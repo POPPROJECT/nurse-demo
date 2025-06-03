@@ -1,7 +1,6 @@
 'use client';
 
 import { signIn } from 'lib/auth';
-// useRouter อาจจะไม่จำเป็นแล้วสำหรับฟังก์ชัน handleSubmit แต่ยังสามารถเก็บไว้ได้หากส่วนอื่นของ Component มีการใช้งาน
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { FaEnvelope, FaKey } from 'react-icons/fa';
@@ -14,57 +13,21 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-
-    // ป้องกันการกดปุ่มซ้ำซ้อน (แนะนำ)
-    const submitButton = e.currentTarget.querySelector(
-      'button[type="submit"]'
-    ) as HTMLButtonElement;
-    if (submitButton) {
-      submitButton.disabled = true;
-      submitButton.textContent = 'Logging in...';
-    }
-
     const result = await signIn(formData);
 
-    // หากมี error ให้แสดงผลและเปิดให้ปุ่มทำงานอีกครั้ง
     if (result?.error) {
       setError(result.error);
-      if (submitButton) {
-        submitButton.disabled = false;
-        submitButton.textContent = 'Login';
-      }
       return;
     }
 
-    // --- ✅✅✅ แก้ไขส่วนสำคัญที่นี่ ---
-    // เปลี่ยนจากการใช้ router.push เป็น window.location.href เพื่อบังคับ Full Page Reload
-    if (result?.role) {
-      if (result.role === 'STUDENT') {
-        window.location.href = '/student/books';
-      } else if (result.role === 'ADMIN') {
-        window.location.href = '/admin/books';
-      } else if (result.role === 'EXPERIENCE_MANAGER') {
-        window.location.href = '/experience-manager/books';
-      } else if (
-        result.role === 'APPROVER_IN' ||
-        result.role === 'APPROVER_OUT'
-      ) {
-        window.location.href = '/approver/approved';
-      } else {
-        // หากไม่มี role ที่ตรงกัน ให้กลับไปหน้าหลัก (หรือแสดง error)
-        window.location.href = '/';
-      }
-    } else {
-      // กรณีที่ไม่คาดคิด: ไม่มี role ส่งกลับมา
-      setError(
-        'Login successful, but user role is missing. Please contact support.'
-      );
-      if (submitButton) {
-        submitButton.disabled = false;
-        submitButton.textContent = 'Login';
-      }
-    }
-    // ---------------------------------
+    // ✅ redirect client-side
+    if (result.role === 'STUDENT') window.location.href = '/student/books';
+    else if (result.role === 'ADMIN') window.location.href = '/admin/books';
+    else if (result.role === 'EXPERIENCE_MANAGER')
+      window.location.href = '/experience-manager/books';
+    else if (result.role === 'APPROVER_IN' || result.role === 'APPROVER_OUT')
+      window.location.href = '/approver/approved';
+    else window.location.href = '/';
   };
 
   return (
@@ -112,7 +75,7 @@ export default function LoginPage() {
             <div className="flex items-center px-3 bg-gray-100 border rounded-md">
               <FaEnvelope className="mr-2 text-gray-500" />
               <input
-                type="text"
+                type="text" // ✅ เปลี่ยนตรงนี้
                 id="identifier"
                 name="identifier"
                 required
@@ -146,7 +109,7 @@ export default function LoginPage() {
           {/* Submit Button */}
           <button
             type="submit"
-            className="w-full py-3 font-semibold text-white transition bg-orange-500 rounded-md hover:bg-orange-600 disabled:bg-orange-300"
+            className="w-full py-3 font-semibold text-white transition bg-orange-500 rounded-md hover:bg-orange-600"
           >
             Login
           </button>
