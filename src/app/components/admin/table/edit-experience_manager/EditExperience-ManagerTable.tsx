@@ -81,7 +81,7 @@ export default function EditExperience_ManagerTable() {
   };
 
   const handleEdit = (id: number) => {
-    router.push(`/admin/edituser/experience-manager/${id}`);
+    window.location.href = `/admin/edituser/experience-manager/${id}`;
   };
 
   const handleDelete = async (id: number) => {

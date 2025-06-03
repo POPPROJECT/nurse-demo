@@ -123,11 +123,9 @@ export default function TableDisplay({ data, setData, deleteUser }: Props) {
                 <td className="px-6 py-4 space-x-2 text-center">
                   <button
                     onClick={() =>
-                      router.push(
-                        `/admin/check-student/${u.id}?name=${encodeURIComponent(
-                          u.fullName
-                        )}`
-                      )
+                      (window.location.href = `/admin/check-student/${
+                        u.id
+                      }?name=${encodeURIComponent(u.fullName)}`)
                     }
                     className="px-3 py-1 text-sm text-white bg-blue-500 rounded hover:bg-blue-600"
                   >
@@ -135,7 +133,7 @@ export default function TableDisplay({ data, setData, deleteUser }: Props) {
                   </button>
                   <button
                     onClick={() =>
-                      router.push(`/admin/edituser/student/${u.id}`)
+                      (window.location.href = `/admin/edituser/student/${u.id}`)
                     }
                     className="px-3 py-1 text-sm text-white bg-green-600 rounded hover:bg-green-800"
                   >

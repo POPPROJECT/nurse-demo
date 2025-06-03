@@ -79,7 +79,7 @@ export default function EditApproverInTable() {
   };
 
   const handleEdit = (id: number) => {
-    router.push(`/admin/edituser/approveIn/${id}`);
+    window.location.href = `/admin/edituser/approveIn/${id}`;
   };
 
   const handleDelete = async (id: number) => {

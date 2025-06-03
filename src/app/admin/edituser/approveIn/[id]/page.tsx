@@ -84,7 +84,7 @@ export default function AdminEditApproverPage() {
       });
 
       // ✅ ย้ายหลังจากกด "ตกลง" แล้วจึงค่อยเปลี่ยนหน้า
-      router.push(`/admin/edituser/approveIn/${id}`);
+      window.location.href = `/admin/edituser/approveIn/${id}`;
     } catch (err) {
       alert('❌ ไม่สามารถอัปเดตข้อมูลได้');
     }

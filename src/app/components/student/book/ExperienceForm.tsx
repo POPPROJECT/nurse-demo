@@ -206,7 +206,7 @@ export default function ExperienceForm({
       await postExperience();
       Swal.close();
       await Swal.fire('สำเร็จ', 'บันทึกเรียบร้อย 🎉', 'success');
-      router.push('/student/books');
+      window.location.href = '/student/books';
     } catch {
       Swal.close();
       Swal.fire('Error', 'เกิดข้อผิดพลาด ไม่สามารถบันทึกได้', 'error');
@@ -227,7 +227,7 @@ export default function ExperienceForm({
       cancelButtonText: 'ไม่ใช่',
     }).then((res) => {
       if (res.isConfirmed) {
-        router.push('/student/books');
+        window.location.href = '/student/books';
       }
     });
   };

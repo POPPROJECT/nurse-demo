@@ -87,7 +87,7 @@ export default function AdminEditApproverOutPage() {
         confirmButtonText: 'ตกลง',
       });
 
-      router.push(`/admin/edituser/approveOut/${id}`);
+      window.location.href = `/admin/edituser/approveOut/${id}`;
     } catch (err) {
       alert('❌ ไม่สามารถอัปเดตข้อมูลได้');
     }

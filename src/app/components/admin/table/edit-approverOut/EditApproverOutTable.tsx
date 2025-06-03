@@ -78,7 +78,7 @@ export default function EditApproverOutTable() {
   };
 
   const handleEdit = (id: number) => {
-    router.push(`/admin/edituser/approveOut/${id}`);
+    window.location.href = `/admin/edituser/approveOut/${id}`;
   };
 
   const handleDelete = async (id: number) => {

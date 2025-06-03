@@ -73,7 +73,7 @@ export default function AdminEditExperienceManagerPage() {
         confirmButtonText: 'ตกลง',
       });
 
-      router.push(`/admin/edituser/experience-manager/${id}`);
+      window.location.href = `/admin/edituser/experience-manager/${id}`;
     } catch (err) {
       alert('❌ ไม่สามารถอัปเดตข้อมูลได้');
     }
