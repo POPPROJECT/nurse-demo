@@ -16,15 +16,23 @@ export type Session = {
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL!;
 
 export async function getSession(): Promise<Session | null> {
+  console.log('--- [getSession] Starting session check on the server... ---');
+
   const cookieStore = await cookies();
   const accessToken = cookieStore.get('access_token')?.value;
 
+  console.log('[getSession] access_token cookie object:', accessToken);
+
   // 1. ตรวจสอบแค่ access_token ก็เพียงพอแล้ว
   if (!accessToken) {
+    console.log('[getSession] No accessToken found. Returning null.');
+
     return null;
   }
 
   try {
+    console.log('[getSession] AccessToken found. Fetching /auth/me...');
+
     // 2. ส่ง Token ไปใน Header โดยตรงเพื่อความแน่นอน
     const res = await fetch(`${BACKEND_URL}/auth/me`, {
       method: 'GET',
@@ -33,6 +41,8 @@ export async function getSession(): Promise<Session | null> {
       },
       cache: 'no-store',
     });
+
+    console.log(`[getSession] Fetch response status: ${res.status}`);
 
     if (!res.ok) {
       console.error(
@@ -43,6 +53,8 @@ export async function getSession(): Promise<Session | null> {
     }
 
     const user = await res.json();
+    console.log('[getSession] Successfully fetched user:', user.role);
+
     const refreshToken = cookieStore.get('refresh_token')?.value;
 
     return {
