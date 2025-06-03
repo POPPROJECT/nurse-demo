@@ -3,7 +3,7 @@ import axios from 'axios';
 import { getSession } from './session';
 
 export const api = axios.create({
-  baseURL: 'http://localhost:8000',
+  baseURL: 'https://api-nurse-demo-production.up.railway.app',
 });
 
 api.interceptors.request.use(async (config) => {
