@@ -1,7 +1,6 @@
 'use client';
 
-import { signIn } from 'lib/auth';
-// useRouter อาจจะไม่จำเป็นแล้วสำหรับฟังก์ชัน handleSubmit แต่ยังสามารถเก็บไว้ได้หากส่วนอื่นของ Component มีการใช้งาน
+// useRouter จะถูกใช้ใน handleSubmit เพื่อทำการ Redirect
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { FaEnvelope, FaKey } from 'react-icons/fa';
@@ -13,9 +12,12 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const formData = new FormData(e.currentTarget);
+    setError(null); // เคลียร์ error เก่าทุกครั้งที่กด submit
 
-    // ป้องกันการกดปุ่มซ้ำซ้อน (แนะนำ)
+    const formData = new FormData(e.currentTarget);
+    const identifier = formData.get('identifier');
+    const password = formData.get('password');
+
     const submitButton = e.currentTarget.querySelector(
       'button[type="submit"]'
     ) as HTMLButtonElement;
@@ -24,47 +26,61 @@ export default function LoginPage() {
       submitButton.textContent = 'Logging in...';
     }
 
-    const result = await signIn(formData);
+    try {
+      // --- ✅✅✅ ส่วนที่แก้ไขหลัก ---
+      // เปลี่ยนจากการเรียก signIn() มาเป็นการ fetch ไปยัง API Route ของ Frontend เอง
+      const res = await fetch('/api/auth/signin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ identifier, password }),
+      });
 
-    // หากมี error ให้แสดงผลและเปิดให้ปุ่มทำงานอีกครั้ง
-    if (result?.error) {
-      setError(result.error);
-      if (submitButton) {
-        submitButton.disabled = false;
-        submitButton.textContent = 'Login';
+      const result = await res.json();
+      // -----------------------------
+
+      if (!res.ok || result.error) {
+        setError(result.error || 'Login failed. Please try again.');
+        if (submitButton) {
+          submitButton.disabled = false;
+          submitButton.textContent = 'Login';
+        }
+        return;
       }
-      return;
-    }
 
-    // --- ✅✅✅ แก้ไขส่วนสำคัญที่นี่ ---
-    // เปลี่ยนจากการใช้ router.push เป็น window.location.href เพื่อบังคับ Full Page Reload
-    if (result?.role) {
-      if (result.role === 'STUDENT') {
-        window.location.href = '/student/books';
-      } else if (result.role === 'ADMIN') {
-        window.location.href = '/admin/books';
-      } else if (result.role === 'EXPERIENCE_MANAGER') {
-        window.location.href = '/experience-manager/books';
-      } else if (
-        result.role === 'APPROVER_IN' ||
-        result.role === 'APPROVER_OUT'
-      ) {
-        window.location.href = '/approver/approved';
+      // ถ้าสำเร็จ Backend (ผ่าน Next.js API Route) จะจัดการตั้งค่า Cookie ให้เอง
+      // เราสามารถ Redirect ได้เลย
+      const role = result.user?.role;
+
+      if (role) {
+        if (role === 'ADMIN') {
+          // ใช้ router.push() ของ Next.js เพื่อประสบการณ์ใช้งานที่ดีกว่า (Client-side navigation)
+          // ตอนนี้มันจะทำงานได้แล้ว เพราะหน้าถัดไปจะสามารถอ่าน Cookie ที่ถูกตั้งค่าบนโดเมนเดียวกันได้
+          router.push('/admin/books');
+        } else if (role === 'STUDENT') {
+          router.push('/student/books');
+        } else if (role === 'EXPERIENCE_MANAGER') {
+          router.push('/experience-manager/books');
+        } else if (role === 'APPROVER_IN' || role === 'APPROVER_OUT') {
+          router.push('/approver/approved');
+        } else {
+          router.push('/');
+        }
       } else {
-        // หากไม่มี role ที่ตรงกัน ให้กลับไปหน้าหลัก (หรือแสดง error)
-        window.location.href = '/';
+        // กรณีที่ไม่คาดคิด
+        setError('Login successful, but user role is missing.');
+        if (submitButton) {
+          submitButton.disabled = false;
+          submitButton.textContent = 'Login';
+        }
       }
-    } else {
-      // กรณีที่ไม่คาดคิด: ไม่มี role ส่งกลับมา
-      setError(
-        'Login successful, but user role is missing. Please contact support.'
-      );
+    } catch (err) {
+      console.error('Submit error:', err);
+      setError('An unexpected network error occurred.');
       if (submitButton) {
         submitButton.disabled = false;
         submitButton.textContent = 'Login';
       }
     }
-    // ---------------------------------
   };
 
   return (
