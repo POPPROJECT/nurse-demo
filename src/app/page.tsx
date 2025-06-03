@@ -15,6 +15,8 @@ export default function LoginPage() {
     const formData = new FormData(e.currentTarget);
     const result = await signIn(formData);
 
+    console.log('Result from signIn function:', result);
+
     if (result?.error) {
       setError(result.error);
       return;
