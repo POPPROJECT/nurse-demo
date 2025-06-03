@@ -73,7 +73,7 @@ export async function updateTokens({
   cookieStore.set('access_token', accessToken, {
     httpOnly: true,
     secure: true,
-    sameSite: 'lax',
+    sameSite: 'none',
     expires,
     path: '/',
   });
@@ -81,7 +81,7 @@ export async function updateTokens({
   cookieStore.set('refresh_token', refreshToken, {
     httpOnly: true,
     secure: true,
-    sameSite: 'lax',
+    sameSite: 'none',
     expires,
     path: '/auth/refresh-token',
   });
