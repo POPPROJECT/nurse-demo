@@ -31,6 +31,7 @@ export async function getSession(): Promise<Session | null> {
       headers: {
         Authorization: `Bearer ${accessToken}`,
       },
+      cache: 'no-store',
     });
 
     if (!res.ok) {
@@ -83,6 +84,6 @@ export async function updateTokens({
     secure: true,
     sameSite: 'none',
     expires,
-    path: '/auth/refresh-token',
+    path: '/',
   });
 }
