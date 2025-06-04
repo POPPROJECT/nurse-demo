@@ -1,5 +1,3 @@
-// src/app/admin/layout.tsx
-
 import { getSession } from 'lib/session';
 import NavbarAdmin from '../components/admin/navbarAdmin'; // ตรวจสอบ Path ให้ถูกต้อง
 import SidenavAdmin from '../components/admin/sidenavAdmin'; // ตรวจสอบ Path ให้ถูกต้อง

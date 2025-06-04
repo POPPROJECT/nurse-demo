@@ -4,56 +4,57 @@ import Image from 'next/image';
 import { FaBars, FaBookMedical, FaUser } from 'react-icons/fa';
 import { MdLogout } from 'react-icons/md';
 import ThemeToggle from '../ui/ThemeToggle';
-
-interface SessionUser {
-  id: number;
-  name: string;
-  role: string;
-  avatarUrl?: string;
-}
+import { useAuth } from '@/app/contexts/AuthContext';
 
 export default function Navbar() {
+  const { session, accessToken } = useAuth(); // ✅ ดึง session และ accessToken จาก Context
+  const user = session?.user;
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [user, setUser] = useState<SessionUser | null>(null);
   const [countingEnabled, setCountingEnabled] = useState(false);
 
   useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_BACKEND_URL}/users/me`,
-          { credentials: 'include' }
-        );
-        if (res.ok) {
-          const data = await res.json();
-          setUser({
-            id: data.id,
-            name: data.fullname || 'ไม่ระบุชื่อ',
-            role: data.role,
-            avatarUrl: data.avatarUrl || null,
-          });
-        }
-      } catch (err) {
-        console.error('❌ Failed to fetch user:', err);
-      }
-    };
-
     const fetchStatus = async () => {
+      if (!accessToken) {
+        // ✅ รอให้ accessToken พร้อมใช้งานก่อน
+        console.log(
+          '[Navbar ExperienceManager] No accessToken, skipping fetchStatus.'
+        );
+        // อาจจะไม่ต้องทำอะไร เพราะถ้าไม่มี token ก็ไม่ควรจะเห็นหน้านี้ (Layout ป้องกันแล้ว)
+        return;
+      }
       try {
         const res = await fetch(
           `${process.env.NEXT_PUBLIC_BACKEND_URL}/admin/settings/get-status`,
-          { credentials: 'include' }
+          {
+            // credentials: 'include', // ไม่จำเป็นแล้วถ้า Backend ใช้ Bearer Token
+            headers: {
+              // ✅ ส่ง Token ใน Header
+              Authorization: `Bearer ${accessToken}`,
+            },
+          }
         );
-        const data = await res.json();
-        setCountingEnabled(data.enabled);
+        if (res.ok) {
+          // ✅ ตรวจสอบ res.ok ก่อน .json()
+          const data = await res.json();
+          setCountingEnabled(data.enabled);
+        } else {
+          console.error(
+            'Navbar ExperienceManager: Failed to fetch counting status',
+            res.status
+          );
+          setCountingEnabled(false); // ตั้งค่า Default ถ้า fetch ล้มเหลว
+        }
       } catch (err) {
+        console.error(
+          '❌ Navbar ExperienceManager: Failed to fetch counting status:',
+          err
+        );
         setCountingEnabled(false);
       }
     };
 
-    fetchUser();
     fetchStatus();
-  }, []);
+  }, [accessToken]);
 
   return (
     <nav className="bg-[#F1A661] dark:bg-[#1E293B] text-white px-4 py-3 flex items-center justify-between w-full top-0 left-0 right-0  z-50 mx-auto fixed sm:relative">
