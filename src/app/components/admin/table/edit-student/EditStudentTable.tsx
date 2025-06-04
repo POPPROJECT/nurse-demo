@@ -85,29 +85,44 @@ export default function EditStudentTable() {
 
   const deleteUser = async (id: number) => {
     if (!api) {
-      Swal.fire('ข้อผิดพลาด', 'Session หมดอายุหรือไม่พบ Token', 'error');
+      // ตรวจสอบ api instance (ซึ่งสร้างจาก accessToken)
+      Swal.fire(
+        'ข้อผิดพลาด',
+        'Session หมดอายุหรือไม่พบ Authentication Token',
+        'error'
+      );
       return;
     }
+
     const confirmResult = await Swal.fire({
       title: 'ยืนยันการลบ?',
+      text: 'คุณแน่ใจหรือไม่ว่าต้องการลบบัญชีผู้ใช้นี้?',
       icon: 'warning',
       showCancelButton: true,
-      confirmButtonText: 'ลบ',
-      cancelButtonText: 'ยกเลิก',
       confirmButtonColor: '#d33',
       cancelButtonColor: '#3085d6',
+      confirmButtonText: 'ลบบัญชี',
+      cancelButtonText: 'ยกเลิก',
     });
 
     if (confirmResult.isConfirmed) {
       try {
-        await api.delete(`/users/${id}`); // ✅ ใช้ api instance
-        setUsers((prev) => prev.filter((u) => u.id !== id));
-        Swal.fire('ลบสำเร็จ', 'ผู้ใช้ถูกลบเรียบร้อยแล้ว', 'success');
+        // ใช้ api instance ที่มี Authorization header อยู่แล้ว
+        const res = await api.delete(`/users/${id}`);
+
+        // ไม่จำเป็นต้องเช็ค res.ok ถ้า axios ไม่โยน error ออกมา แสดงว่าสำเร็จ
+        // axios จะโยน error โดยอัตโนมัติถ้า status code เป็น 4xx หรือ 5xx
+
+        setUsers((currentUsers) =>
+          currentUsers.filter((user) => user.id !== id)
+        );
+        Swal.fire('ลบสำเร็จ!', 'ผู้ใช้ถูกลบออกจากระบบเรียบร้อยแล้ว', 'success');
       } catch (err: any) {
         console.error('Error deleting user:', err);
         Swal.fire(
-          'ผิดพลาด',
-          err.response?.data?.message || 'ลบไม่สำเร็จ',
+          'เกิดข้อผิดพลาด!',
+          err.response?.data?.message ||
+            'ไม่สามารถลบผู้ใช้ได้ กรุณาลองใหม่อีกครั้ง',
           'error'
         );
       }

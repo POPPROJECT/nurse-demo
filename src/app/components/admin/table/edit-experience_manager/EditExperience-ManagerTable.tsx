@@ -136,12 +136,12 @@ export default function EditExperience_ManagerTable({
 
     const confirmResult = await Swal.fire({
       title: 'ยืนยันการลบ?',
-      text: 'คุณแน่ใจหรือไม่ว่าต้องการลบบัญชีผู้ใช้นี้? การกระทำนี้ไม่สามารถย้อนกลับได้!',
+      text: 'คุณแน่ใจหรือไม่ว่าต้องการลบบัญชีผู้ใช้นี้?',
       icon: 'warning',
       showCancelButton: true,
       confirmButtonColor: '#d33',
       cancelButtonColor: '#3085d6',
-      confirmButtonText: 'ใช่, ลบเลย!',
+      confirmButtonText: 'ลบบัญชี',
       cancelButtonText: 'ยกเลิก',
     });
 
