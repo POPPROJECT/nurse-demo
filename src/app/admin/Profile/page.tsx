@@ -11,6 +11,7 @@ import {
   FaCamera,
 } from 'react-icons/fa';
 import { BACKEND_URL } from '../../../../lib/constants';
+import { useAuth } from '@/app/contexts/AuthContext';
 
 interface UserProfile {
   id: number;
@@ -20,6 +21,7 @@ interface UserProfile {
 }
 
 export default function AdminProfilePage() {
+  const { accessToken, user: authContextUser } = useAuth(); // ✅ ดึง accessToken และ user จาก Context
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -34,13 +36,24 @@ export default function AdminProfilePage() {
 
   useEffect(() => {
     const fetchUser = async () => {
+      if (!accessToken) {
+        // ✅ ถ้าไม่มี accessToken ใน Context ก็ไม่ต้อง fetch
+        console.error('AdminProfilePage: No accessToken found in AuthContext.');
+        setError('Authentication token not available.');
+        setLoading(false);
+        return;
+      }
+
       setLoading(true);
       setError(null);
       try {
         const res = await axios.get(
           `${process.env.NEXT_PUBLIC_BACKEND_URL}/users/me`,
           {
-            withCredentials: true,
+            headers: {
+              Authorization: `Bearer ${accessToken}`, // ✅ ส่ง Token ใน Header
+            },
+            // withCredentials: true, // อาจจะไม่จำเป็นแล้วถ้าส่ง Token ใน Header และ Cookie จัดการที่ BFF
           }
         );
         setUser(res.data);
@@ -49,15 +62,27 @@ export default function AdminProfilePage() {
           fullname: res.data.fullname,
           avatarUrl: res.data.avatarUrl || '',
         });
-      } catch (err) {
-        // ❌ ถ้าไม่มี session → redirect ไปหน้า login
+      } catch (err: any) {
         console.error('Error fetching user profile in AdminProfilePage:', err);
+        setError(
+          err.response?.data?.message ||
+            err.message ||
+            'Failed to load profile.'
+        );
       } finally {
         setLoading(false);
       }
     };
-    fetchUser();
-  }, []);
+    if (authContextUser) {
+      // setUser(authContextUser); // อาจจะต้อง map field ถ้าโครงสร้างต่างกัน
+      // setForm({ /* ... */ });
+      // setLoading(false);
+      // หรือจะ fetch ใหม่เสมอเพื่อข้อมูลล่าสุดก็ได้
+      fetchUser();
+    } else {
+      fetchUser(); // ถ้ายังไม่มี user ใน context ให้ fetch
+    }
+  }, [accessToken, authContextUser]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
