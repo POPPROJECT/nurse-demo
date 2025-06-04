@@ -3,8 +3,8 @@ import { useState, useEffect } from 'react';
 import Chart from 'chart.js/auto';
 import { FaUsers, FaCheckCircle } from 'react-icons/fa';
 import { BACKEND_URL } from 'lib/constants';
-import { getSession } from 'lib/session';
 import { Role } from 'lib/type';
+import { getSession } from 'lib/session';
 
 type Book = { id: number; title: string };
 

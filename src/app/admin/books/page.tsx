@@ -4,19 +4,11 @@ import BookManager from '@/app/components/admin/book/BookManager';
 import { getSession } from '../../../../lib/session';
 
 export default async function AdminBooksPage() {
-  console.log('--- [AdminBooksPage] Checking session... ---');
-
   const session = await getSession();
-  console.log('[AdminBooksPage] Session object received:', session);
 
   if (!session || session.user.role !== 'ADMIN') {
-    console.log(
-      '[AdminBooksPage] Redirecting to / because session is invalid or not ADMIN.'
-    );
-
     redirect('/');
   }
-  console.log('[AdminBooksPage] Session is valid. Rendering page.');
 
   return (
     <div className="container max-w-6xl px-4 py-8 mx-auto mt-10 sm:mt-0">
