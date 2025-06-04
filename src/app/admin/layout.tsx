@@ -15,9 +15,12 @@ export default async function AdminLayout({
   const session = await getSession();
 
   // ✅ ตรวจสอบสิทธิ์ใน Layout นี้เลย
-  // ถ้าไม่มี session หรือไม่ใช่ ADMIN ให้ redirect กลับไปหน้าแรก
-  // การทำแบบนี้จะป้องกันทุกหน้าที่ใช้ Layout นี้โดยอัตโนมัติ
+  // ถ้าไม่มี session หรือไม่ใช่ ADMIN ให้ redirect กลับไปหน้าแรก (หน้า Login)
   if (!session || session.user.role !== 'ADMIN') {
+    console.log(
+      '[AdminLayout] Session check failed or not ADMIN. Redirecting to /. Session:',
+      session
+    );
     redirect('/'); // หรือ redirect ไปหน้า Login ที่คุณต้องการ
   }
 

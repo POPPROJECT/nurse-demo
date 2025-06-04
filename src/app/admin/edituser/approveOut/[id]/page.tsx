@@ -44,7 +44,6 @@ export default function AdminEditApproverOutPage() {
         });
       } catch (err) {
         console.error('❌ ดึงข้อมูลล้มเหลว', err);
-        router.push('/');
       }
     };
     fetchData();

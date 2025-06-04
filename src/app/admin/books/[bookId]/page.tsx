@@ -14,7 +14,8 @@ export default async function AdminBookPage({
 
   const session = await getSession();
   if (!session || session.user.role !== 'ADMIN') {
-    redirect('/');
+    console.error('⛔ Session not found!');
+    return;
   }
 
   const token = session.accessToken;

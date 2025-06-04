@@ -7,8 +7,10 @@ export default async function AdminBooksPage() {
   const session = await getSession();
 
   if (!session || session.user.role !== 'ADMIN') {
-    redirect('/');
+    console.error('⛔ Session not found!');
+    return;
   }
+  console.log('[AdminBooksPage] Session is valid. Rendering page.');
 
   return (
     <div className="container max-w-6xl px-4 py-8 mx-auto mt-10 sm:mt-0">

@@ -1,12 +1,15 @@
-import EditApproveInTable from '@/app/components/admin/table/edit-approverIn/EditApproverInTable'
+import EditApproveInTable from '@/app/components/admin/table/edit-approverIn/EditApproverInTable';
 import { getSession } from 'lib/session';
 import { redirect } from 'next/navigation';
-import React from 'react'
+import React from 'react';
 
 export default async function ApprovedIn() {
   const session = await getSession();
-  if (!session) redirect('/');
-  
+  if (!session) {
+    console.error('⛔ Session not found!');
+    return;
+  }
+
   return (
     <div className="">
       <div className="flex flex-1 pt-16 sm:pt-0">

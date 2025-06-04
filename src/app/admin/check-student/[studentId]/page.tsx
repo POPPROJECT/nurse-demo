@@ -13,8 +13,8 @@ export default function AdminStudentProgressPage() {
 
   useEffect(() => {
     getSession().then((sess) => {
-      if (!sess) return (window.location.href = '/');
-      setToken(sess.accessToken);
+      if (!sess) console.error('⛔ Session not found!');
+      return;
     });
   }, []);
 

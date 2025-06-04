@@ -5,7 +5,10 @@ import React from 'react';
 
 export default async function ApprovedIn() {
   const session = await getSession();
-  if (!session) redirect('/');
+  if (!session) {
+    console.error('⛔ Session not found!');
+    return;
+  }
 
   return (
     <div className="">

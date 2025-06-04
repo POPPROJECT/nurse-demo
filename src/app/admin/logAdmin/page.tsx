@@ -25,7 +25,7 @@ export default function AdminLogPage() {
   const fetchLogs = async () => {
     const sess = await getSession();
     if (!sess || sess.user.role !== Role.ADMIN) {
-      window.location.href = '/';
+      console.error('⛔ Session not found!');
       return;
     }
     const res = await axios.get(`${BASE}/admin/logs`, {

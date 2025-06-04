@@ -66,7 +66,7 @@ export default function Page() {
     const checkRole = async () => {
       const sess = await getSession();
       if (!sess || sess.user.role !== Role.ADMIN) {
-        window.location.href = '/';
+        console.error('⛔ Session not found!');
         return;
       }
     };

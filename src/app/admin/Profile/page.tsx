@@ -47,7 +47,7 @@ export default function AdminProfilePage() {
         });
       } catch (err) {
         // ❌ ถ้าไม่มี session → redirect ไปหน้า login
-        window.location.href = '/';
+        console.error('Error fetching user profile in AdminProfilePage:', err);
       }
     };
     fetchUser();

@@ -6,7 +6,10 @@ import React from 'react';
 
 export default async function Experience_Manager() {
   const session = await getSession();
-  if (!session) redirect('/');
+  if (!session) {
+    console.error('⛔ Session not found!');
+    return;
+  }
 
   return (
     <div className="">
