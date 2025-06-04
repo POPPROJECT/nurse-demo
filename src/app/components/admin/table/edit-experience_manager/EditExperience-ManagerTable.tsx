@@ -116,11 +116,6 @@ export default function EditExperience_ManagerTable({
     // หน้านี้ยังไม่มีการแก้ไขรายบุคคล ถ้ามี ต้องสร้าง Path และ Page แยกต่างหาก
     // หรือจะทำ Modal popup สำหรับแก้ไขก็ได้
     router.push(`/admin/edituser/experience-manager/${id}`);
-    Swal.fire(
-      'แจ้งเตือน',
-      'ฟังก์ชันแก้ไขสำหรับผู้จัดการเล่มยังไม่ถูก Implement',
-      'info'
-    );
   };
 
   const handleDelete = async (id: number) => {

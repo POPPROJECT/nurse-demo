@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import Swal from 'sweetalert2';
-import { FaPlus, FaCheck } from 'react-icons/fa';
+import { FaCheck } from 'react-icons/fa';
 import router from 'next/router';
 import { SessionUser, useAuth } from '@/app/contexts/AuthContext';
 
@@ -115,7 +115,12 @@ export default function RegisterUser() {
     try {
       const response = await axios.post(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/signup`,
-        dto
+        dto,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
       );
 
       // เมื่อสมัครสำเร็จ ให้เซ็ต session ใหม่

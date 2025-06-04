@@ -29,10 +29,10 @@ export default async function AdminLayout({
       initialSession={session}
       initialAccessToken={session.accessToken}
     >
-      <div className="min-h-screen bg-gray-100 dark:bg-[#0F172A]">
+      <div className="min-h-screen bg-gray-100 dark:bg-[#0F172A] flex flex-col">
         {/* ✅ ส่ง session.user ไปเป็น prop ชื่อ initialUser ให้ NavbarAdmin */}
         <NavbarAdmin />
-        <div className="flex">
+        <div className="flex flex-1">
           <SidenavAdmin />
           <main className="flex-1 p-6 bg-background text-foreground">
             {children}

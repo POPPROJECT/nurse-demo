@@ -26,14 +26,16 @@ export default async function StudentLayout({
       initialSession={session}
       initialAccessToken={session.accessToken}
     >
-      <div className="flex flex-col min-h-screen bg-gray-100 dark:bg-[#161d2e]">
+      <div className="flex flex-col min-h-screen bg-gray-100 dark:bg-[#0F172A]">
         {/* ✅ Navbar พร้อม initialUser */}
         <Navbar />
 
         {/* ✅ Layout */}
-        <div className="flex flex-1 pt-[72px] md:pt-0">
+        <div className="flex flex-1">
           <Sidebar />
-          <main className="flex-1 p-4">{children}</main>
+          <main className="flex-1 p-6 bg-background text-foreground">
+            {children}
+          </main>
         </div>
 
         <Footer />
