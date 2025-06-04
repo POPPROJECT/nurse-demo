@@ -18,49 +18,46 @@ import { BACKEND_URL } from 'lib/constants';
 export default function AdminProfilePage() {
   const { accessToken, session: authSession, updateUserInSession } = useAuth();
 
-  // States สำหรับข้อมูลที่แสดงผลปัจจุบัน
+  // States สำหรับข้อมูลที่ "กำลังแสดงผล" บน UI (เมื่อไม่ได้อยู่ในโหมด edit)
   const [currentFullname, setCurrentFullname] = useState('');
   const [currentEmail, setCurrentEmail] = useState('');
   const [currentAvatarUrl, setCurrentAvatarUrl] = useState('');
 
-  // States สำหรับ controlled form inputs ตอนอยู่ในโหมด editing
+  // States สำหรับ "ฟอร์ม" ที่กำลังแก้ไข
   const [formFullnameInput, setFormFullnameInput] = useState('');
-  const [formEmailInput, setFormEmailInput] = useState(''); // State สำหรับ Email input
+  // Email โดยทั่วไปจะไม่ให้แก้ไข แต่ถ้า Backend รองรับ และคุณต้องการให้แก้ไขได้ ก็เพิ่ม State นี้
+  // const [formEmailInput, setFormEmailInput] = useState('');
 
   const [editing, setEditing] = useState(false);
   const [file, setFile] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null); // สำหรับแสดงรูปที่เพิ่งเลือก
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // ฟังก์ชันสำหรับตั้งค่า UI states และ Form states จากข้อมูล user
-  const populateUIAndFormStates = useCallback(
-    (userData: SessionUser | null) => {
-      if (userData) {
-        // ตั้งค่า states ที่ใช้แสดงผล
-        setCurrentFullname(userData.name);
-        setCurrentEmail(userData.email);
-        setCurrentAvatarUrl(userData.avatarUrl || '');
-        setPreviewUrl(userData.avatarUrl || null);
+  // ฟังก์ชันสำหรับตั้งค่า state ทั้งส่วนแสดงผลและส่วนฟอร์มจากข้อมูล user
+  const populateStates = useCallback((userData: SessionUser | null) => {
+    if (userData) {
+      // ตั้งค่า states ที่ใช้แสดงผล
+      setCurrentFullname(userData.name);
+      setCurrentEmail(userData.email); // ✅ แสดง Email จาก Context
+      setCurrentAvatarUrl(userData.avatarUrl || '');
 
-        // ตั้งค่า states สำหรับ form inputs
-        setFormFullnameInput(userData.name);
-        setFormEmailInput(userData.email); // Email จะแสดงใน form แต่ readonly
-      }
-    },
-    []
-  );
+      // ตั้งค่า states สำหรับ form inputs (ใช้เป็นค่าเริ่มต้นเมื่อกด Edit)
+      setFormFullnameInput(userData.name);
+      // setFormEmailInput(userData.email); // ถ้าจะให้แก้ Email
+
+      setPreviewUrl(userData.avatarUrl || null); // ตั้งค่า previewUrl เริ่มต้นด้วย
+    }
+  }, []);
 
   useEffect(() => {
-    // เมื่อ Component โหลด หรือ authSession/accessToken เปลี่ยนแปลง
     if (authSession?.user) {
-      populateUIAndFormStates(authSession.user);
+      populateStates(authSession.user);
       setLoading(false);
     } else if (accessToken && !authSession?.user) {
-      // มี Token แต่ยังไม่มี User ใน Context (อาจจะเกิดตอน refresh หนักๆ)
-      // ลอง fetch ข้อมูล User ล่าสุด
+      // มี Token แต่ยังไม่มี User ใน Context
       const fetchInitialUser = async () => {
         setLoading(true);
         setError(null);
@@ -70,7 +67,7 @@ export default function AdminProfilePage() {
             { headers: { Authorization: `Bearer ${accessToken}` } }
           );
           updateUserInSession(res.data); // อัปเดต Context
-          populateUIAndFormStates(res.data); // อัปเดต UI และ Form states
+          populateStates(res.data); // อัปเดต UI และ Form states
         } catch (e: any) {
           console.error('Error fetching initial user data for profile:', e);
           setError(
@@ -82,35 +79,29 @@ export default function AdminProfilePage() {
       };
       fetchInitialUser();
     } else if (!accessToken && !authSession?.user) {
-      // ไม่มีทั้ง Token และ User ใน Context (AdminLayout ควรจะ redirect ไปแล้ว)
       setLoading(false);
       setError('Session not found or expired. Please login again.');
     }
-  }, [authSession, accessToken, updateUserInSession, populateUIAndFormStates]);
+  }, [authSession, accessToken, updateUserInSession, populateStates]);
 
   const handleFullnameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormFullnameInput(e.target.value);
   };
 
-  // ถ้าต้องการให้แก้ไข Email ได้ (ต้องมั่นใจว่า Backend รองรับ และจัดการเรื่อง Unique Email)
-  // const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-  //   setFormEmailInput(e.target.value);
-  // };
-
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files?.[0]) {
       const uploadedFile = e.target.files[0];
       setFile(uploadedFile);
-      setPreviewUrl(URL.createObjectURL(uploadedFile));
+      setPreviewUrl(URL.createObjectURL(uploadedFile)); // แสดง preview รูปที่เพิ่งเลือก
     }
   };
 
   const handleEditClick = () => {
-    // เมื่อกด "แก้ไข" ให้ตั้งค่า form inputs จาก current states
+    // เมื่อกด "แก้ไข" ให้ดึงค่าจาก current states (ข้อมูลล่าสุดที่แสดงผล) มาใส่ใน form inputs
     setFormFullnameInput(currentFullname);
-    setFormEmailInput(currentEmail); // ตั้งค่า email input ด้วย (ถ้ามี)
-    setPreviewUrl(currentAvatarUrl || null); // Reset preview จากค่าล่าสุดที่แสดงผล
-    setFile(null); // เคลียร์ไฟล์ที่อาจจะเลือกไว้ก่อนหน้า
+    // setFormEmailInput(currentEmail); // ถ้าให้แก้ Email
+    setPreviewUrl(currentAvatarUrl || null); // Reset preview จากค่าล่าสุด
+    setFile(null); // เคลียร์ไฟล์ที่อาจจะเลือกไว้ก่อนหน้า ถ้ามีการยกเลิกแล้วกดแก้ไขใหม่
     setEditing(true);
   };
 
@@ -131,40 +122,43 @@ export default function AdminProfilePage() {
     setSaving(true);
 
     const formData = new FormData();
-    formData.append('fullname', formFullnameInput); // ✅ ใช้ค่าจาก formFullnameInput
-    // ถ้าต้องการอัปเดต Email และ Backend รองรับ:
+    // ส่ง fullname ไปให้ Backend (Backend อาจจะคาดหวัง field ชื่อ 'name')
+    // ตรวจสอบ API Backend ของคุณว่าต้องการ field ชื่ออะไร
+    formData.append('fullname', formFullnameInput); // หรือ 'name': formFullnameInput
+
+    if (file) {
+      formData.append('avatar', file); // Backend ต้องรองรับการอัปโหลดไฟล์ชื่อ 'avatar'
+    }
+    // ถ้ามีการแก้ไข Email และ Backend รองรับ:
     // if (formEmailInput !== currentEmail) {
     //   formData.append('email', formEmailInput);
     // }
-    if (file) {
-      formData.append('avatar', file);
-    }
 
     try {
-      const res = await axios.patch<SessionUser>(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/users/me`,
+      const res = await axios.patch<SessionUser>( // คาดหวังข้อมูล User ที่มีโครงสร้างเดียวกับ SessionUser กลับมา
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/users/me`, // Endpoint สำหรับอัปเดต Profile ตัวเอง
         formData,
         {
           headers: {
-            'Content-Type': 'multipart/form-data',
+            'Content-Type': 'multipart/form-data', // ✅ ถูกต้องสำหรับการส่ง FormData (ที่มีไฟล์)
             Authorization: `Bearer ${accessToken}`,
           },
         }
       );
 
       updateUserInSession(res.data); // ✅ อัปเดตข้อมูล User ใน AuthContext
-      populateUIAndFormStates(res.data); // ✅ อัปเดต UI และ Form states ของหน้านี้
+      populateStates(res.data); // ✅ อัปเดต UI และ Form states ของหน้านี้ด้วยข้อมูลใหม่จาก Backend
 
       setEditing(false);
       setFile(null);
-      // previewUrl จะถูกอัปเดตโดย populateUIAndFormStates แล้ว
+      // previewUrl จะถูกอัปเดตโดย populateStates แล้ว
 
-      Swal.fire('สำเร็จ!', 'บันทึกข้อมูลเรียบร้อยแล้ว', 'success');
+      Swal.fire('สำเร็จ!', 'บันทึกข้อมูลโปรไฟล์เรียบร้อยแล้ว', 'success');
     } catch (err: any) {
       console.error('Error saving profile:', err);
       Swal.fire(
         'เกิดข้อผิดพลาด',
-        err.response?.data?.message || 'ไม่สามารถบันทึกข้อมูลได้',
+        err.response?.data?.message || 'ไม่สามารถบันทึกข้อมูลโปรไฟล์ได้',
         'error'
       );
     } finally {
@@ -191,8 +185,8 @@ export default function AdminProfilePage() {
   // ใช้ current states สำหรับการแสดงผลเมื่อไม่ได้อยู่ในโหมด editing
   // และใช้ form input states เมื่ออยู่ในโหมด editing
   const displayFullname = editing ? formFullnameInput : currentFullname;
-  const displayEmail = currentEmail;
-  const displayAvatarUrl = editing
+  const displayEmailToShow = currentEmail; // Email จะมาจาก currentEmail เสมอ (ไม่ให้แก้ไข)
+  const displayAvatarToShow = editing
     ? previewUrl || currentAvatarUrl
     : currentAvatarUrl;
 
@@ -203,13 +197,13 @@ export default function AdminProfilePage() {
           <div className="flex flex-col items-center md:flex-row">
             <div className="flex flex-col items-center space-y-3">
               <div className="relative">
-                {displayAvatarUrl ? (
+                {displayAvatarToShow ? (
                   <img
                     src={
-                      displayAvatarUrl.startsWith('blob:') ||
-                      displayAvatarUrl.startsWith('http')
-                        ? displayAvatarUrl
-                        : `${BACKEND_URL}${displayAvatarUrl}`
+                      displayAvatarToShow.startsWith('blob:') ||
+                      displayAvatarToShow.startsWith('http')
+                        ? displayAvatarToShow
+                        : `${BACKEND_URL}${displayAvatarToShow}` // ใช้ BACKEND_URL ถ้า path ไม่ใช่ URL เต็ม
                     }
                     alt="avatar"
                     className="object-cover w-32 h-32 border-4 border-white rounded-full shadow-md"
@@ -220,15 +214,28 @@ export default function AdminProfilePage() {
                   </div>
                 )}
                 {editing && (
-                  <button /* ... ปุ่ม Camera ... */ disabled={saving}>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      document.getElementById('avatarInput')?.click()
+                    }
+                    className="absolute bottom-0 right-0 p-2 bg-blue-600 rounded-full shadow-lg hover:bg-blue-700"
+                    title="เปลี่ยนรูปโปรไฟล์"
+                    disabled={saving}
+                  >
                     <FaCamera className="w-4 h-4 text-white" />
                   </button>
                 )}
               </div>
               {editing && (
-                <button /* ... ปุ่ม เปลี่ยนรูป ... */ disabled={saving}>
-                  {' '}
-                  คลิกเพื่อเปลี่ยนรูป{' '}
+                <button
+                  onClick={() =>
+                    document.getElementById('avatarInput')?.click()
+                  }
+                  className="px-4 py-1 text-sm font-bold text-white bg-gray-700 rounded-full shadow hover:bg-gray-800"
+                  disabled={saving}
+                >
+                  คลิกเพื่อเปลี่ยนรูป
                 </button>
               )}
               <input
@@ -247,7 +254,7 @@ export default function AdminProfilePage() {
               {authSession?.user?.role === 'ADMIN' && (
                 <div className="mt-2">
                   <span className="px-3 py-1 text-sm text-black bg-white rounded-full bg-opacity-80">
-                    ผู้ดูแลระบบ
+                    ผู้ดูแลระบบ {/* หรือแสดง Role จาก authSession.user.role */}
                   </span>
                 </div>
               )}
@@ -259,16 +266,16 @@ export default function AdminProfilePage() {
             <Field
               icon={<FaUser />}
               label="ชื่อ-สกุล"
-              value={formFullnameInput}
+              value={formFullnameInput} // Input ใช้ formFullnameInput
               id="fullname"
               editing={editing}
-              onChange={handleFullnameChange} // ✅ ใช้ handleFullnameChange
+              onChange={handleFullnameChange} // ใช้ handleFullnameChange
               currentValue={currentFullname}
             />
             <Field
               icon={<FaEnvelope />}
               label="อีเมล"
-              value={currentEmail} // ✅ Email แสดงค่าปัจจุบันเสมอ
+              value={currentEmail} // ✅ Email แสดงค่าจาก currentEmail เสมอ
               id="email"
               readOnly // ✅ Email ไม่ควรให้แก้ไข
               editing={false} // ไม่ต้องแสดงเป็น input field
@@ -303,7 +310,7 @@ export default function AdminProfilePage() {
   );
 }
 
-// Field Component (แก้ไขให้รับ currentValue)
+// Field Component (แก้ไขให้รับ currentValue และ id/name ที่ถูกต้อง)
 function Field({
   icon,
   label,
@@ -316,12 +323,12 @@ function Field({
 }: {
   icon: React.ReactNode;
   label: string;
-  value: string; // ค่าสำหรับ input field ตอน editing
-  id?: string;
+  value: string;
+  id?: string; // id ของ input field
   editing?: boolean;
   readOnly?: boolean;
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  currentValue?: string; // ค่าปัจจุบันสำหรับแสดงผล
+  currentValue?: string;
 }) {
   return (
     <div className="flex flex-col">
@@ -333,10 +340,10 @@ function Field({
       </label>
       {editing && !readOnly ? (
         <input
-          id={id}
-          name={id} // name ควรตรงกับ id
+          id={id} // id ควรตรงกับ key ที่ใช้ใน handleChange
+          name={id} // name attribute ควรตรงกับ id
           type="text"
-          value={value}
+          value={value} // ค่าสำหรับ input ตอน edit
           onChange={onChange}
           className="px-4 py-2 text-gray-900 bg-white border border-gray-300 rounded-lg dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-orange-400"
         />
