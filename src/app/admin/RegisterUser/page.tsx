@@ -5,21 +5,10 @@ import axios from 'axios';
 import Swal from 'sweetalert2';
 import { FaPlus, FaCheck } from 'react-icons/fa';
 import router from 'next/router';
+import { useAuth } from '@/app/contexts/AuthContext';
 
 export default function RegisterUser() {
-  useEffect(() => {
-    const checkSession = async () => {
-      try {
-        await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/users/me`, {
-          withCredentials: true,
-        });
-      } catch (err) {
-        router.push('/');
-      }
-    };
-    checkSession();
-  }, []);
-
+  const { setSession } = useAuth(); // ใช้ setSession เพื่ออัปเดต session
   const [role, setRole] = useState<
     'student' | 'approverIn' | 'approverOut' | 'experienceManager'
   >('student');
@@ -32,6 +21,19 @@ export default function RegisterUser() {
     hospital: '',
     ward: '',
   });
+
+  useEffect(() => {
+    const checkSession = async () => {
+      try {
+        await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/users/me`, {
+          withCredentials: true,
+        });
+      } catch (err) {
+        router.push('/'); // หากไม่มี session ให้ไปหน้า login
+      }
+    };
+    checkSession();
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
@@ -100,12 +102,17 @@ export default function RegisterUser() {
     }
 
     try {
-      await axios.post(
+      const response = await axios.post(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/signup`,
         dto
       );
+
+      // เมื่อสมัครสำเร็จ ให้เซ็ต session ใหม่
+      const newSession = response.data; // สมมุติว่า backend ส่ง session กลับมา
+      setSession(newSession); // ใช้ setSession จาก context เพื่ออัปเดต session
       Swal.fire('สมัครสมาชิกสำเร็จ', '', 'success');
 
+      // รีเซ็ตฟอร์ม
       setForm({
         name: '',
         email: '',

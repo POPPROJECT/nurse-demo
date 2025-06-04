@@ -68,7 +68,7 @@ export default function StudentExperienceClient({
 
   // useEffect for fetching book details
   useEffect(() => {
-    if (!token) return;
+    if (!token || !studentIdForApi) return;
     axios
       .get(
         `${BACKEND_URL}/experience-books/authorized/student/${studentIdForApi}`,
@@ -78,27 +78,34 @@ export default function StudentExperienceClient({
         }
       )
       .then((res) => {
-        const initializedBooks = res.data.map((book: Book) => ({
-          ...book,
-          courses: book.courses.map((course: Course) => ({
-            ...course,
-            subCourses: course.subCourses.map((sub: SubCourse) => ({
-              ...sub,
-              progressCount: 0,
-              confirmedCount: 0,
+        // เพิ่มการตรวจสอบว่าข้อมูลที่ได้รับจาก API เป็นข้อมูลที่ถูกต้อง
+        if (res.data && Array.isArray(res.data)) {
+          const initializedBooks = res.data.map((book: Book) => ({
+            ...book,
+            courses: book.courses.map((course: Course) => ({
+              ...course,
+              subCourses: course.subCourses.map((sub: SubCourse) => ({
+                ...sub,
+                progressCount: 0,
+                confirmedCount: 0,
+              })),
             })),
-          })),
-        }));
-        setBooks(initializedBooks);
-        if (initializedBooks.length > 0)
-          setSelectedBookId(initializedBooks[0].id);
+          }));
+          setBooks(initializedBooks);
+          if (initializedBooks.length > 0) {
+            setSelectedBookId(initializedBooks[0].id);
+          }
+        } else {
+          setMessage('ไม่มีสมุดที่นิสิตได้รับอนุญาตให้เข้าถึง');
+          setMessageType('error');
+        }
       })
       .catch((err) => {
-        console.error('Error fetching book details:', err);
-        setMessage('ไม่สามารถโหลดข้อมูลสมุดประสบการณ์ได้');
+        console.error('Error fetching authorized book details:', err);
+        setMessage('ไม่สามารถโหลดข้อมูลสมุดที่ได้รับอนุญาตได้');
         setMessageType('error');
       });
-  }, [token]);
+  }, [token, studentIdForApi]);
 
   // useEffect for fetching student progress
   useEffect(() => {
