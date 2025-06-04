@@ -1,14 +1,14 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react'; // useEffect ไม่จำเป็นแล้วสำหรับ fetchUser
 import Link from 'next/link';
-import Image from 'next/image'; // Import รูปภาพ
+import Image from 'next/image';
 import { FaBars, FaBookMedical, FaUser, FaUserEdit } from 'react-icons/fa';
 import { MdLogout, MdOutlineManageSearch } from 'react-icons/md';
 import { GoChecklist } from 'react-icons/go';
 import { TbReportSearch } from 'react-icons/tb';
-import { IoPersonAdd } from 'react-icons/io5';
-import ThemeToggle from '../ui/ThemeToggle';
+// import { IoPersonAdd } from 'react-icons/io5'; // ไม่ได้ถูกใช้งาน
+import ThemeToggle from '../ui/ThemeToggle'; // ตรวจสอบ Path ให้ถูกต้อง
 
 interface SessionUser {
   id: number;
@@ -17,40 +17,46 @@ interface SessionUser {
   avatarUrl?: string;
 }
 
-export default function NavbarAdmin() {
+// ✅ รับ initialUser เป็น prop
+export default function NavbarAdmin({
+  initialUser,
+}: {
+  initialUser: SessionUser | null;
+}) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [user, setUser] = useState<SessionUser | null>(null);
+  // ✅ ใช้ initialUser ในการตั้งค่า user state เริ่มต้น
+  const [user, setUser] = useState<SessionUser | null>(initialUser);
   const [isRegisterDropdownOpen, setIsRegisterDropdownOpen] = useState(false);
 
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_BACKEND_URL}/users/me`,
-          {
-            credentials: 'include',
-          }
-        );
-        if (res.ok) {
-          const data = await res.json();
-          setUser({
-            id: data.id,
-            name: data.fullname || 'ไม่ระบุชื่อ',
-            role: data.role,
-            avatarUrl: data.avatarUrl || null,
-          });
-        }
-      } catch (err) {
-        console.error('❌ Failed to fetch user:', err);
-      }
-    };
-
-    fetchUser();
-  }, []);
+  // 🗑️ ลบ useEffect ที่ใช้ fetchUser ทิ้งไปเลย
+  // useEffect(() => {
+  //   const fetchUser = async () => {
+  //     try {
+  //       const res = await fetch(
+  //         `${process.env.NEXT_PUBLIC_BACKEND_URL}/users/me`,
+  //         {
+  //           credentials: 'include',
+  //         }
+  //       );
+  //       if (res.ok) {
+  //         const data = await res.json();
+  //         setUser({
+  //           id: data.id,
+  //           name: data.fullname || 'ไม่ระบุชื่อ',
+  //           role: data.role,
+  //           avatarUrl: data.avatarUrl || null,
+  //         });
+  //       }
+  //     } catch (err) {
+  //       console.error('❌ Failed to fetch user:', err);
+  //     }
+  //   };
+  //   fetchUser();
+  // }, []);
 
   return (
-    <nav className="bg-[#F1A661] dark:bg-[#1E293B] text-white px-4 py-3 flex items-center justify-between w-full top-0 left-0 right-0  z-50 mx-auto fixed sm:relative shadow-lg">
+    <nav className="bg-[#F1A661] dark:bg-[#1E293B] text-white px-4 py-3 flex items-center justify-between w-full top-0 left-0 right-0 z-50 mx-auto fixed sm:relative shadow-lg">
       {/* โลโก้และชื่อมหาลัย */}
       <div className="flex items-center space-x-3">
         <Image
@@ -66,7 +72,7 @@ export default function NavbarAdmin() {
 
       {/* เมนูสำหรับขนาดจอใหญ่ */}
       <div className="items-center hidden gap-4 md:flex">
-        {user && (
+        {user && ( // ✅ ส่วนนี้จะทำงานถูกต้องเมื่อ user state ถูกตั้งค่าจาก initialUser
           <>
             <Link href="/admin/Profile">
               {user.avatarUrl ? (
@@ -119,7 +125,6 @@ export default function NavbarAdmin() {
             </Link>
 
             {/* Dropdown สำหรับจัดการผู้ใช้ */}
-            {/* <div className="py-2"> */}
             <button
               className="flex items-center w-full py-2 space-x-2 text-left rounded-md hover:bg-gray-200 "
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
@@ -155,7 +160,6 @@ export default function NavbarAdmin() {
                 </Link>
               </div>
             )}
-            {/* </div> */}
 
             {/* Dropdown สำหรับเพิ่มบัญชีผู้ใช้งาน */}
             <button
@@ -168,7 +172,7 @@ export default function NavbarAdmin() {
             {isRegisterDropdownOpen && (
               <div className="pl-6">
                 <Link
-                  href="/admin/RegisterUser"
+                  href="/admin/RegisterUser" // ลิงก์นี้อาจจะซ้ำกับด้านล่าง
                   className="block px-4 py-2 rounded-md hover:bg-gray-200"
                 >
                   เพิ่มบัญชีผู้ใช้งาน
@@ -183,7 +187,7 @@ export default function NavbarAdmin() {
             )}
 
             <Link
-              href="/admin/RegisterUser"
+              href="/admin/dashboard-student" // แก้ไข Path นี้ให้ถูกต้องตามที่คุณต้องการ
               className="flex items-center py-2 space-x-2 rounded-md hover:bg-gray-200"
             >
               <TbReportSearch />
@@ -202,7 +206,7 @@ export default function NavbarAdmin() {
 
             <div className="border-t border-gray-300">
               <Link
-                href="/api/auth/signout"
+                href="/api/auth/signout" // ✅ Link ไปยัง API Route สำหรับ Logout
                 className="flex items-center py-2 space-x-2 rounded-md hover:bg-gray-200"
               >
                 <MdLogout className="inline mr-2" /> ออกจากระบบ

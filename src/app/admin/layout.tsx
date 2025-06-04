@@ -1,16 +1,30 @@
-'use client';
+// src/app/admin/layout.tsx
 
-import Navbar from '../components/admin/navbarAdmin';
-import SidenavAdmin from '../components/admin/sidenavAdmin';
+import { getSession } from 'lib/session';
+import NavbarAdmin from '../components/admin/navbarAdmin'; // ตรวจสอบ Path ให้ถูกต้อง
+import SidenavAdmin from '../components/admin/sidenavAdmin'; // ตรวจสอบ Path ให้ถูกต้อง
+import { redirect } from 'next/navigation'; // ✅ Import redirect สำหรับ Server Component
 
-export default function AdminLayout({
+// ✅ ทำให้เป็น async function เพื่อเรียก await getSession()
+export default async function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  // ✅ เรียก getSession() เพื่อดึงข้อมูล session บน Server
+  const session = await getSession();
+
+  // ✅ ตรวจสอบสิทธิ์ใน Layout นี้เลย
+  // ถ้าไม่มี session หรือไม่ใช่ ADMIN ให้ redirect กลับไปหน้าแรก
+  // การทำแบบนี้จะป้องกันทุกหน้าที่ใช้ Layout นี้โดยอัตโนมัติ
+  if (!session || session.user.role !== 'ADMIN') {
+    redirect('/'); // หรือ redirect ไปหน้า Login ที่คุณต้องการ
+  }
+
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-[#0F172A]">
-      <Navbar />
+      {/* ✅ ส่ง session.user ไปเป็น prop ชื่อ initialUser ให้ NavbarAdmin */}
+      <NavbarAdmin initialUser={session.user} />
       <div className="flex">
         <SidenavAdmin />
         <main className="flex-1 p-6 bg-background text-foreground">
