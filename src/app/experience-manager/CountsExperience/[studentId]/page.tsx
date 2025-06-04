@@ -1,8 +1,8 @@
-import { getSession, Session } from 'lib/session';
 import { Role } from 'lib/type';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import StudentExperienceClient from './StudentExperienceClient'; // Your renamed client component
+import { useAuth } from '@/app/contexts/AuthContext';
 
 // Component สำหรับแสดงข้อความเมื่อฟีเจอร์ปิดหรือเข้าไม่ได้
 const FeatureDisabledMessage = ({
@@ -126,7 +126,7 @@ export default async function StudentExperiencePage({
 }: StudentExperiencePageProps) {
   const { studentId } = params;
 
-  const session: Session | null = await getSession();
+  const { session } = useAuth(); // Use the session from the context
 
   if (
     !session ||

@@ -1,13 +1,20 @@
-import { getSession } from 'lib/session';
 import { Role } from 'lib/type';
 import { redirect } from 'next/navigation';
 import StudentHistoryClient from './StudentHistoryClient';
+import { useAuth } from '@/app/contexts/AuthContext';
+
+const { session } = useAuth(); // Use the session from the context
+
+const token = session?.accessToken;
 
 async function getExperienceCountingSystemStatus() {
   try {
     const res = await fetch(
       `${process.env.NEXT_PUBLIC_BACKEND_URL}/admin/settings/get-status`,
-      { cache: 'no-store' }
+      {
+        headers: { Authorization: `Bearer ${token}` },
+        cache: 'no-store',
+      }
     );
     if (!res.ok) return { enabled: false };
     const data = await res.json();
@@ -22,9 +29,11 @@ export default async function StudentHistoryPageServer({
 }: {
   params: { studentId: string };
 }) {
-  const session = await getSession();
-
-  if (!session || session.user.role !== Role.EXPERIENCE_MANAGER) {
+  if (
+    !session ||
+    !session.user ||
+    session.user.role !== Role.EXPERIENCE_MANAGER
+  ) {
     redirect('/');
   }
 

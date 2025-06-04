@@ -4,6 +4,7 @@ import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import Swal from 'sweetalert2';
+import { useAuth } from '@/app/contexts/AuthContext';
 
 interface FieldValue {
   field?: { label: string };
@@ -30,6 +31,8 @@ interface StudentHistoryClientProps {
 export default function StudentHistoryPage({
   studentId,
 }: StudentHistoryClientProps) {
+  const { session } = useAuth(); // Accessing session from AuthContext
+  const token = session?.accessToken; // Get token from session
   const BASE = process.env.NEXT_PUBLIC_BACKEND_URL;
   const [studentName, setStudentName] = useState('');
   const [realUserId, setRealUserId] = useState<number | null>(null);
@@ -56,6 +59,7 @@ export default function StudentHistoryPage({
     if (!studentId) return;
     axios
       .get(`${BASE}/users/by-student-id/${studentId}`, {
+        headers: { Authorization: `Bearer ${token}` }, // Ensure token is passed here
         withCredentials: true,
       })
       .then((res) => {
@@ -63,13 +67,14 @@ export default function StudentHistoryPage({
         setStudentName(res.data.name);
       })
       .catch(() => Swal.fire('Error', 'โหลดข้อมูลนิสิตล้มเหลว', 'error'));
-  }, [studentId]);
+  }, [studentId, token]);
 
   // โหลดสมุด
   useEffect(() => {
     if (!realUserId) return;
     axios
       .get(`${BASE}/experience-books/authorized/student/${realUserId}`, {
+        headers: { Authorization: `Bearer ${token}` },
         withCredentials: true,
       })
       .then((r) => {
@@ -77,7 +82,7 @@ export default function StudentHistoryPage({
         if (r.data.length > 0) setBookId(r.data[0].id);
       })
       .catch(() => Swal.fire('Error', 'โหลดสมุดไม่ได้', 'error'));
-  }, [realUserId, BASE]);
+  }, [realUserId, token, BASE]);
 
   // โหลดรายการบันทึก
   useEffect(() => {
@@ -85,6 +90,7 @@ export default function StudentHistoryPage({
     setLoading(true);
     axios
       .get(`${BASE}/student-experiences/admin`, {
+        headers: { Authorization: `Bearer ${token}` }, // Ensure token is sent in the request headers
         withCredentials: true,
         params: {
           studentId: realUserId,
@@ -103,7 +109,18 @@ export default function StudentHistoryPage({
       })
       .catch(() => Swal.fire('Error', 'ไม่สามารถโหลดข้อมูลได้', 'error'))
       .finally(() => setLoading(false));
-  }, [realUserId, bookId, page, limit, status, sortBy, order, search, BASE]);
+  }, [
+    realUserId,
+    bookId,
+    page,
+    limit,
+    status,
+    sortBy,
+    order,
+    search,
+    token,
+    BASE,
+  ]);
 
   const handleDelete = (id: string) => {
     Swal.fire({
@@ -118,6 +135,7 @@ export default function StudentHistoryPage({
       if (!result.isConfirmed) return;
       axios
         .delete(`${BASE}/student-experiences/admin/${id}`, {
+          headers: { Authorization: `Bearer ${token}` }, // Ensure token is passed here
           withCredentials: true,
         })
         .then(() => {

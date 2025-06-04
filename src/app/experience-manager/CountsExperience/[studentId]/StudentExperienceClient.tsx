@@ -6,6 +6,7 @@ import axios from 'axios';
 import { FaCheck } from 'react-icons/fa';
 import { BACKEND_URL } from 'lib/constants';
 import Swal from 'sweetalert2';
+import { useAuth } from '@/app/contexts/AuthContext';
 
 // ... (Interfaces: Book, Course, SubCourse, StudentExperienceClientProps) ...
 interface Book {
@@ -36,8 +37,9 @@ export default function StudentExperienceClient({
   studentIdForApi,
   studentName,
   studentDisplayId,
-  session,
 }: StudentExperienceClientProps) {
+  const { session } = useAuth(); // Use the session from the context
+  const token = session?.accessToken;
   const userId = parseInt(studentIdForApi, 10);
   if (isNaN(userId)) {
     // กรณีไม่ใช่เลข แสดงข้อความ error หรือ loading
@@ -55,8 +57,6 @@ export default function StudentExperienceClient({
     null
   );
   const [expandedCourseIds, setExpandedCourseIds] = useState<number[]>([]);
-
-  const token = session?.accessToken;
 
   const toggleCourse = (courseId: number) => {
     setExpandedCourseIds((prev) =>
