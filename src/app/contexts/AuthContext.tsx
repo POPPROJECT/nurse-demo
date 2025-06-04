@@ -7,9 +7,11 @@ import React, { createContext, useContext, useState, ReactNode } from 'react';
 export interface SessionUser {
   id: number;
   name: string;
-  email: string;
   role: Role;
-  studentId?: string;
+  studentProfile: {
+    studentId: string;
+    user: { name: string };
+  };
   avatarUrl?: string;
 }
 

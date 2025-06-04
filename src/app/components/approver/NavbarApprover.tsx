@@ -14,44 +14,10 @@ interface NavbarApproverProps {
   role: 'APPROVER_IN' | 'APPROVER_OUT';
 }
 
-interface SessionUser {
-  id: number;
-  name: string;
-  avatarUrl?: string;
-}
-
 export default function NavbarApprover({ role }: NavbarApproverProps) {
-  const [user, setUser] = useState<SessionUser | null>(null);
+  const { session } = useAuth(); // ✅ ดึง session จาก Context
+  const user = session?.user; // ✅ เข้าถึง user object
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const { accessToken } = useAuth();
-
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_BACKEND_URL}/users/me`,
-          {
-            headers: {
-              // ✅ ใช้ Authorization header
-              Authorization: `Bearer ${accessToken}`,
-            },
-          }
-        );
-        if (res.ok) {
-          const data = await res.json();
-          setUser({
-            id: data.id,
-            name: data.fullname,
-            avatarUrl: data.avatarUrl || null,
-          });
-        }
-      } catch (err) {
-        console.error('❌ Failed to fetch user:', err);
-      }
-    };
-
-    fetchUser();
-  }, [accessToken]);
 
   return (
     <nav className="bg-[#F1A661] dark:bg-[#1E293B] text-white px-4 py-3 flex items-center justify-between w-full top-0 left-0 right-0 z-50 mx-auto fixed sm:relative  shadow-lg">
