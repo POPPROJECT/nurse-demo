@@ -9,6 +9,7 @@ import { GoChecklist } from 'react-icons/go';
 import { TbReportSearch } from 'react-icons/tb';
 // import { IoPersonAdd } from 'react-icons/io5'; // ไม่ได้ถูกใช้งาน
 import ThemeToggle from '../ui/ThemeToggle'; // ตรวจสอบ Path ให้ถูกต้อง
+import { useAuth } from '@/app/contexts/AuthContext';
 
 interface SessionUser {
   id: number;
@@ -26,34 +27,9 @@ export default function NavbarAdmin({
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   // ✅ ใช้ initialUser ในการตั้งค่า user state เริ่มต้น
-  const [user, setUser] = useState<SessionUser | null>(initialUser);
   const [isRegisterDropdownOpen, setIsRegisterDropdownOpen] = useState(false);
-
-  // 🗑️ ลบ useEffect ที่ใช้ fetchUser ทิ้งไปเลย
-  // useEffect(() => {
-  //   const fetchUser = async () => {
-  //     try {
-  //       const res = await fetch(
-  //         `${process.env.NEXT_PUBLIC_BACKEND_URL}/users/me`,
-  //         {
-  //           credentials: 'include',
-  //         }
-  //       );
-  //       if (res.ok) {
-  //         const data = await res.json();
-  //         setUser({
-  //           id: data.id,
-  //           name: data.fullname || 'ไม่ระบุชื่อ',
-  //           role: data.role,
-  //           avatarUrl: data.avatarUrl || null,
-  //         });
-  //       }
-  //     } catch (err) {
-  //       console.error('❌ Failed to fetch user:', err);
-  //     }
-  //   };
-  //   fetchUser();
-  // }, []);
+  const { session } = useAuth();
+  const user = session?.user;
 
   return (
     <nav className="bg-[#F1A661] dark:bg-[#1E293B] text-white px-4 py-3 flex items-center justify-between w-full top-0 left-0 right-0 z-50 mx-auto fixed sm:relative shadow-lg">

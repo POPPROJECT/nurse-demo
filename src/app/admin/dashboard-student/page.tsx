@@ -5,6 +5,7 @@ import { FaUsers, FaCheckCircle } from 'react-icons/fa';
 import { BACKEND_URL } from 'lib/constants';
 import { Role } from 'lib/type';
 import { getSession } from 'lib/session';
+import { useAuth } from '@/app/contexts/AuthContext';
 
 type Book = { id: number; title: string };
 
@@ -56,46 +57,79 @@ function FilterBar({
 }
 
 export default function Page() {
+  const { accessToken, session: authUser } = useAuth();
   const [books, setBooks] = useState<Book[]>([]);
   const [bookId, setBookId] = useState<number | ''>('');
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(false);
-
-  // ✅ ตรวจสอบสิทธิ์ก่อนโหลดหน้า
-  useEffect(() => {
-    const checkRole = async () => {
-      const sess = await getSession();
-      if (!sess || sess.user.role !== Role.ADMIN) {
-        console.error('⛔ Session not found!');
-        return;
-      }
-    };
-    checkRole();
-  }, []);
+  const [loadingBooks, setLoadingBooks] = useState(true);
+  const [pageError, setPageError] = useState<string | null>(null);
 
   // Load books
   useEffect(() => {
-    fetch(`${BACKEND_URL}/experience-books`, { credentials: 'include' })
-      .then((r) => r.json())
-      .then((list: Book[]) => setBooks(list))
-      .catch(() => setBooks([]));
-  }, []);
+    if (!accessToken) {
+      // ✅ รอให้ accessToken พร้อมใช้งานก่อน
+      if (authUser === null) {
+        // ถ้า AuthProvider โหลดเสร็จแล้วแต่ไม่มี user/token
+        setPageError('Session not available. Please login again.');
+      }
+      setLoadingBooks(false);
+      return;
+    }
+    setLoadingBooks(true);
+    setPageError(null);
+    fetch(`${BACKEND_URL}/experience-books`, {
+      headers: {
+        // ✅ ใช้ Authorization header
+        Authorization: `Bearer ${accessToken}`,
+      },
+      // credentials: 'include', // ไม่จำเป็นแล้ว
+    })
+      .then((r) => {
+        if (!r.ok) throw new Error(`Failed to fetch books: ${r.status}`);
+        return r.json();
+      })
+      .then((list: Book[]) => {
+        setBooks(list);
+      })
+      .catch((err) => {
+        console.error('Error loading books:', err);
+        setBooks([]);
+        setPageError(err.message || 'Could not load books.');
+      })
+      .finally(() => setLoadingBooks(false));
+  }, [accessToken, authUser]);
 
   // Load dashboard data
   useEffect(() => {
-    if (bookId === '') {
+    if (bookId === '' || !accessToken) {
+      // ✅ รอให้ accessToken พร้อมใช้งานก่อน
       setData(null);
       return;
     }
     setLoading(true);
+    setPageError(null);
     fetch(`${BACKEND_URL}/approver/dashboard?bookId=${bookId}`, {
-      credentials: 'include',
+      headers: {
+        // ✅ ใช้ Authorization header
+        Authorization: `Bearer ${accessToken}`,
+      },
+      // credentials: 'include', // ไม่จำเป็นแล้ว
     })
-      .then((r) => r.json())
+      .then((r) => {
+        if (!r.ok)
+          throw new Error(`Failed to fetch dashboard data: ${r.status}`);
+        return r.json();
+      })
       .then((d: DashboardData) => setData(d))
-      .catch(() => setData(null))
+      .catch((err) => {
+        console.error('Error loading dashboard data:', err);
+        setData(null);
+        setPageError(err.message || 'Could not load dashboard data.');
+        // Swal.fire('ผิดพลาด', 'โหลดข้อมูล Dashboard ไม่สำเร็จ', 'error');
+      })
       .finally(() => setLoading(false));
-  }, [bookId]);
+  }, [bookId, accessToken]);
 
   // Draw overall donut
   useEffect(() => {
@@ -160,6 +194,28 @@ export default function Page() {
     if (p >= 20) return '#f97316';
     return '#ef4444';
   };
+
+  if (loadingBooks)
+    return <div className="p-10 text-center">Loading available books...</div>;
+  if (pageError)
+    return (
+      <div className="p-10 text-center text-red-500">Error: {pageError}</div>
+    );
+  // ถ้ายังไม่มี user จาก context (อาจจะกำลังโหลดจาก AuthProvider)
+  if (!authUser && typeof accessToken !== 'string')
+    return <div className="p-10 text-center">Initializing session...</div>;
+  // ถ้า AuthProvider บอกว่าไม่มี session จริงๆ (AdminLayout ควรจะ redirect ไปแล้ว)
+  if (!authUser && accessToken === null) {
+    return (
+      <div className="p-10 text-center text-red-500">
+        Session not found. Please{' '}
+        <a href="/" className="underline">
+          login
+        </a>
+        .
+      </div>
+    );
+  }
 
   return (
     <div className="container max-w-6xl px-4 py-8 mx-auto mt-10 sm:mt-0">

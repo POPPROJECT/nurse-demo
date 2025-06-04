@@ -27,7 +27,7 @@ export default async function AdminLayout({
 
   return (
     <AuthProvider
-      initialUser={session}
+      initialSession={session}
       initialAccessToken={session.accessToken}
     >
       <div className="min-h-screen bg-gray-100 dark:bg-[#0F172A]">

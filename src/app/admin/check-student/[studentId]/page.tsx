@@ -11,7 +11,7 @@ export default function AdminStudentProgressPage() {
   const searchParams = useSearchParams();
   const studentNameParam = searchParams.get('name') || '';
 
-  const { accessToken, user: authUser } = useAuth(); // ✅ 2. ดึง accessToken และ user จาก Context
+  const { accessToken, session: authUser } = useAuth(); // ✅ 2. ดึง accessToken และ user จาก Context
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {

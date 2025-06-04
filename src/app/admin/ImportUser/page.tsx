@@ -1,5 +1,5 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import ExcelJS from 'exceljs';
 import Swal from 'sweetalert2';
 import axios from 'axios';
@@ -8,8 +8,10 @@ import UploadPanel from '@/app/components/admin/ImportUser/UploadPanel';
 import SummarySection from '@/app/components/admin/ImportUser/SummarySection';
 import PreviewTable from '@/app/components/admin/ImportUser/PreviewTable';
 import ImportResult from '@/app/components/admin/ImportUser/ImportResult';
+import { useAuth } from '@/app/contexts/AuthContext';
 
 export default function ImportUserPage() {
+  const { accessToken, session: authUser } = useAuth();
   const [rows, setRows] = useState<RowData[]>([]);
   const [successList, setSuccessList] = useState<RowData[]>([]);
   const [skippedList, setSkippedList] = useState<SkippedEntry[]>([]);
@@ -22,6 +24,17 @@ export default function ImportUserPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
   const [skippedMerged, setSkippedMerged] = useState<SkippedEntry[]>([]);
+  const [pageError, setPageError] = useState<string | null>(null);
+  const [isPageLoading, setIsPageLoading] = useState(true);
+
+  useEffect(() => {
+    if (typeof accessToken === 'string' || accessToken === null) {
+      setIsPageLoading(false);
+      if (!accessToken && !authUser) {
+        setPageError('Session not available or expired. Please login again.');
+      }
+    }
+  }, [accessToken, authUser]);
 
   const validateRow = (row: RowData): boolean => {
     if (
@@ -144,11 +157,24 @@ export default function ImportUserPage() {
   };
 
   const handleImport = async () => {
+    if (!accessToken) {
+      Swal.fire(
+        'ข้อผิดพลาด',
+        'Session หมดอายุหรือไม่พบ Token กรุณาเข้าสู่ระบบใหม่อีกครั้ง',
+        'error'
+      );
+      return;
+    }
     try {
       const res = await axios.post(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/users/import`,
-        { users: rows },
-        { withCredentials: true }
+        { users: rows.filter(validateRow) },
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+        }
       );
 
       const skippedRaw: SkippedEntry[] = res.data?.skippedEmails ?? [];
@@ -185,12 +211,28 @@ export default function ImportUserPage() {
         'success'
       );
       setRows([]);
-    } catch {
-      Swal.fire('ผิดพลาด', 'ไม่สามารถนำเข้าข้อมูลได้', 'error');
+      setFileName(null);
+    } catch (err: any) {
+      console.error('Import error:', err);
+      Swal.fire(
+        'ผิดพลาด',
+        err.response?.data?.message ||
+          'ไม่สามารถนำเข้าข้อมูลได้ กรุณาลองใหม่อีกครั้ง',
+        'error'
+      );
     }
   };
 
   const handleUndo = async () => {
+    if (!accessToken) {
+      Swal.fire(
+        'ข้อผิดพลาด',
+        'Session หมดอายุหรือไม่พบ Token กรุณาเข้าสู่ระบบใหม่อีกครั้ง',
+        'error'
+      );
+      return;
+    }
+
     const confirm = await Swal.fire({
       title: 'ยกเลิกการนำเข้าล่าสุด?',
       text: 'ระบบจะลบผู้ใช้ที่เพิ่งนำเข้า',
@@ -205,12 +247,23 @@ export default function ImportUserPage() {
       await axios.post(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/users/import/undo`,
         {},
-        { withCredentials: true }
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
       );
       setSuccessList([]);
+      setSkippedList([]);
+      setSkippedMerged([]);
       Swal.fire('สำเร็จ', 'ลบข้อมูลที่นำเข้าเรียบร้อยแล้ว', 'success');
-    } catch {
-      Swal.fire('ผิดพลาด', 'ไม่สามารถยกเลิกการนำเข้าได้', 'error');
+    } catch (err: any) {
+      console.error('Undo error:', err);
+      Swal.fire(
+        'ผิดพลาด',
+        err.response?.data?.message || 'ไม่สามารถยกเลิกการนำเข้าได้',
+        'error'
+      );
     }
   };
 
@@ -219,6 +272,23 @@ export default function ImportUserPage() {
     (currentPage - 1) * pageSize,
     currentPage * pageSize
   );
+
+  if (isPageLoading)
+    return <div className="p-10 text-center">Loading session...</div>;
+  if (pageError)
+    return (
+      <div className="p-10 text-center text-red-500">Error: {pageError}</div>
+    );
+  if (!accessToken && !authUser) {
+    return (
+      <div>
+        Authentication required. Please{' '}
+        <a href="/" className="underline">
+          Login
+        </a>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen p-8 space-y-8 bg-gray-50">
