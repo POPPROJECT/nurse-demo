@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import Swal from 'sweetalert2';
 import TableSearchBar from './TableSearchBar';
 import TableDisplay from './TableDisplay';
 import TablePagination from './TablePagination';
 import { useAuth } from '@/app/contexts/AuthContext';
+import axios from 'axios';
 
 interface User {
   id: number;
@@ -15,9 +16,12 @@ interface User {
   status: 'ENABLE' | 'DISABLE';
 }
 
+// ✅ ไม่จำเป็นต้องรับ accessToken เป็น Prop แล้ว ถ้าจะใช้จาก Context โดยตรง
 export default function EditStudentTable() {
-  const { accessToken } = useAuth(); // ✅ ใช้ accessToken จาก context
+  const { accessToken } = useAuth(); // ✅ 2. ดึง accessToken จาก Context
   const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true); // ✅ เพิ่ม Loading state
+  const [error, setError] = useState<string | null>(null); // ✅ เพิ่ม Error state
   const [search, setSearch] = useState('');
   const [sortBy, setSortBy] = useState<'fullName' | 'email' | 'studentId'>(
     'studentId'
@@ -25,133 +29,88 @@ export default function EditStudentTable() {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [pageIndex, setPageIndex] = useState(0);
   const [perPage, setPerPage] = useState(10);
-  const [page, setPage] = useState(1);
+  // const [page, setPage] = useState(1); // page state อาจจะไม่จำเป็น
 
-  useEffect(() => {
-    const fetchInitialUsers = async () => {
-      // ✅ เปลี่ยนชื่อฟังก์ชันให้สื่อความหมาย
-      try {
-        // 🎯 ตรวจสอบการเรียก API นี้
-        // ถ้า API นี้ต้องใช้ Token ให้แน่ใจว่าส่งไปใน Header อย่างถูกต้อง
-        // ถ้าใช้ Axios Instance ที่ตั้งค่า Interceptor ไว้แล้ว มันควรจะทำงานอัตโนมัติ
-        // ถ้าใช้ fetch โดยตรง ต้องมั่นใจว่าใส่ credentials: 'include' หรือ Authorization header
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_BACKEND_URL}/users?role=STUDENT`,
-          {
-            method: 'GET', // ระบุ method ให้ชัดเจน (ถึงแม้ GET จะเป็น default)
-            headers: accessToken
-              ? { Authorization: `Bearer ${accessToken}` }
-              : {}, // ส่ง Token ถ้ามี
-            // credentials: 'include', // ใช้ credentials หรือ Authorization header อย่างใดอย่างหนึ่ง
-          }
-        );
-
-        if (!res.ok) {
-          // ถ้าเกิด Error (เช่น 401) ให้แสดง Error แต่ "ห้าม" Redirect
-          const errorData = await res
-            .json()
-            .catch(() => ({ message: 'Failed to parse error response' }));
-          console.error(
-            'Error fetching students in EditStudentTable:',
-            res.status,
-            errorData
-          );
-          Swal.fire(
-            'ผิดพลาด',
-            `โหลดข้อมูลนิสิตไม่สำเร็จ (Status: ${res.status}): ${
-              errorData.message || 'Unknown error'
-            }`,
-            'error'
-          );
-          setUsers([]); // อาจจะ set เป็น [] หรือแสดงสถานะ Error ใน UI
-          return; // ออกจากฟังก์ชัน
-        }
-
-        const data = await res.json();
-        setUsers(
-          data.map((u: any) => ({
-            id: u.id,
-            studentId: u.studentProfile?.studentId ?? '',
-            fullName: u.name,
-            email: u.email,
-            status: u.status ?? 'ENABLED', // ควรจะเป็น ENABLE หรือ DISABLE ตาม Enum
-          }))
-        );
-      } catch (err) {
-        console.error('Exception fetching students in EditStudentTable:', err);
-        Swal.fire(
-          'ผิดพลาด',
-          'โหลดข้อมูลนิสิตไม่สำเร็จ กรุณาลองใหม่อีกครั้ง',
-          'error'
-        );
-        setUsers([]);
-      }
-    };
-
-    fetchInitialUsers();
+  // ✅ สร้าง Axios instance ที่มี Authorization header (ถ้าไม่ได้ใช้ instance กลาง)
+  // หรือจะสร้าง authHeader object เพื่อใช้กับ fetch ก็ได้
+  const api = useMemo(() => {
+    if (!accessToken) return null;
+    return axios.create({
+      baseURL: process.env.NEXT_PUBLIC_BACKEND_URL,
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
   }, [accessToken]);
 
-  const deleteUser = async (id: number) => {
-    // ตรวจสอบว่ามี accessToken หรือไม่ (ถ้าใช้ AuthContext หรือ Prop)
-    if (!accessToken) {
-      // accessToken นี้ต้องถูกส่งเข้ามาใน Component หรือดึงจาก Context
-      Swal.fire(
-        'ข้อผิดพลาด',
-        'ไม่พบ Authentication Token กรุณา Login ใหม่',
-        'error'
-      );
+  const fetchStudents = useCallback(async () => {
+    // ✅ เปลี่ยนชื่อฟังก์ชันให้สื่อความหมาย
+    if (!api) {
+      // ✅ ถ้า api instance ยังไม่ได้ถูกสร้าง (เพราะไม่มี accessToken)
+      setError('Authentication token not available.');
+      setLoading(false);
       return;
     }
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await api.get('/users?role=STUDENT'); // ✅ ใช้ api instance
+      setUsers(
+        res.data.map((u: any) => ({
+          id: u.id,
+          studentId: u.studentProfile?.studentId ?? '',
+          fullName: u.name, // Backend ส่ง name
+          email: u.email,
+          status: u.status ?? 'ENABLE',
+        }))
+      );
+    } catch (err: any) {
+      console.error('Error fetching students:', err);
+      setError(
+        err.response?.data?.message ||
+          err.message ||
+          'Failed to load student data.'
+      );
+      Swal.fire('ผิดพลาด', 'โหลดข้อมูลนิสิตไม่สำเร็จ', 'error');
+      setUsers([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [api]); // ✅ Dependency คือ api instance
 
-    const confirm = await Swal.fire({
+  useEffect(() => {
+    fetchStudents();
+  }, [fetchStudents]); // ✅ เรียก fetchStudents เมื่อ Component mount หรือ api instance เปลี่ยน
+
+  const deleteUser = async (id: number) => {
+    if (!api) {
+      Swal.fire('ข้อผิดพลาด', 'Session หมดอายุหรือไม่พบ Token', 'error');
+      return;
+    }
+    const confirmResult = await Swal.fire({
       title: 'ยืนยันการลบ?',
-      text: 'คุณแน่ใจหรือไม่ว่าต้องการลบบัญชีผู้ใช้นี้? การกระทำนี้ไม่สามารถย้อนกลับได้',
       icon: 'warning',
       showCancelButton: true,
+      confirmButtonText: 'ลบ',
+      cancelButtonText: 'ยกเลิก',
       confirmButtonColor: '#d33',
       cancelButtonColor: '#3085d6',
-      confirmButtonText: 'ใช่, ลบเลย',
-      cancelButtonText: 'ยกเลิก',
     });
 
-    if (!confirm.isConfirmed) return;
-
-    try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/users/${id}`,
-        {
-          method: 'DELETE',
-          headers: {
-            Authorization: `Bearer ${accessToken}`, // ✅ ส่ง Token ใน Header
-            // 'Content-Type': 'application/json', // ไม่จำเป็นสำหรับ DELETE ที่ไม่มี body
-          },
-          // credentials: 'include', // ไม่จำเป็นแล้วถ้าส่ง Token ใน Header
-        }
-      );
-
-      if (!res.ok) {
-        let errorMessage = 'ลบไม่สำเร็จ';
-        try {
-          const errorData = await res.json();
-          errorMessage = errorData.message || `เกิดข้อผิดพลาด: ${res.status}`;
-        } catch (e) {
-          // ถ้า response ไม่ใช่ JSON หรือมีปัญหาในการ parse
-          errorMessage = `เกิดข้อผิดพลาด: ${res.status} ${res.statusText}`;
-        }
-        throw new Error(errorMessage); // โยน Error พร้อม Message ที่ได้จาก Backend
+    if (confirmResult.isConfirmed) {
+      try {
+        await api.delete(`/users/${id}`); // ✅ ใช้ api instance
+        setUsers((prev) => prev.filter((u) => u.id !== id));
+        Swal.fire('ลบสำเร็จ', 'ผู้ใช้ถูกลบเรียบร้อยแล้ว', 'success');
+      } catch (err: any) {
+        console.error('Error deleting user:', err);
+        Swal.fire(
+          'ผิดพลาด',
+          err.response?.data?.message || 'ลบไม่สำเร็จ',
+          'error'
+        );
       }
-
-      // ถ้าสำเร็จ ลบ user ออกจาก state ใน UI
-      setUsers((prev) => prev.filter((u) => u.id !== id)); // สมมติว่ามีฟังก์ชัน setUsers
-      Swal.fire('ลบสำเร็จ!', 'ผู้ใช้ถูกลบเรียบร้อยแล้ว', 'success');
-    } catch (err: any) {
-      // รับ err เป็น any เพื่อเข้าถึง message
-      console.error('Error deleting user:', err);
-      Swal.fire(
-        'ผิดพลาด',
-        err.message || 'ลบไม่สำเร็จ กรุณาลองใหม่อีกครั้ง',
-        'error'
-      );
     }
   };
 
@@ -221,9 +180,24 @@ export default function EditStudentTable() {
     }
     return pages;
   };
+  // ✅ แสดง Loading หรือ Error UI
+  if (loading)
+    return <div className="p-10 text-center">Loading students...</div>;
+  if (error)
+    return <div className="p-10 text-center text-red-500">Error: {error}</div>;
+  // AdminLayout ควรจะป้องกันแล้ว แต่ถ้ามาถึงได้โดยไม่มี accessToken ใน Context
+  if (!accessToken) {
+    return (
+      <div className="p-10 text-center text-orange-500">
+        Authentication token is missing. Please try logging in again.
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
+      {' '}
+      {/* ลด p-4 ถ้าหน้าแม่มี p-6/p-8 แล้ว */}
       <TableSearchBar
         search={search}
         setSearch={setSearch}
@@ -232,16 +206,20 @@ export default function EditStudentTable() {
           setPerPage(n);
           setPageIndex(0);
         }}
-        setPage={(n) => {
-          setPage(n);
-          setPageIndex(n - 1);
-        }}
-        totalCount={users.length}
+        setPage={(n) => setPageIndex(n - 1)} // แก้ไข setPage ให้ใช้ setPageIndex
+        totalCount={sorted.length} // ควรใช้ sorted.length หรือ users.length ถ้าไม่มี client-side filter มากนัก
         filteredCount={filtered.length}
       />
-      <TableDisplay data={paged} setData={setUsers} deleteUser={deleteUser} />
+      {/* ✅ ส่ง accessToken ไปให้ TableDisplay ถ้า TableDisplay ยังต้องใช้ */}
+      <TableDisplay
+        data={paged}
+        setData={setUsers}
+        deleteUser={deleteUser}
+        accessToken={accessToken} // ส่ง accessToken ต่อไป
+      />
       <div className="text-sm text-gray-600 dark:text-gray-300">
-        แสดง {paged.length} จาก {filtered.length} รายการ
+        แสดง {paged.length} จาก {filtered.length} รายการ (ทั้งหมด {users.length}{' '}
+        รายการ)
       </div>
       <TablePagination
         pageIndex={pageIndex}
