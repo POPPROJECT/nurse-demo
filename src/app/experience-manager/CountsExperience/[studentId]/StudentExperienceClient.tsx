@@ -1,24 +1,25 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Session } from 'lib/session';
 import axios from 'axios';
 import { FaCheck } from 'react-icons/fa';
 import { BACKEND_URL } from 'lib/constants';
 import Swal from 'sweetalert2';
 import { useAuth } from '@/app/contexts/AuthContext';
+import { Session } from 'lib/session';
 
-// ... (Interfaces: Book, Course, SubCourse, StudentExperienceClientProps) ...
 interface Book {
   id: number;
   title: string;
   courses: Course[];
 }
+
 interface Course {
   id: number;
   name: string;
   subCourses: SubCourse[];
 }
+
 interface SubCourse {
   id: number;
   name: string;
@@ -26,6 +27,7 @@ interface SubCourse {
   progressCount: number;
   confirmedCount: number;
 }
+
 interface StudentExperienceClientProps {
   studentIdForApi: string;
   studentName: string;
@@ -37,9 +39,9 @@ export default function StudentExperienceClient({
   studentIdForApi,
   studentName,
   studentDisplayId,
+  session
 }: StudentExperienceClientProps) {
-  const { session } = useAuth(); // Use the session from the context
-  const token = session?.accessToken;
+  const { accessToken } = useAuth(); // ใช้ useAuth แทนการดึงจาก lib/session
   const userId = parseInt(studentIdForApi, 10);
   if (isNaN(userId)) {
     // กรณีไม่ใช่เลข แสดงข้อความ error หรือ loading
@@ -49,14 +51,18 @@ export default function StudentExperienceClient({
       </div>
     );
   }
-  const [books, setBooks] = useState<Book[]>([]);
+
+  const [books, setBooks] = useState<Book[]>([]); // Initialize state to hold books
   const [selectedBookId, setSelectedBookId] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [messageType, setMessageType] = useState<'success' | 'error' | null>(
     null
   );
+
   const [expandedCourseIds, setExpandedCourseIds] = useState<number[]>([]);
+
+  const token = session?.accessToken;
 
   const toggleCourse = (courseId: number) => {
     setExpandedCourseIds((prev) =>
@@ -68,85 +74,39 @@ export default function StudentExperienceClient({
 
   // useEffect for fetching book details
   useEffect(() => {
-    if (!token || !studentIdForApi) return;
+    if (!accessToken) return;
     axios
       .get(
         `${BACKEND_URL}/experience-books/authorized/student/${studentIdForApi}`,
         {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: { Authorization: `Bearer ${accessToken}` },
           withCredentials: true,
         }
       )
       .then((res) => {
-        // เพิ่มการตรวจสอบว่าข้อมูลที่ได้รับจาก API เป็นข้อมูลที่ถูกต้อง
-        if (res.data && Array.isArray(res.data)) {
-          const initializedBooks = res.data.map((book: Book) => ({
-            ...book,
-            courses: book.courses.map((course: Course) => ({
-              ...course,
-              subCourses: course.subCourses.map((sub: SubCourse) => ({
-                ...sub,
-                progressCount: 0,
-                confirmedCount: 0,
-              })),
+        const initializedBooks = res.data.map((book: Book) => ({
+          ...book,
+          courses: book.courses.map((course: Course) => ({
+            ...course,
+            subCourses: course.subCourses.map((sub: SubCourse) => ({
+              ...sub,
+              progressCount: 0,
+              confirmedCount: 0,
             })),
-          }));
-          setBooks(initializedBooks);
-          if (initializedBooks.length > 0) {
-            setSelectedBookId(initializedBooks[0].id);
-          }
-        } else {
-          setMessage('ไม่มีสมุดที่นิสิตได้รับอนุญาตให้เข้าถึง');
-          setMessageType('error');
-        }
+          })),
+        }));
+        setBooks(initializedBooks);
+        if (initializedBooks.length > 0)
+          setSelectedBookId(initializedBooks[0].id); // Set the default selected book
       })
       .catch((err) => {
-        console.error('Error fetching authorized book details:', err);
+        console.error('Error fetching book details:', err);
         setMessage('ไม่สามารถโหลดข้อมูลสมุดที่ได้รับอนุญาตได้');
         setMessageType('error');
       });
-  }, [token, studentIdForApi]);
+  }, [accessToken, studentIdForApi]);
 
-  // useEffect for fetching student progress
-  useEffect(() => {
-    if (!token || !selectedBookId) return;
-
-    axios
-      .get(
-        `${BACKEND_URL}/experience-books/${selectedBookId}/progress/user-by-string-id/${studentIdForApi}`, // <-- ใช้ path ใหม่
-        {
-          headers: { Authorization: `Bearer ${token}` },
-          withCredentials: true,
-        }
-      )
-      .then((res) => {
-        const progressMap = res.data;
-        setBooks((prevBooks) =>
-          prevBooks.map((book) =>
-            book.id === selectedBookId
-              ? {
-                  ...book,
-                  courses: book.courses.map((course) => ({
-                    ...course,
-                    subCourses: course.subCourses.map((sub) => ({
-                      ...sub,
-                      confirmedCount: progressMap[sub.name] || 0,
-                      progressCount: 0,
-                    })),
-                  })),
-                }
-              : book
-          )
-        );
-      })
-      .catch((err) => {
-        console.error('Error fetching student progress:', err);
-        setMessage('ไม่สามารถโหลดข้อมูลความก้าวหน้าของนิสิตได้');
-        setMessageType('error');
-      });
-  }, [token, selectedBookId, userId]);
-
-  // updateProgress function
+  // Handle saving progress
   const updateProgress = (courseId: number, subId: number, value: number) => {
     const newValue = Math.max(0, value);
     setBooks((prev) =>
@@ -173,9 +133,9 @@ export default function StudentExperienceClient({
     );
   };
 
-  // handleSave function
+  // Handle save functionality
   const handleSave = async () => {
-    if (!selectedBookId || isNaN(userId) || !token) return;
+    if (!selectedBookId || isNaN(userId) || !accessToken) return;
     const currentBook = books.find((b) => b.id === selectedBookId);
     if (!currentBook) return;
 
@@ -203,11 +163,17 @@ export default function StudentExperienceClient({
       await axios.patch(
         `${BACKEND_URL}/experience-books/${selectedBookId}/progress/user-by-string-id/${studentIdForApi}`,
         { progress: progressPayload },
-        { headers: { Authorization: `Bearer ${token}` }, withCredentials: true }
+        {
+          headers: { Authorization: `Bearer ${accessToken}` },
+          withCredentials: true,
+        }
       );
       const res = await axios.get(
         `${BACKEND_URL}/experience-books/${selectedBookId}/progress/user-by-string-id/${studentIdForApi}`,
-        { headers: { Authorization: `Bearer ${token}` }, withCredentials: true }
+        {
+          headers: { Authorization: `Bearer ${accessToken}` },
+          withCredentials: true,
+        }
       );
       const progressMap = res.data;
       setBooks((prev) =>
@@ -291,7 +257,6 @@ export default function StudentExperienceClient({
   }
   // ***** END OF CRITICAL CHANGE *****
 
-  // Main return statement for the component's UI
   return (
     <div>
       <div className="mb-3 dark:text-white bg-white dark:bg-[#1E293B] text-gray-800 rounded-xl shadow-md transition-shadow mt-7 max-w-5xl p-6 mx-auto duration-300 min-w-auto">

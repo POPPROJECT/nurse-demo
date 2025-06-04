@@ -43,7 +43,6 @@ export default function StyledExperienceManagerProfile() {
           `${process.env.NEXT_PUBLIC_BACKEND_URL}/users/me`,
           {
             headers: {
-              // ✅ ใช้ Authorization header
               Authorization: `Bearer ${accessToken}`,
             },
           }
@@ -56,7 +55,6 @@ export default function StyledExperienceManagerProfile() {
           avatarUrl: res.data.avatarUrl || '',
         });
       } catch (err) {
-        // ❌ ถ้าไม่มี session → redirect ไปหน้า login
         window.location.href = '/';
       }
     };
@@ -86,30 +84,40 @@ export default function StyledExperienceManagerProfile() {
     if (form.password) formData.append('password', form.password);
     if (file) formData.append('avatar', file);
 
-    await axios.patch(
-      `${process.env.NEXT_PUBLIC_BACKEND_URL}/users/me`,
-      formData,
-      {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          'Content-Type': 'multipart/form-data',
-        },
-      }
-    );
-    setEditing(false);
-    window.location.reload();
+    try {
+      await axios.patch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/users/me`,
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      );
+      setEditing(false);
+      window.location.reload();
+    } catch (err) {
+      console.error(err);
+      setEditing(false);
+      setForm({
+        email: user?.email || '',
+        fullname: user?.fullname || '',
+        password: '',
+        avatarUrl: user?.avatarUrl || '',
+      });
+    }
   };
 
   if (loading) return <div className="p-10">Loading...</div>;
   if (!user) return <div className="p-10">ไม่พบข้อมูลผู้ใช้</div>;
-  
+
   return (
     <main className="flex-1 px-4 py-8 md:px-12">
       <div className="max-w-3xl mx-auto overflow-hidden bg-white shadow-xl rounded-2xl">
         <div className="p-8 bg-[#F1A661] dark:bg-[#5A9ED1]">
           <div className="flex flex-col items-center md:flex-row">
             <div className="flex flex-col items-center space-y-3">
-              {/* รูปโปรไฟล์ + ปุ่มกล้อง */}
               <div className="relative">
                 {previewUrl || form.avatarUrl ? (
                   <img
@@ -127,7 +135,6 @@ export default function StyledExperienceManagerProfile() {
                     <FaUser className="text-4xl text-gray-400" />
                   </div>
                 )}
-
                 {editing && (
                   <button
                     type="button"
@@ -141,8 +148,6 @@ export default function StyledExperienceManagerProfile() {
                   </button>
                 )}
               </div>
-
-              {/* ปุ่มด้านล่าง */}
               {editing && (
                 <button
                   onClick={() =>
@@ -153,8 +158,6 @@ export default function StyledExperienceManagerProfile() {
                   คลิกเพื่อเปลี่ยนรูป
                 </button>
               )}
-
-              {/* ซ่อนไว้ */}
               <input
                 id="avatarInput"
                 type="file"
