@@ -9,6 +9,7 @@ export type Session = {
     name: string;
     email: string;
     role: Role;
+    studentId?: string;
     avatarUrl?: string;
   };
   accessToken: string;
@@ -65,6 +66,8 @@ export async function getSession(): Promise<Session | null> {
         name: user.name,
         email: user.email,
         role: user.role as Role,
+        studentId: user.studentId ?? '',
+        avatarUrl: user.avatarUrl || '',
       },
       accessToken,
       refreshToken: refreshToken || '', // อาจจะไม่มีก็ได้ถ้ายังไม่ได้ไป path ของมัน
