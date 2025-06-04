@@ -13,13 +13,32 @@ import {
 } from 'react-icons/fa';
 import Swal from 'sweetalert2';
 import { BACKEND_URL } from 'lib/constants';
+import { useAuth } from '@/app/contexts/AuthContext';
+
+interface UserData {
+  id: number;
+  name: string; // จาก API คือ name
+  email: string;
+  studentProfile?: { studentId: string | null };
+  avatarUrl?: string;
+}
+
+interface FormState {
+  fullName: string; // ใน Form ใช้ fullName
+  email: string;
+  studentId: string;
+  avatarUrl: string;
+}
 
 export default function AdminEditStudentPage() {
-  const { id } = useParams();
+  const { id: userId } = useParams();
   const router = useRouter();
+  const { accessToken } = useAuth(); // ✅ 2. ดึง accessToken จาก Context
 
   const [editing, setEditing] = useState(false);
-  const [form, setForm] = useState({
+  const [loading, setLoading] = useState(true); // ✅ เพิ่ม state สำหรับ loading
+  const [error, setError] = useState<string | null>(null); // ✅ เพิ่ม state สำหรับ error
+  const [form, setForm] = useState<FormState>({
     fullName: '',
     email: '',
     studentId: '',
@@ -28,23 +47,51 @@ export default function AdminEditStudentPage() {
 
   useEffect(() => {
     const fetchData = async () => {
+      if (!userId) return; // ป้องกันกรณี id ยังไม่มีค่า
+      if (!accessToken) {
+        // ✅ ตรวจสอบ accessToken จาก Context
+        console.error(
+          '[AdminEditStudentPage] No access token. Cannot fetch user data.'
+        );
+        setError(
+          'Authentication token not available. Please try logging in again.'
+        );
+        setLoading(false);
+        return;
+      }
+
+      setLoading(true);
+      setError(null);
       try {
-        const res = await axios.get(
-          `${process.env.NEXT_PUBLIC_BACKEND_URL}/users/admin/${id}`,
-          { withCredentials: true }
+        const res = await axios.get<UserData>( // ✅ ระบุ Type ของ Response
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/users/admin/${userId}`, // ใช้ userId
+          {
+            headers: {
+              // ✅ ส่ง Token ใน Authorization Header
+              Authorization: `Bearer ${accessToken}`,
+            },
+            // withCredentials: true, // ไม่จำเป็นแล้วถ้าส่ง Token ใน Header
+          }
         );
         setForm({
-          fullName: res.data.name,
+          fullName: res.data.name, // API ส่ง name มา แต่ form ใช้ fullName
           email: res.data.email,
           studentId: res.data.studentProfile?.studentId || '',
           avatarUrl: res.data.avatarUrl || '',
         });
-      } catch (err) {
-        console.error('❌ ดึงข้อมูลล้มเหลว', err);
+      } catch (err: any) {
+        console.error('❌ ดึงข้อมูลผู้ใช้ล้มเหลว:', err);
+        setError(
+          err.response?.data?.message ||
+            err.message ||
+            'Failed to load user data.'
+        );
+      } finally {
+        setLoading(false);
       }
     };
     fetchData();
-  }, [id]);
+  }, [userId, accessToken]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
@@ -64,13 +111,19 @@ export default function AdminEditStudentPage() {
 
     try {
       await axios.patch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/users/${id}`,
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/users/${userId}`,
         {
           name: form.fullName,
           email: form.email,
           studentId: form.studentId,
         },
-        { withCredentials: true }
+        {
+          headers: {
+            // ✅ ส่ง Token ใน Authorization Header
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json', // ระบุ Content-Type ให้ถูกต้อง
+          },
+        }
       );
 
       setEditing(false);
@@ -82,11 +135,25 @@ export default function AdminEditStudentPage() {
         confirmButtonText: 'ตกลง',
       });
 
-      router.push(`/admin/edituser/student/${id}`);
+      router.push(`/admin/edituser/student/${userId}`);
     } catch (err) {
       alert('❌ ไม่สามารถอัปเดตข้อมูลได้');
     }
   };
+
+  // ✅ แสดงสถานะ Loading และ Error ให้ชัดเจน
+  if (loading)
+    return <div className="p-10 text-center">Loading user data...</div>;
+  if (error)
+    return <div className="p-10 text-center text-red-500">Error: {error}</div>;
+  if (!form.email && !form.fullName) {
+    // อาจจะตรวจสอบจาก field อื่นๆ ที่ควรจะมีค่าเสมอ
+    return (
+      <div className="p-10 text-center">
+        User data not found or could not be loaded.
+      </div>
+    );
+  }
 
   return (
     <main className="flex-1 px-4 py-8 md:px-12">
