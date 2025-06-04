@@ -11,19 +11,8 @@ import { TbReportSearch } from 'react-icons/tb';
 import ThemeToggle from '../ui/ThemeToggle'; // ตรวจสอบ Path ให้ถูกต้อง
 import { useAuth } from '@/app/contexts/AuthContext';
 
-interface SessionUser {
-  id: number;
-  name: string;
-  role: string;
-  avatarUrl?: string;
-}
-
 // ✅ รับ initialUser เป็น prop
-export default function NavbarAdmin({
-  initialUser,
-}: {
-  initialUser: SessionUser | null;
-}) {
+export default function NavbarAdmin() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   // ✅ ใช้ initialUser ในการตั้งค่า user state เริ่มต้น
