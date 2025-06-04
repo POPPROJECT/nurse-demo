@@ -70,10 +70,13 @@ export default function StudentExperienceClient({
   useEffect(() => {
     if (!token) return;
     axios
-      .get(`${BACKEND_URL}/experience-books/details`, {
-        headers: { Authorization: `Bearer ${token}` },
-        withCredentials: true,
-      })
+      .get(
+        `${BACKEND_URL}/experience-books/authorized/student/${studentIdForApi}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          withCredentials: true,
+        }
+      )
       .then((res) => {
         const initializedBooks = res.data.map((book: Book) => ({
           ...book,
