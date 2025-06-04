@@ -4,6 +4,7 @@ import { getSession } from 'lib/session';
 import NavbarAdmin from '../components/admin/navbarAdmin'; // ตรวจสอบ Path ให้ถูกต้อง
 import SidenavAdmin from '../components/admin/sidenavAdmin'; // ตรวจสอบ Path ให้ถูกต้อง
 import { redirect } from 'next/navigation'; // ✅ Import redirect สำหรับ Server Component
+import { AuthProvider } from '../contexts/AuthContext';
 
 // ✅ ทำให้เป็น async function เพื่อเรียก await getSession()
 export default async function AdminLayout({
@@ -25,15 +26,20 @@ export default async function AdminLayout({
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 dark:bg-[#0F172A]">
-      {/* ✅ ส่ง session.user ไปเป็น prop ชื่อ initialUser ให้ NavbarAdmin */}
-      <NavbarAdmin initialUser={session.user} />
-      <div className="flex">
-        <SidenavAdmin />
-        <main className="flex-1 p-6 bg-background text-foreground">
-          {children}
-        </main>
+    <AuthProvider
+      initialUser={session}
+      initialAccessToken={session.accessToken}
+    >
+      <div className="min-h-screen bg-gray-100 dark:bg-[#0F172A]">
+        {/* ✅ ส่ง session.user ไปเป็น prop ชื่อ initialUser ให้ NavbarAdmin */}
+        <NavbarAdmin initialUser={session.user} />
+        <div className="flex">
+          <SidenavAdmin />
+          <main className="flex-1 p-6 bg-background text-foreground">
+            {children}
+          </main>
+        </div>
       </div>
-    </div>
+    </AuthProvider>
   );
 }
