@@ -181,7 +181,7 @@ export default function StudentExperienceClient({
 
     const progressPayload = currentBook.courses.flatMap((course) =>
       course.subCourses
-        .filter((sub) => (sub.progressCount || 0) > 0) // Ensure progressCount is defined before comparison
+        .filter((sub) => (sub.progressCount || 0) > 0)
         .map((sub) => ({
           subCourseId: sub.id,
           count: (sub.confirmedCount || 0) + (sub.progressCount || 0),
@@ -201,12 +201,12 @@ export default function StudentExperienceClient({
     setSaving(true);
     try {
       await axios.patch(
-        `${BACKEND_URL}/experience-books/${selectedBookId}/progress/user-by-string-id/${studentIdForApi}`, // <-- ใช้ path ใหม่
+        `${BACKEND_URL}/experience-books/${selectedBookId}/progress/user-by-string-id/${studentIdForApi}`,
         { progress: progressPayload },
         { headers: { Authorization: `Bearer ${token}` }, withCredentials: true }
       );
       const res = await axios.get(
-        `${BACKEND_URL}/experience-books/${selectedBookId}/progress/user-by-string-id/${studentIdForApi}`, // <-- ใช้ path ใหม่
+        `${BACKEND_URL}/experience-books/${selectedBookId}/progress/user-by-string-id/${studentIdForApi}`,
         { headers: { Authorization: `Bearer ${token}` }, withCredentials: true }
       );
       const progressMap = res.data;

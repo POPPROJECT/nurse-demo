@@ -12,6 +12,7 @@ import {
   FaCamera,
 } from 'react-icons/fa';
 import { BACKEND_URL } from '../../../../lib/constants';
+import { useAuth } from '@/app/contexts/AuthContext';
 
 interface UserProfile {
   id: number;
@@ -21,6 +22,8 @@ interface UserProfile {
 }
 
 export default function StyledExperienceManagerProfile() {
+  const { accessToken, session: authUser } = useAuth();
+
   const [user, setUser] = useState<UserProfile | null>(null);
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({
@@ -31,6 +34,7 @@ export default function StyledExperienceManagerProfile() {
   });
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -38,7 +42,10 @@ export default function StyledExperienceManagerProfile() {
         const res = await axios.get(
           `${process.env.NEXT_PUBLIC_BACKEND_URL}/users/me`,
           {
-            withCredentials: true,
+            headers: {
+              // ✅ ใช้ Authorization header
+              Authorization: `Bearer ${accessToken}`,
+            },
           }
         );
         setUser(res.data);
@@ -53,8 +60,12 @@ export default function StyledExperienceManagerProfile() {
         window.location.href = '/';
       }
     };
-    fetchUser();
-  }, []);
+    if (accessToken) {
+      fetchUser();
+    } else {
+      setLoading(false);
+    }
+  }, [accessToken]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
@@ -79,8 +90,8 @@ export default function StyledExperienceManagerProfile() {
       `${process.env.NEXT_PUBLIC_BACKEND_URL}/users/me`,
       formData,
       {
-        withCredentials: true,
         headers: {
+          Authorization: `Bearer ${accessToken}`,
           'Content-Type': 'multipart/form-data',
         },
       }
@@ -89,8 +100,9 @@ export default function StyledExperienceManagerProfile() {
     window.location.reload();
   };
 
-  if (!user) return <div className="p-10">Loading...</div>;
-
+  if (loading) return <div className="p-10">Loading...</div>;
+  if (!user) return <div className="p-10">ไม่พบข้อมูลผู้ใช้</div>;
+  
   return (
     <main className="flex-1 px-4 py-8 md:px-12">
       <div className="max-w-3xl mx-auto overflow-hidden bg-white shadow-xl rounded-2xl">
