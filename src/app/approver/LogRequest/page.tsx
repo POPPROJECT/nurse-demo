@@ -21,29 +21,46 @@ export default function LogRequestPage() {
   const { accessToken } = useAuth(); // ใช้ useAuth เพื่อดึง accessToken
 
   const fetchLogs = async () => {
-    const res = await axios.get<{ total: number; data: any[] }>(
-      `${BASE}/approver/log-requests`,
-      {
-        headers: { Authorization: `Bearer ${accessToken}` },
-        params: {
-          page,
-          limit,
-          search,
-          status,
-          sortBy,
-          order,
-          startDate,
-          endDate,
-        },
-      }
-    );
-    setData(res.data.data);
-    setTotal(res.data.total);
+    if (!accessToken) return; // ถ้าไม่มี accessToken ให้หยุดการทำงาน
+    try {
+      const res = await axios.get<{ total: number; data: any[] }>(
+        `${BASE}/approver/log-requests`,
+        {
+          headers: { Authorization: `Bearer ${accessToken}` },
+          params: {
+            page,
+            limit,
+            search,
+            status,
+            sortBy,
+            order,
+            startDate,
+            endDate,
+          },
+        }
+      );
+      setData(res.data.data);
+      setTotal(res.data.total);
+    } catch (err) {
+      console.error('Error fetching logs:', err);
+    }
   };
 
   useEffect(() => {
-    fetchLogs();
-  }, [page, limit, search, status, sortBy, order, startDate, endDate]);
+    if (accessToken) {
+      fetchLogs();
+    }
+  }, [
+    page,
+    limit,
+    search,
+    status,
+    sortBy,
+    order,
+    startDate,
+    endDate,
+    accessToken,
+  ]);
 
   return (
     <div className="container max-w-6xl px-4 py-8 mx-auto mt-10 sm:mt-0">
