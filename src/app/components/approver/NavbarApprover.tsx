@@ -137,15 +137,16 @@ export default function NavbarApprover({ role }: NavbarApproverProps) {
               <span>ประวัติการยืนยัน</span>
             </Link>
             <br />
-            <div className="border-t border-gray-300">
-              <Link
-                href="/api/auth/signout"
-                className="flex items-center py-2 space-x-2 rounded-md hover:bg-gray-200"
-              >
-                <MdLogout />
-                <span>ออกจากระบบ</span>
-              </Link>
-            </div>
+
+            <button
+              onClick={async () => {
+                await fetch('/api/auth/signout', { method: 'POST' });
+                window.location.href = '/';
+              }}
+              className="flex items-center w-full py-2 space-x-2 rounded-md hover:bg-gray-200"
+            >
+              <MdLogout className="inline mr-2" /> ออกจากระบบ
+            </button>
           </div>
         </div>
       )}

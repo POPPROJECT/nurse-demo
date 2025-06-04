@@ -12,19 +12,12 @@ import {
   FaCamera,
 } from 'react-icons/fa';
 import { BACKEND_URL } from '../../../../lib/constants';
-import { getSession } from 'lib/session';
-import { redirect } from 'next/navigation';
-
-interface UserProfile {
-  id: number;
-  studentId: string;
-  fullname: string;
-  email: string;
-  avatarUrl?: string;
-}
+import { useAuth } from '@/app/contexts/AuthContext';
 
 export default function StyledStudentProfile() {
-  const [user, setUser] = useState<UserProfile | null>(null);
+  const { session: authSession, accessToken, updateUserInSession } = useAuth();
+  const user = authSession?.user;
+
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({
     studentId: '',
@@ -36,37 +29,20 @@ export default function StyledStudentProfile() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   useEffect(() => {
-    const checkSessionAndFetchUser = async () => {
-      try {
-        // ✅ ตรวจสอบ session โดยเรียก users/me
-        const res = await axios.get(
-          `${process.env.NEXT_PUBLIC_BACKEND_URL}/users/me`,
-          { withCredentials: true }
-        );
+    if (user) {
+      setForm({
+        studentId: (user as any).studentId || '',
+        fullname: user.name,
+        email: user.email,
+        avatarUrl: user.avatarUrl || '',
+      });
+    }
+  }, [user]);
 
-        // ✅ หากสำเร็จ → บันทึกข้อมูล user
-        setUser(res.data);
-        setForm({
-          email: res.data.email,
-          fullname: res.data.fullname,
-          studentId: res.data.studentId,
-          avatarUrl: res.data.avatarUrl || '',
-        });
-      } catch (err) {
-        // ❌ ถ้าไม่มี session → redirect ไปหน้า login
-        window.location.href = '/';
-      }
-    };
-
-    checkSessionAndFetchUser();
-  }, []);
-
-  // ✅ ฟังก์ชันเปลี่ยนค่าฟอร์ม
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
 
     if (id === 'studentId') {
-      // ✅ กรองเฉพาะตัวเลข และจำกัดความยาว 8 ตัว
       const numericOnly = value.replace(/\D/g, '').slice(0, 8);
       setForm((prev) => ({ ...prev, studentId: numericOnly }));
     } else {
@@ -74,34 +50,47 @@ export default function StyledStudentProfile() {
     }
   };
 
-  // ✅ ฟังก์ชันจัดการอัปโหลดรูปและแสดง preview
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files?.[0]) {
       const uploadedFile = e.target.files[0];
       setFile(uploadedFile);
-      setPreviewUrl(URL.createObjectURL(uploadedFile)); // ✅ เพิ่ม preview
+      setPreviewUrl(URL.createObjectURL(uploadedFile));
     }
   };
 
-  // ✅ ฟังก์ชันบันทึกข้อมูล
   const save = async () => {
+    if (!accessToken) return;
+
     const formData = new FormData();
     formData.append('studentId', form.studentId);
     formData.append('fullname', form.fullname);
     if (file) formData.append('avatar', file);
 
-    await axios.patch(
-      `${process.env.NEXT_PUBLIC_BACKEND_URL}/users/me`,
-      formData,
-      {
-        withCredentials: true,
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      }
-    );
-    setEditing(false);
-    window.location.reload(); // 🔄 reload เพื่ออัปเดต avatar ที่ preview
+    try {
+      const res = await axios.patch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/users/me`,
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      );
+
+      updateUserInSession(res.data); // ✅ อัปเดต Context
+      setForm({
+        studentId: res.data.studentId,
+        fullname: res.data.fullname,
+        email: res.data.email,
+        avatarUrl: res.data.avatarUrl || '',
+      });
+      setPreviewUrl(null);
+      setFile(null);
+      setEditing(false);
+    } catch (err) {
+      console.error('Error updating profile:', err);
+    }
   };
 
   if (!user) return <div className="p-10">Loading...</div>;
@@ -112,7 +101,6 @@ export default function StyledStudentProfile() {
         <div className="p-8 bg-[#F1A661] dark:bg-[#5A9ED1]">
           <div className="flex flex-col items-center md:flex-row">
             <div className="flex flex-col items-center space-y-3">
-              {/* รูปโปรไฟล์ + ปุ่มกล้อง */}
               <div className="relative">
                 {previewUrl || form.avatarUrl ? (
                   <img
@@ -145,7 +133,6 @@ export default function StyledStudentProfile() {
                 )}
               </div>
 
-              {/* ปุ่มด้านล่าง */}
               {editing && (
                 <button
                   onClick={() =>
@@ -157,7 +144,6 @@ export default function StyledStudentProfile() {
                 </button>
               )}
 
-              {/* ซ่อนไว้ */}
               <input
                 id="avatarInput"
                 type="file"
@@ -168,7 +154,7 @@ export default function StyledStudentProfile() {
             </div>
 
             <div className="mt-4 text-center md:ml-6 md:text-left md:mt-0">
-              <h1 className="text-3xl font-bold text-white">{user.fullname}</h1>
+              <h1 className="text-3xl font-bold text-white">{form.fullname}</h1>
               <p className="text-sm text-white opacity-90">ข้อมูลส่วนตัว</p>
               <div className="mt-2 space-x-2">
                 <span className="px-3 py-1 text-sm text-black bg-white rounded-full bg-opacity-80">
@@ -192,7 +178,6 @@ export default function StyledStudentProfile() {
               editing={editing}
               onChange={handleChange}
             />
-
             <Field
               icon={<FaUser />}
               label="ชื่อ-สกุล"
@@ -231,9 +216,9 @@ export default function StyledStudentProfile() {
                     setEditing(false);
                     setPreviewUrl(null);
                     setForm({
+                      studentId: (user as any).studentId || '',
+                      fullname: user.name,
                       email: user.email,
-                      fullname: user.fullname,
-                      studentId: user.studentId,
                       avatarUrl: user.avatarUrl || '',
                     });
                     setFile(null);
@@ -251,7 +236,6 @@ export default function StyledStudentProfile() {
   );
 }
 
-// ✅ ฟิลด์ component
 function Field({
   icon,
   label,
@@ -270,7 +254,7 @@ function Field({
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }) {
   return (
-    <div className={`flex flex-col`}>
+    <div className="flex flex-col">
       <label className="flex items-center gap-2 mb-1 text-sm font-medium text-gray-500">
         {icon} {label}
       </label>
@@ -282,7 +266,7 @@ function Field({
           className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400"
         />
       ) : (
-        <p className="px-1 text-lg font-semibold">{value}</p>
+        <p className="px-1 text-lg font-semibold">{value || '-'}</p>
       )}
     </div>
   );

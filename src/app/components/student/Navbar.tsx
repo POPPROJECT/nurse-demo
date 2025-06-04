@@ -108,13 +108,12 @@ export default function Navbar() {
             </Link>
 
             <hr />
-            <button // ✅ เปลี่ยน Link เป็น button เพื่อเรียกฟังก์ชัน logout
+            <button
               onClick={async () => {
-                setIsMenuOpen(false); // ปิดเมนูก่อน
-                await fetch('/api/auth/signout', { method: 'GET' }); // หรือ POST ตาม API Route ของคุณ
-                window.location.href = '/'; // Redirect ไปหน้า Login
+                await fetch('/api/auth/signout', { method: 'POST' });
+                window.location.href = '/';
               }}
-              className="flex items-center w-full px-2 py-1 text-left text-red-500 rounded hover:bg-gray-100"
+              className="flex items-center w-full py-2 space-x-2 rounded-md hover:bg-gray-200"
             >
               <MdLogout className="inline mr-2" /> ออกจากระบบ
             </button>
