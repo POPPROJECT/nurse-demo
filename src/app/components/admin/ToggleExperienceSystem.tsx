@@ -1,46 +1,75 @@
 'use client';
-import { useEffect, useState } from 'react';
+import axios from 'axios';
+import { useEffect, useMemo, useState } from 'react';
+import Swal from 'sweetalert2';
 
-export default function ToggleExperienceSystem() {
+export default function ToggleExperienceSystem({
+  accessToken,
+}: {
+  accessToken: string;
+}) {
   const [enabled, setEnabled] = useState(false);
   const [loading, setLoading] = useState(true);
   const [toggling, setToggling] = useState(false);
 
+  // ✅ สร้าง Axios instance ที่มี Authorization header
+  const api = useMemo(() => {
+    if (!accessToken) return null;
+    return axios.create({
+      baseURL: process.env.NEXT_PUBLIC_BACKEND_URL,
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+  }, [accessToken]);
+
   useEffect(() => {
     const fetchStatus = async () => {
-      try {
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_BACKEND_URL}/admin/settings/get-status`,
-          {
-            credentials: 'include',
-          }
+      if (!api) {
+        // ✅ ถ้ายังไม่มี api instance (เพราะไม่มี accessToken)
+        console.error(
+          '[ToggleExperienceSystem] No accessToken, cannot fetch status.'
         );
-        const data = await res.json();
-        setEnabled(data.enabled);
-      } catch {
-        console.error('❌ ไม่สามารถโหลดสถานะได้');
+        setLoading(false);
+        return;
+      }
+      setLoading(true);
+      try {
+        const res = await api.get('/admin/settings/get-status'); // ใช้ api instance
+        setEnabled(res.data.enabled);
+      } catch (err: any) {
+        console.error('❌ ไม่สามารถโหลดสถานะระบบนับประสบการณ์ได้:', err);
+        Swal.fire(
+          'ผิดพลาด',
+          err.response?.data?.message || 'ไม่สามารถโหลดสถานะได้',
+          'error'
+        );
       } finally {
         setLoading(false);
       }
     };
     fetchStatus();
-  }, []);
+  }, [api]);
 
   const handleToggle = async () => {
-    if (toggling) return;
+    if (toggling || !api) return; // ✅ ตรวจสอบ api instance
     setToggling(true);
     try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/admin/settings/toggle-counting`,
-        {
-          method: 'POST',
-          credentials: 'include',
-        }
+      const res = await api.post('/admin/settings/toggle-counting'); // ใช้ api instance
+      setEnabled(res.data.enabled);
+      Swal.fire(
+        'สำเร็จ',
+        `ระบบนับประสบการณ์ถูก${res.data.enabled ? 'เปิด' : 'ปิด'}ใช้งานแล้ว`,
+        'success'
       );
-      const data = await res.json();
-      setEnabled(data.enabled);
-    } catch {
-      alert('❌ ไม่สามารถเปลี่ยนสถานะระบบนับประสบการณ์ได้');
+    } catch (err: any) {
+      console.error('❌ ไม่สามารถเปลี่ยนสถานะระบบนับประสบการณ์ได้:', err);
+      Swal.fire(
+        'ผิดพลาด',
+        err.response?.data?.message || 'ไม่สามารถเปลี่ยนสถานะระบบได้',
+        'error'
+      );
     } finally {
       setToggling(false);
     }

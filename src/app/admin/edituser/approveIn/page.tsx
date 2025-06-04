@@ -5,9 +5,14 @@ import React from 'react';
 
 export default async function ApprovedIn() {
   const session = await getSession();
-  if (!session) {
-    console.error('⛔ Session not found!');
-    return;
+
+  // ✅ การป้องกันเส้นทางใน Server Component
+  if (!session || session.user.role !== 'ADMIN') {
+    // ตรวจสอบ Role ADMIN
+    console.error(
+      '⛔ [AdminApproveInPage] Session not found or not ADMIN. Redirecting.'
+    );
+    redirect('/');
   }
 
   return (
@@ -23,7 +28,7 @@ export default async function ApprovedIn() {
             </div>
             <br />
 
-            <EditApproveInTable />
+            <EditApproveInTable accessToken={session.accessToken}/>
           </div>
         </main>
       </div>

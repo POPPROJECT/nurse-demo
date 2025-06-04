@@ -3,13 +3,16 @@ import { getSession } from 'lib/session';
 import { redirect } from 'next/navigation';
 import React from 'react';
 
-export default async function ApprovedIn() {
+export default async function ApprovedOut() {
   const session = await getSession();
-  if (!session) {
-    console.error('⛔ Session not found!');
-    return;
-  }
 
+  if (!session || session.user.role !== 'ADMIN') {
+    // ตรวจสอบ Role ADMIN
+    console.error(
+      '⛔ [AdminApproveOutPage] Session not found or not ADMIN. Redirecting.'
+    );
+    redirect('/');
+  }
   return (
     <div className="">
       <div className="flex flex-1 pt-16 sm:pt-0">
@@ -23,7 +26,7 @@ export default async function ApprovedIn() {
             </div>
             <br />
 
-            <EditApproverOutTable />
+            <EditApproverOutTable accessToken={session.accessToken} />
           </div>
         </main>
       </div>

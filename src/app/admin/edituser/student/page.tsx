@@ -1,9 +1,8 @@
 import EditStudentTable from '@/app/components/admin/table/edit-student/EditStudentTable';
 import { getSession } from 'lib/session';
-import { redirect } from 'next/navigation';
 import React from 'react';
 
-export default async function ApprovedIn() {
+export default async function Student() {
   const session = await getSession();
   if (!session) {
     console.error('⛔ Session not found!');

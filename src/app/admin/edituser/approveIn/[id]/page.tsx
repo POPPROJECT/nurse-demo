@@ -1,7 +1,7 @@
 'use client';
 
 import { useParams, useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import axios from 'axios';
 import {
   FaUser,
@@ -13,12 +13,35 @@ import {
 } from 'react-icons/fa';
 import { BACKEND_URL } from 'lib/constants';
 import Swal from 'sweetalert2';
+import { useAuth } from '@/app/contexts/AuthContext';
+
+// Interface สำหรับข้อมูล User ที่คาดหวังจาก API
+interface ApproverData {
+  id: number;
+  name: string;
+  email: string;
+  approverProfile?: { pin: string | null };
+  avatarUrl?: string; // ถ้ามี
+}
+
+// Interface สำหรับ Form state
+interface ApproverFormState {
+  fullName: string;
+  email: string;
+  pin: string;
+  avatarUrl: string; // เก็บ avatarUrl ไว้ด้วย
+}
 
 export default function AdminEditApproverPage() {
-  const { id } = useParams();
+  const { id: userId } = useParams();
   const router = useRouter();
+  const { accessToken, session: authSession } = useAuth(); // ✅ 2. ดึง accessToken และ session จาก Context
 
   const [editing, setEditing] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
   const [form, setForm] = useState({
     fullName: '',
     email: '',
@@ -26,25 +49,43 @@ export default function AdminEditApproverPage() {
     avatarUrl: '',
   });
 
+  // ✅ ใช้ useCallback สำหรับ fetchData
+  const fetchData = useCallback(async () => {
+    if (!userId || !accessToken) {
+      if (!accessToken) setError('Authentication token not found.');
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await axios.get<ApproverData>(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/users/admin/${userId}`,
+        {
+          headers: { Authorization: `Bearer ${accessToken}` }, // ✅ ส่ง Token ใน Header
+        }
+      );
+      setForm({
+        fullName: res.data.name,
+        email: res.data.email,
+        pin: res.data.approverProfile?.pin || '',
+        avatarUrl: res.data.avatarUrl || '',
+      });
+    } catch (err: any) {
+      console.error('❌ ดึงข้อมูลผู้นิเทศล้มเหลว:', err);
+      setError(
+        err.response?.data?.message ||
+          err.message ||
+          'Failed to load approver data.'
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, [userId, accessToken]);
+
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const res = await axios.get(
-          `${process.env.NEXT_PUBLIC_BACKEND_URL}/users/admin/${id}`,
-          { withCredentials: true }
-        );
-        setForm({
-          fullName: res.data.name,
-          email: res.data.email,
-          pin: res.data.approverProfile?.pin || '',
-          avatarUrl: res.data.avatarUrl || '',
-        });
-      } catch (err) {
-        console.error('❌ ดึงข้อมูลล้มเหลว', err);
-      }
-    };
     fetchData();
-  }, [id]);
+  }, [fetchData]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
@@ -57,37 +98,92 @@ export default function AdminEditApproverPage() {
   };
 
   const handleSubmit = async () => {
-    if (!/^\d{6}$/.test(form.pin)) {
-      alert('กรุณากรอก PIN เป็นตัวเลขจำนวน 6 หลัก');
+    if (!accessToken) {
+      Swal.fire('ข้อผิดพลาด', 'Session หมดอายุ, กรุณา Login ใหม่', 'error');
       return;
     }
+    if (form.pin !== '' && !/^\d{6}$/.test(form.pin)) {
+      // อนุญาตให้ PIN เป็นค่าว่างได้ถ้าไม่ต้องการตั้งใหม่
+      Swal.fire(
+        'ผิดพลาด',
+        'PIN ต้องเป็นตัวเลข 6 หลัก หรือเว้นว่างไว้หากไม่ต้องการเปลี่ยน',
+        'warning'
+      );
+      return;
+    }
+    setSaving(true);
 
     try {
+      // ✅ สร้าง Payload เฉพาะข้อมูลที่ต้องการส่ง (Backend อาจจะไม่รับ Field ที่ไม่รู้จัก)
+      const payload: { name: string; email: string; pin?: string } = {
+        name: form.fullName,
+        email: form.email,
+      };
+      if (form.pin) {
+        // ส่ง PIN ไปก็ต่อเมื่อมีการกรอก
+        payload.pin = form.pin;
+      }
+
       await axios.patch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/users/${id}`,
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/users/${userId}`,
+        payload,
         {
-          name: form.fullName,
-          email: form.email,
-          pin: form.pin,
-        },
-        { withCredentials: true }
+          headers: {
+            // ✅ ส่ง Token ใน Authorization Header
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json', // เนื้อหาเป็น JSON
+          },
+        }
       );
       setEditing(false);
-
-      // ✅ แสดง SweetAlert แจ้งเตือนความสำเร็จ
-      await Swal.fire({
+      Swal.fire({
         title: 'สำเร็จ!',
         text: 'แก้ไขข้อมูลเรียบร้อยแล้ว',
         icon: 'success',
         confirmButtonText: 'ตกลง',
+      }).then(() => {
+        // fetch ข้อมูลใหม่เพื่ออัปเดต UI หลังจากบันทึกสำเร็จ
+        fetchData();
+        // router.push(`/admin/edituser/approveIn/${userId}`); // อาจจะไม่จำเป็นถ้าไม่ต้องการบังคับ Reload
       });
-
-      // ✅ ย้ายหลังจากกด "ตกลง" แล้วจึงค่อยเปลี่ยนหน้า
-      window.location.href = `/admin/edituser/approveIn/${id}`;
-    } catch (err) {
-      alert('❌ ไม่สามารถอัปเดตข้อมูลได้');
+    } catch (err: any) {
+      console.error('❌ ไม่สามารถอัปเดตข้อมูลได้:', err);
+      Swal.fire(
+        'ผิดพลาด',
+        err.response?.data?.message || 'ไม่สามารถอัปเดตข้อมูลได้',
+        'error'
+      );
+    } finally {
+      setSaving(false);
     }
   };
+
+  const handleCancelEdit = () => {
+    setEditing(false);
+    // Reset form กลับไปเป็นข้อมูลล่าสุดที่ fetch มา (หรือจาก authSession ถ้ามี)
+    if (authSession?.user && authSession.user.id === Number(userId)) {
+      // สมมติว่ากำลังแก้โปรไฟล์ตัวเอง
+      // setForm({ fullName: authSession.user.name, email: authSession.user.email, pin: '******', avatarUrl: authSession.user.avatarUrl || '' });
+      fetchData(); // เรียก fetchData เพื่อ reset form ให้เป็นข้อมูลล่าสุดจาก server จะดีกว่า
+    } else {
+      fetchData(); // ถ้าไม่ใช่โปรไฟล์ตัวเอง ก็ fetch ใหม่
+    }
+  };
+
+  if (loading)
+    return <div className="p-10 text-center">Loading approver data...</div>;
+  if (error)
+    return <div className="p-10 text-center text-red-500">Error: {error}</div>;
+  // AdminLayout ควรจะป้องกันการเข้าถึงหน้านี้ถ้าไม่มีสิทธิ์อยู่แล้ว
+  // แต่ถ้าต้องการป้องกันอีกชั้น หรือแสดง UI ที่แตกต่าง ก็ทำได้
+  if (!authSession?.user || authSession.user.role !== 'ADMIN') {
+    return (
+      <div className="p-10 text-center text-orange-500">
+        Verifying session... Please wait. If this persists, try logging in
+        again.
+      </div>
+    );
+  }
 
   return (
     <main className="flex-1 px-4 py-8 md:px-12">
@@ -189,6 +285,7 @@ function Field({
   readOnly = false,
   hideValue = false,
   onChange,
+  maxLength,
 }: {
   icon: React.ReactNode;
   label: string;
@@ -198,27 +295,30 @@ function Field({
   readOnly?: boolean;
   hideValue?: boolean;
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  maxLength?: number;
 }) {
-  const isPinField = id === 'pin';
-
   return (
     <div className="flex flex-col">
-      <label className="flex items-center gap-2 mb-1 text-sm font-medium text-gray-500">
+      <label
+        htmlFor={id}
+        className="flex items-center gap-2 mb-1 text-sm font-medium text-gray-500 dark:text-gray-400"
+      >
         {icon} {label}
       </label>
       {editing && !readOnly ? (
         <input
           id={id}
-          type="text"
+          name={id} // ✅ เพิ่ม name attribute
+          type={id === 'pin' && hideValue ? 'password' : 'text'} // ถ้าเป็น PIN และต้องการซ่อน ก็ใช้ type password
           value={value}
           onChange={onChange}
-          inputMode={isPinField ? 'numeric' : undefined}
-          maxLength={isPinField ? 6 : undefined}
-          className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400"
+          maxLength={maxLength}
+          inputMode={id === 'pin' ? 'numeric' : undefined}
+          className="px-4 py-2 text-gray-900 bg-white border border-gray-300 rounded-lg dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-orange-400"
         />
       ) : (
-        <p className="px-1 text-lg font-semibold">
-          {hideValue ? '●'.repeat(value?.length || 0) : value}
+        <p className="px-1 text-lg font-semibold text-gray-800 dark:text-gray-100">
+          {hideValue && value ? '●'.repeat(value.length) : value || '-'}
         </p>
       )}
     </div>

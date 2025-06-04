@@ -1,10 +1,11 @@
 'use client';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import Swal from 'sweetalert2';
 import { useRouter } from 'next/navigation';
 import TableSearchBar from './TableSearchBar';
 import ApproverTable from './ApproverTable';
 import TablePagination from './TablePagination';
+import axios from 'axios';
 
 interface ApproverOut {
   id: number;
@@ -13,33 +14,65 @@ interface ApproverOut {
   status: 'ENABLE' | 'DISABLE';
 }
 
-export default function EditApproverOutTable() {
+export default function EditApproverOutTable({
+  accessToken,
+}: {
+  accessToken: string;
+}) {
   const router = useRouter();
   const [users, setUsers] = useState<ApproverOut[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [sortBy, setSortBy] = useState<'fullName' | 'email'>('fullName');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [pageIndex, setPageIndex] = useState(0);
   const [perPage, setPerPage] = useState(10);
-  const [page, setPage] = useState(1);
+
+  const api = useMemo(() => {
+    if (!accessToken) return null;
+    return axios.create({
+      baseURL: process.env.NEXT_PUBLIC_BACKEND_URL,
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+  }, [accessToken]);
+
+  const fetchApprovers = useCallback(async () => {
+    if (!api) {
+      setError('Authentication token not available. Please login again.');
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await api.get('/users?role=APPROVER_OUT'); // ใช้ api instance
+      setUsers(
+        res.data.map((u: any) => ({
+          id: u.id,
+          fullName: u.name, // Backend ส่ง u.name
+          email: u.email,
+          status: u.status,
+        }))
+      );
+    } catch (err: any) {
+      console.error('Error fetching APPROVER_OUT users:', err);
+      setError(
+        err.response?.data?.message || err.message || 'Failed to load data.'
+      );
+      Swal.fire('ผิดพลาด', 'โหลดข้อมูลผู้นิเทศภายนอกไม่สำเร็จ', 'error');
+      setUsers([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [api]);
 
   useEffect(() => {
-    fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/users?role=APPROVER_OUT`, {
-      credentials: 'include',
-    })
-      .then((res) => res.json())
-      .then((arr) =>
-        setUsers(
-          arr.map((u: any) => ({
-            id: u.id,
-            fullName: u.name,
-            email: u.email,
-            status: u.status,
-          }))
-        )
-      )
-      .catch(() => Swal.fire('ผิดพลาด', 'โหลดข้อมูลไม่สำเร็จ', 'error'));
-  }, []);
+    fetchApprovers();
+  }, [fetchApprovers]);
 
   const filtered = useMemo(() => {
     const f = search.toLowerCase();
@@ -77,34 +110,32 @@ export default function EditApproverOutTable() {
     setPageIndex(0);
   };
 
-  const handleEdit = (id: number) => {
-    window.location.href = `/admin/edituser/approveOut/${id}`;
-  };
-
   const handleDelete = async (id: number) => {
-    const ok = await Swal.fire({
-      title: 'ยืนยันการลบ?',
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonText: 'ลบ',
-      cancelButtonText: 'ยกเลิก',
+    if (!api) {
+      Swal.fire('ข้อผิดพลาด', 'Session หมดอายุหรือไม่พบ Token', 'error');
+      return;
+    }
+    const confirmResult = await Swal.fire({
+      /* ... SweetAlert config ... */
     });
-    if (ok.isConfirmed) {
+    if (confirmResult.isConfirmed) {
       try {
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_BACKEND_URL}/users/${id}`,
-          {
-            method: 'DELETE',
-            credentials: 'include',
-          }
-        );
-        if (!res.ok) throw new Error();
+        await api.delete(`/users/${id}`); // ใช้ api instance
         setUsers((d) => d.filter((u) => u.id !== id));
         Swal.fire('ลบเรียบร้อย', '', 'success');
-      } catch {
-        Swal.fire('ผิดพลาด', 'ลบไม่สำเร็จ', 'error');
+      } catch (err: any) {
+        console.error('Error deleting user:', err);
+        Swal.fire(
+          'ผิดพลาด',
+          err.response?.data?.message || 'ลบไม่สำเร็จ',
+          'error'
+        );
       }
     }
+  };
+
+  const handleEdit = (id: number) => {
+    router.push(`/admin/edituser/approveOut/${id}`); // ใช้ Next.js router
   };
 
   const getPageNumbers = () => {
@@ -127,6 +158,10 @@ export default function EditApproverOutTable() {
     return pages;
   };
 
+  if (loading) return <div className="p-10 text-center">Loading data...</div>;
+  if (error)
+    return <div className="p-10 text-center text-red-500">Error: {error}</div>;
+
   return (
     <div className="p-4 space-y-6">
       <TableSearchBar
@@ -137,10 +172,7 @@ export default function EditApproverOutTable() {
           setPerPage(n);
           setPageIndex(0);
         }}
-        setPage={(n) => {
-          setPage(n);
-          setPageIndex(n - 1);
-        }}
+        setPage={(n) => setPageIndex(n - 1)}
         totalCount={users.length}
         filteredCount={filtered.length}
       />
@@ -158,7 +190,7 @@ export default function EditApproverOutTable() {
       />
 
       <div className="text-sm text-gray-700 dark:text-gray-300">
-        แสดง {paged.length} จาก {filtered.length} รายการ
+        แสดง {paged.length} จาก {filtered.length} รายการ (ทั้งหมด {users.length} รายการ)
       </div>
 
       <TablePagination

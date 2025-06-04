@@ -6,9 +6,13 @@ import React from 'react';
 
 export default async function Experience_Manager() {
   const session = await getSession();
-  if (!session) {
-    console.error('⛔ Session not found!');
-    return;
+
+  if (!session || session.user.role !== 'ADMIN') {
+    // ตรวจสอบ Role ADMIN
+    console.error(
+      '⛔ [AdminExperienceManagerPage] Session not found or not ADMIN. Redirecting.'
+    );
+    redirect('/');
   }
 
   return (
@@ -24,9 +28,9 @@ export default async function Experience_Manager() {
             </div>
             <br />
 
-            <ToggleExperienceSystem />
+            <ToggleExperienceSystem accessToken={session.accessToken} />
 
-            <EditExperienceManagerTable />
+            <EditExperienceManagerTable accessToken={session.accessToken} />
           </div>
         </main>
       </div>

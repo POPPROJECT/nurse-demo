@@ -63,6 +63,7 @@ export async function getSession(): Promise<Session | null> {
       user: {
         id: user.id,
         name: user.name,
+        email: user.email,
         role: user.role as Role,
       },
       accessToken,

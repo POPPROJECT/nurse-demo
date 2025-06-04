@@ -1,11 +1,11 @@
 'use client';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import Swal from 'sweetalert2';
 import { useRouter } from 'next/navigation';
 import TableSearchBar from './TableSearchBar';
 import ApproverTable from './ApproverTable';
 import TablePagination from './TablePagination';
-
+import axios from 'axios';
 
 interface ApproverIn {
   id: number;
@@ -14,9 +14,16 @@ interface ApproverIn {
   status: 'ENABLE' | 'DISABLE';
 }
 
-export default function EditApproverInTable() {
+export default function EditApproverInTable({
+  accessToken,
+}: {
+  accessToken: string | null;
+}) {
   const router = useRouter();
   const [users, setUsers] = useState<ApproverIn[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
   const [search, setSearch] = useState('');
   const [sortBy, setSortBy] = useState<'fullName' | 'email'>('fullName');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
@@ -24,23 +31,59 @@ export default function EditApproverInTable() {
   const [perPage, setPerPage] = useState(10);
   const [page, setPage] = useState(1);
 
+  const api = useMemo(() => {
+    if (!accessToken) return null;
+    const instance = axios.create({
+      baseURL: process.env.NEXT_PUBLIC_BACKEND_URL,
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+    return instance;
+  }, [accessToken]);
+
+  const fetchApprovers = useCallback(async () => {
+    if (!api) {
+      // ✅ ถ้า api instance ยังไม่ได้ถูกสร้าง (เพราะไม่มี accessToken)
+      console.log(
+        '[EditApproverInTable] No accessToken, skipping fetchApprovers.'
+      );
+      // AdminLayout ควรจะป้องกันแล้ว แต่ถ้ามาถึงได้โดยไม่มี token ก็ set error
+      setError('Authentication token not available. Please login again.');
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await api.get('/users?role=APPROVER_IN'); // ใช้ api instance
+      setUsers(
+        res.data.map((u: any) => ({
+          id: u.id,
+          fullName: u.name,
+          email: u.email,
+          status: u.status,
+        }))
+      );
+    } catch (err: any) {
+      console.error('Error fetching approvers:', err);
+      setError(
+        err.response?.data?.message ||
+          err.message ||
+          'Failed to load approvers.'
+      );
+      Swal.fire('ผิดพลาด', 'โหลดข้อมูลผู้นิเทศภายในไม่สำเร็จ', 'error');
+      setUsers([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [api]); // ✅ เพิ่ม api (ซึ่งขึ้นกับ accessToken) ใน dependency array
+
   useEffect(() => {
-    fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/users?role=APPROVER_IN`, {
-      credentials: 'include',
-    })
-      .then((res) => res.json())
-      .then((arr) =>
-        setUsers(
-          arr.map((u: any) => ({
-            id: u.id,
-            fullName: u.name,
-            email: u.email,
-            status: u.status,
-          }))
-        )
-      )
-      .catch(() => Swal.fire('ผิดพลาด', 'โหลดข้อมูลไม่สำเร็จ', 'error'));
-  }, []);
+    fetchApprovers();
+  }, [fetchApprovers]);
 
   const filtered = useMemo(() => {
     const f = search.toLowerCase();
@@ -79,31 +122,36 @@ export default function EditApproverInTable() {
   };
 
   const handleEdit = (id: number) => {
-    window.location.href = `/admin/edituser/approveIn/${id}`;
+    // ควรจะใช้ router.push หรือ Link ของ Next.js เพื่อ Client-side navigation
+    // ไม่ควรใช้ window.location.href ถ้าไม่จำเป็นต้อง Full Page Reload
+    router.push(`/admin/edituser/approveIn/${id}`);
   };
 
   const handleDelete = async (id: number) => {
-    const ok = await Swal.fire({
+    if (!api) {
+      Swal.fire('ข้อผิดพลาด', 'Session หมดอายุหรือไม่พบ Token', 'error');
+      return;
+    }
+    const confirmResult = await Swal.fire({
       title: 'ยืนยันการลบ?',
       icon: 'warning',
       showCancelButton: true,
       confirmButtonText: 'ลบ',
       cancelButtonText: 'ยกเลิก',
     });
-    if (ok.isConfirmed) {
+
+    if (confirmResult.isConfirmed) {
       try {
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_BACKEND_URL}/users/${id}`,
-          {
-            method: 'DELETE',
-            credentials: 'include',
-          }
-        );
-        if (!res.ok) throw new Error();
+        await api.delete(`/users/${id}`); // ใช้ api instance
         setUsers((d) => d.filter((u) => u.id !== id));
         Swal.fire('ลบเรียบร้อย', '', 'success');
-      } catch {
-        Swal.fire('ผิดพลาด', 'ลบไม่สำเร็จ', 'error');
+      } catch (err: any) {
+        console.error('Error deleting approver:', err);
+        Swal.fire(
+          'ผิดพลาด',
+          err.response?.data?.message || 'ลบไม่สำเร็จ',
+          'error'
+        );
       }
     }
   };
@@ -127,6 +175,12 @@ export default function EditApproverInTable() {
     }
     return pages;
   };
+
+  // ✅ แสดง Loading หรือ Error UI
+  if (loading)
+    return <div className="p-10 text-center">Loading approvers...</div>;
+  if (error)
+    return <div className="p-10 text-center text-red-500">Error: {error}</div>;
 
   return (
     <div className="p-4 space-y-6">
