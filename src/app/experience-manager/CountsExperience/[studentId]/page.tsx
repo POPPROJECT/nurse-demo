@@ -2,7 +2,7 @@ import { Role } from 'lib/type';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import StudentExperienceClient from './StudentExperienceClient'; // Your renamed client component
-import { useAuth } from '@/app/contexts/AuthContext';
+import { getSession } from 'lib/session';
 
 // Component สำหรับแสดงข้อความเมื่อฟีเจอร์ปิดหรือเข้าไม่ได้
 const FeatureDisabledMessage = ({
@@ -32,6 +32,11 @@ const FeatureDisabledMessage = ({
   );
 };
 
+const session = await getSession(); // Get session from server-side (no useAuth here)
+
+const token = session?.accessToken;
+
+
 // ฟังก์ชันสำหรับตรวจสอบสถานะระบบนับประสบการณ์
 async function getExperienceCountingSystemStatus(): Promise<{
   enabled: boolean;
@@ -40,7 +45,10 @@ async function getExperienceCountingSystemStatus(): Promise<{
   try {
     const res = await fetch(
       `${process.env.NEXT_PUBLIC_BACKEND_URL}/admin/settings/get-status`,
-      { cache: 'no-store' }
+      {
+        headers: { Authorization: `Bearer ${token}` },
+        cache: 'no-store',
+      }
     );
     if (!res.ok) {
       console.error(
@@ -125,8 +133,6 @@ export default async function StudentExperiencePage({
   params,
 }: StudentExperiencePageProps) {
   const { studentId } = params;
-
-  const { session } = useAuth(); // Use the session from the context
 
   if (
     !session ||

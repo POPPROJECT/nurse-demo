@@ -1,4 +1,4 @@
-import { getSession, Session } from 'lib/session'; // Make sure Session type is exported from lib/session.ts
+import { getSession  } from 'lib/session'; // Make sure Session type is exported from lib/session.ts
 import { Role } from 'lib/type'; // Your Role enum/type
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
@@ -23,7 +23,11 @@ const FeatureDisabledMessage = ({ message }: { message: string }) => {
   );
 };
 
+
 async function getExperienceCountingSystemStatus() {
+  const session = await getSession();
+  const token = session?.accessToken;
+
   try {
     const res = await fetch(
       `${process.env.NEXT_PUBLIC_BACKEND_URL}/admin/settings/get-status`,
@@ -31,6 +35,7 @@ async function getExperienceCountingSystemStatus() {
         // For server-to-server fetch, 'credentials: include' is not standard.
         // If your backend needs auth from the Next.js server, use API keys/tokens in headers.
         // This endpoint is public, so it should be fine.
+        headers: { Authorization: `Bearer ${token}` },
         cache: 'no-store', // Ensures you always get the latest status
       }
     );
@@ -54,40 +59,26 @@ async function getExperienceCountingSystemStatus() {
 }
 
 export default async function CountsExperiencePageServer() {
-  const session: Session | null = await getSession(); // Uses your lib/session.ts
+  const session = await getSession();
 
-  // 1. Authentication and Authorization Check (Server-Side)
-  if (
-    !session ||
-    !session.user ||
-    session.user.role !== Role.EXPERIENCE_MANAGER
-  ) {
-    redirect('/'); // Or to your login page e.g. '/auth/signin'
-    // redirect() throws an error that Next.js handles, so no explicit return null is needed.
+  if (!session || session.user.role !== Role.EXPERIENCE_MANAGER) {
+    redirect('/'); // Redirect to login if not authorized
   }
 
-  // 2. Check System Status (Server-Side)
-  const { enabled: countingEnabled, error: statusFetchError } =
-    await getExperienceCountingSystemStatus();
-
-  if (statusFetchError) {
-    // Log the error for your records and inform the user.
-    console.error(
-      `CountsExperiencePage (Server): System status fetch error - ${statusFetchError}`
-    );
+  const { enabled, error } = await getExperienceCountingSystemStatus();
+  if (error) {
+    console.error('Error fetching system status:', error);
     return (
       <FeatureDisabledMessage message="ไม่สามารถตรวจสอบสถานะของระบบนับประสบการณ์ได้ในขณะนี้ กรุณาลองใหม่อีกครั้ง" />
     );
   }
 
-  if (!countingEnabled) {
-    // If the system is disabled, prevent access by showing a message.
+  if (!enabled) {
     return (
       <FeatureDisabledMessage message="ระบบนับประสบการณ์ถูกปิดการใช้งานโดยผู้ดูแลระบบ" />
     );
   }
 
-  // 3. If all checks pass, render the client component.
-  // Pass the session (or just the accessToken) to the client component to avoid re-fetching session there.
+  // Pass the session to the client-side component
   return <CountsExperienceClient session={session} />;
 }

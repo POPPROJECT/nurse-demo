@@ -1,10 +1,10 @@
 import { Role } from 'lib/type';
 import { redirect } from 'next/navigation';
 import StudentHistoryClient from './StudentHistoryClient';
-import { useAuth } from '@/app/contexts/AuthContext';
+import { getSession } from 'lib/session';
 
-const { session } = useAuth(); // Use the session from the context
 
+const session = await getSession(); // Get session from server-side (no useAuth here)
 const token = session?.accessToken;
 
 async function getExperienceCountingSystemStatus() {

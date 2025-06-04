@@ -6,6 +6,7 @@ import { Session } from 'lib/session'; // ประเภทของ session �
 import FilterBar from '@/app/components/experience-manager/CountsExperience/FilterBar';
 import StudentTable from '@/app/components/experience-manager/CountsExperience/StudentTable';
 import Pagination from '@/app/components/experience-manager/CountsExperience/Pagination';
+import { useAuth } from '@/app/contexts/AuthContext';
 
 interface CountsExperienceClientProps {
   session: Session; // รับ session ที่มี accessToken และข้อมูลผู้ใช้
@@ -17,6 +18,7 @@ export default function CountsExperienceClient({
   const BASE = process.env.NEXT_PUBLIC_BACKEND_URL!; // URL backend จาก environment variable
 
   // รายชื่อสมุดประสบการณ์ทั้งหมด
+  const { accessToken } = session;
   const [books, setBooks] = useState<{ id: number; title: string }[]>([]);
   const [bookId, setBookId] = useState<number | string>(''); // สมุดที่เลือก
   const [search, setSearch] = useState(''); // คำค้นหา
@@ -31,17 +33,17 @@ export default function CountsExperienceClient({
 
   // โหลดรายการสมุดบันทึกประสบการณ์ทั้งหมด เมื่อ component โหลด
   useEffect(() => {
-    if (session?.accessToken) {
+    if (accessToken) {
       axios
         .get<{ id: number; title: string }[]>(`${BASE}/experience-books`, {
-          headers: { Authorization: `Bearer ${session.accessToken}` },
+          headers: { Authorization: `Bearer ${accessToken}` },
         })
         .then((r) => setBooks(r.data)) // บันทึกสมุดที่โหลดได้
         .catch((err) => {
           console.error('Error fetching books:', err); // แสดง error ถ้าโหลดไม่สำเร็จ
         });
     }
-  }, [session, BASE]); // ทำงานใหม่เมื่อ session หรือ BASE เปลี่ยน
+  }, [accessToken, BASE]); // ทำงานใหม่เมื่อ accessToken หรือ BASE เปลี่ยน
 
   // โหลดข้อมูลนิสิตทุกครั้งที่มีการเปลี่ยน filter, page หรือ sort
   useEffect(() => {
