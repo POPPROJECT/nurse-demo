@@ -1,11 +1,10 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { getSession } from '../../../../lib/session';
-import { Role } from '../../../../lib/type';
 import FilterBar from '@/app/components/approver/LogRequest/FilterBar';
 import LogTable from '@/app/components/approver/LogRequest/LogTable';
 import Pagination from '@/app/components/approver/LogRequest/Pagination';
+import { useAuth } from '@/app/contexts/AuthContext';
 
 export default function LogRequestPage() {
   const BASE = process.env.NEXT_PUBLIC_BACKEND_URL!;
@@ -19,21 +18,13 @@ export default function LogRequestPage() {
   const [order, setOrder] = useState<'asc' | 'desc'>('desc');
   const [startDate, setStartDate] = useState<string | undefined>();
   const [endDate, setEndDate] = useState<string | undefined>();
+  const { accessToken } = useAuth(); // ใช้ useAuth เพื่อดึง accessToken
 
   const fetchLogs = async () => {
-    const sess = await getSession();
-    if (
-      !sess ||
-      (sess.user.role !== Role.APPROVER_IN &&
-        sess.user.role !== Role.APPROVER_OUT)
-    ) {
-      window.location.href = '/';
-      return;
-    }
     const res = await axios.get<{ total: number; data: any[] }>(
       `${BASE}/approver/log-requests`,
       {
-        headers: { Authorization: `Bearer ${sess.accessToken}` },
+        headers: { Authorization: `Bearer ${accessToken}` },
         params: {
           page,
           limit,

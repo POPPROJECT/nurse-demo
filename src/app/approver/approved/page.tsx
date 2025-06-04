@@ -8,6 +8,7 @@ import { Role } from '../../../../lib/type';
 import FilterBar from '@/app/components/approver/approved/FilterBar';
 import BulkActions from '@/app/components/approver/approved/BulkAction';
 import RequestCard from '@/app/components/approver/approved/RequestCard';
+import { useAuth } from '@/app/contexts/AuthContext';
 
 interface FieldValue {
   field: { label: string };
@@ -74,24 +75,15 @@ export default function ApprovedPage() {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const totalPages = Math.ceil(total / limit);
+  const { accessToken } = useAuth();
 
   const fetchRequests = async () => {
     setLoading(true);
     try {
-      const sess = await getSession();
-      if (
-        !sess ||
-        (sess.user.role !== Role.APPROVER_IN &&
-          sess.user.role !== Role.APPROVER_OUT)
-      ) {
-        window.location.href = '/';
-        return;
-      }
-
       const res = await axios.get<{ total: number; data: Experience[] }>(
         `${BASE}/approver/requests`,
         {
-          headers: { Authorization: `Bearer ${sess.accessToken}` },
+          headers: { Authorization: `Bearer ${accessToken}` },
           params: { search, sortBy, order, page, limit },
         }
       );
@@ -120,8 +112,7 @@ export default function ApprovedPage() {
   }, [search]); // ✅ เฉพาะตอนพิมพ์ search เท่านั้น
 
   const handleConfirm = async (id: number) => {
-    const sess = await getSession();
-    if (!sess || sess.user.role !== Role.APPROVER_IN) {
+    if (!accessToken) {
       Swal.fire('Error', 'กรุณาเข้าสู่ระบบก่อน', 'error');
       return;
     }
@@ -137,7 +128,7 @@ export default function ApprovedPage() {
       await axios.patch(
         `${BASE}/approver/requests/${id}/confirm`,
         { pin: value },
-        { headers: { Authorization: `Bearer ${sess.accessToken}` } }
+        { headers: { Authorization: `Bearer ${accessToken}` } }
       );
       Swal.fire({ icon: 'success', title: 'สำเร็จ', text: 'ยืนยันแล้ว' });
       await fetchRequests();
@@ -153,11 +144,7 @@ export default function ApprovedPage() {
 
   const handleReject = async (id: number) => {
     const sess = await getSession();
-    if (
-      !sess ||
-      (sess.user.role !== Role.APPROVER_IN &&
-        sess.user.role !== Role.APPROVER_OUT)
-    ) {
+    if (!accessToken) {
       Swal.fire('Error', 'กรุณาเข้าสู่ระบบก่อน', 'error');
       return;
     }
@@ -173,7 +160,7 @@ export default function ApprovedPage() {
       await axios.patch(
         `${BASE}/approver/requests/${id}/reject`,
         { pin: value },
-        { headers: { Authorization: `Bearer ${sess.accessToken}` } }
+        { headers: { Authorization: `Bearer ${accessToken}` } }
       );
       Swal.fire({ icon: 'success', title: 'สำเร็จ', text: 'ปฏิเสธแล้ว' });
       await fetchRequests();
@@ -189,11 +176,7 @@ export default function ApprovedPage() {
 
   const handleBulkConfirm = async (pin: string) => {
     const sess = await getSession();
-    if (
-      !sess ||
-      (sess.user.role !== Role.APPROVER_IN &&
-        sess.user.role !== Role.APPROVER_OUT)
-    ) {
+    if (!accessToken) {
       Swal.fire('Error', 'กรุณาเข้าสู่ระบบก่อน', 'error');
       return;
     }
@@ -201,7 +184,7 @@ export default function ApprovedPage() {
       await axios.patch(
         `${BASE}/approver/requests/bulk-confirm`,
         { ids: selectedIds, pin },
-        { headers: { Authorization: `Bearer ${sess.accessToken}` } }
+        { headers: { Authorization: `Bearer ${accessToken}` } }
       );
       Swal.fire('สำเร็จ', 'ยืนยันทั้งหมดแล้ว', 'success');
       setSelectedIds([]);
@@ -213,11 +196,7 @@ export default function ApprovedPage() {
 
   const handleBulkReject = async (pin: string) => {
     const sess = await getSession();
-    if (
-      !sess ||
-      (sess.user.role !== Role.APPROVER_IN &&
-        sess.user.role !== Role.APPROVER_OUT)
-    ) {
+    if (!accessToken) {
       Swal.fire('Error', 'กรุณาเข้าสู่ระบบก่อน', 'error');
       return;
     }
@@ -225,7 +204,7 @@ export default function ApprovedPage() {
       await axios.patch(
         `${BASE}/approver/requests/bulk-reject`,
         { ids: selectedIds, pin },
-        { headers: { Authorization: `Bearer ${sess.accessToken}` } }
+        { headers: { Authorization: `Bearer ${accessToken}` } }
       );
       Swal.fire('สำเร็จ', 'ปฏิเสธทั้งหมดแล้ว', 'success');
       setSelectedIds([]);
