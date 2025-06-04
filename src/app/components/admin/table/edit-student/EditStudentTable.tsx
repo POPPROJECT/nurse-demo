@@ -92,25 +92,66 @@ export default function EditStudentTable() {
   }, [accessToken]);
 
   const deleteUser = async (id: number) => {
+    // ตรวจสอบว่ามี accessToken หรือไม่ (ถ้าใช้ AuthContext หรือ Prop)
+    if (!accessToken) {
+      // accessToken นี้ต้องถูกส่งเข้ามาใน Component หรือดึงจาก Context
+      Swal.fire(
+        'ข้อผิดพลาด',
+        'ไม่พบ Authentication Token กรุณา Login ใหม่',
+        'error'
+      );
+      return;
+    }
+
     const confirm = await Swal.fire({
       title: 'ยืนยันการลบ?',
+      text: 'คุณแน่ใจหรือไม่ว่าต้องการลบบัญชีผู้ใช้นี้? การกระทำนี้ไม่สามารถย้อนกลับได้',
       icon: 'warning',
       showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'ใช่, ลบเลย',
+      cancelButtonText: 'ยกเลิก',
     });
+
     if (!confirm.isConfirmed) return;
+
     try {
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/users/${id}`,
         {
           method: 'DELETE',
-          credentials: 'include',
+          headers: {
+            Authorization: `Bearer ${accessToken}`, // ✅ ส่ง Token ใน Header
+            // 'Content-Type': 'application/json', // ไม่จำเป็นสำหรับ DELETE ที่ไม่มี body
+          },
+          // credentials: 'include', // ไม่จำเป็นแล้วถ้าส่ง Token ใน Header
         }
       );
-      if (!res.ok) throw new Error();
-      setUsers((prev) => prev.filter((u) => u.id !== id));
-      Swal.fire('ลบสำเร็จ', '', 'success');
-    } catch {
-      Swal.fire('ผิดพลาด', 'ลบไม่สำเร็จ', 'error');
+
+      if (!res.ok) {
+        let errorMessage = 'ลบไม่สำเร็จ';
+        try {
+          const errorData = await res.json();
+          errorMessage = errorData.message || `เกิดข้อผิดพลาด: ${res.status}`;
+        } catch (e) {
+          // ถ้า response ไม่ใช่ JSON หรือมีปัญหาในการ parse
+          errorMessage = `เกิดข้อผิดพลาด: ${res.status} ${res.statusText}`;
+        }
+        throw new Error(errorMessage); // โยน Error พร้อม Message ที่ได้จาก Backend
+      }
+
+      // ถ้าสำเร็จ ลบ user ออกจาก state ใน UI
+      setUsers((prev) => prev.filter((u) => u.id !== id)); // สมมติว่ามีฟังก์ชัน setUsers
+      Swal.fire('ลบสำเร็จ!', 'ผู้ใช้ถูกลบเรียบร้อยแล้ว', 'success');
+    } catch (err: any) {
+      // รับ err เป็น any เพื่อเข้าถึง message
+      console.error('Error deleting user:', err);
+      Swal.fire(
+        'ผิดพลาด',
+        err.message || 'ลบไม่สำเร็จ กรุณาลองใหม่อีกครั้ง',
+        'error'
+      );
     }
   };
 

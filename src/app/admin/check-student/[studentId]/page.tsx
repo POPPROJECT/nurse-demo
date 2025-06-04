@@ -4,24 +4,55 @@ import { useParams, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { getSession } from 'lib/session';
 import AdminProgressClient from '@/app/components/admin/check-student/AdminProgressClient';
+import { useAuth } from '@/app/contexts/AuthContext';
 
 export default function AdminStudentProgressPage() {
   const { studentId } = useParams();
   const searchParams = useSearchParams();
   const studentNameParam = searchParams.get('name') || '';
-  const [token, setToken] = useState<string>('');
+
+  const { accessToken, user: authUser } = useAuth(); // ✅ 2. ดึง accessToken และ user จาก Context
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    getSession().then((sess) => {
-      if (!sess) console.error('⛔ Session not found!');
-      return;
-    });
-  }, []);
+    // ✅ ตรวจสอบ accessToken จาก Context เมื่อ Component mount
+    // AdminLayout ควรจะป้องกันเส้นทางนี้อยู่แล้ว ถ้าไม่มี session จริงๆ จะถูก redirect ไปก่อน
+    if (accessToken) {
+      setIsLoading(false); // ถ้ามี token ก็พร้อมใช้งาน
+    } else if (authUser === null && accessToken === null) {
+      // กรณีที่ AuthProvider บอกว่าไม่มี session (อาจจะหลัง logout หรือ session หมดอายุจริงๆ)
+      // AdminLayout ควรจะ redirect ไปแล้ว แต่ถ้ามาถึงตรงนี้ได้ ก็อาจจะ redirect ซ้ำอีกที
+      // หรือแสดงข้อความว่า session หมดอายุ
+      console.error(
+        '⛔ [AdminStudentProgressPage] No session found in AuthContext.'
+      );
+      // window.location.href = '/'; // ไม่ควร redirect จากที่นี่ ปล่อยให้ AdminLayout จัดการ
+      setIsLoading(false); // เพื่อให้ UI แสดงผลว่ามีปัญหา
+    }
+    // ถ้า authUser กำลังโหลด (ถ้า Context มี state loading ของตัวเอง) ก็ให้ isLoading เป็น true ต่อไป
+  }, [accessToken, authUser]);
 
-  if (!token) return <div className="p-6">Loading session...</div>;
+  // ✅ แสดง Loading UI ขณะรอ accessToken จาก Context หรือกำลังตรวจสอบ
+  if (isLoading)
+    return <div className="p-6 text-center">Loading session...</div>;
+
+  // ✅ ถ้าไม่มี accessToken จริงๆ (หลังจาก Context โหลดแล้ว) แสดงข้อความให้ Login ใหม่
+  // AdminLayout ควรจะดักจับกรณีนี้ไปแล้ว แต่ใส่ไว้เผื่อ
+  if (!accessToken) {
+    return (
+      <div className="p-6 text-center text-red-500">
+        Session not available. Please{' '}
+        <Link href="/" className="underline">
+          login
+        </Link>{' '}
+        again.
+      </div>
+    );
+  }
+
   if (!studentId) return <div className="p-6">ไม่พบรหัสนิสิต</div>;
 
-  const displayName = studentNameParam || studentId;
+  const displayName = studentNameParam || studentId.toString(); // studentId อาจจะเป็น string[]
 
   return (
     <div className="container max-w-6xl px-4 py-8 mx-auto mt-10 sm:mt-0">
@@ -57,7 +88,10 @@ export default function AdminStudentProgressPage() {
         <h2 className="text-lg font-semibold sm:text-xl ">🔍 {displayName}</h2>
       </div>
 
-      <AdminProgressClient accessToken={token} studentId={Number(studentId)} />
+      <AdminProgressClient
+        accessToken={accessToken}
+        studentId={Number(studentId)}
+      />
     </div>
   );
 }
