@@ -1,13 +1,14 @@
 'use client';
 
-// useRouter จะถูกใช้ใน handleSubmit เพื่อทำการ Redirect
+// useRouter อาจจะไม่จำเป็นแล้วสำหรับฟังก์ชัน handleSubmit ถ้าคุณเปลี่ยนไปใช้ window.location.href ทั้งหมด
+// แต่ยังสามารถเก็บไว้ได้หากส่วนอื่นของ Component มีการใช้งาน
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { FaEnvelope, FaKey } from 'react-icons/fa';
 import { FcGoogle } from 'react-icons/fc';
 
 export default function LoginPage() {
-  const router = useRouter();
+  const router = useRouter(); // คุณยังสามารถใช้ router สำหรับการ navigate อื่นๆ ที่ไม่ใช่หลัง login ได้
   const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -27,8 +28,7 @@ export default function LoginPage() {
     }
 
     try {
-      // --- ✅✅✅ ส่วนที่แก้ไขหลัก ---
-      // เปลี่ยนจากการเรียก signIn() มาเป็นการ fetch ไปยัง API Route ของ Frontend เอง
+      // เรียก API Route ของ Frontend เอง
       const res = await fetch('/api/auth/signin', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -36,7 +36,6 @@ export default function LoginPage() {
       });
 
       const result = await res.json();
-      // -----------------------------
 
       if (!res.ok || result.error) {
         setError(result.error || 'Login failed. Please try again.');
@@ -47,26 +46,29 @@ export default function LoginPage() {
         return;
       }
 
-      // ถ้าสำเร็จ Backend (ผ่าน Next.js API Route) จะจัดการตั้งค่า Cookie ให้เอง
-      // เราสามารถ Redirect ได้เลย
+      // ถ้าสำเร็จ, API Route ของ Frontend ได้จัดการตั้งค่า Cookie บน vercel.app แล้ว
+      // ทำการ Redirect ด้วย window.location.href เพื่อบังคับ Full Page Reload
       const role = result.user?.role;
+      console.log('[LoginPage] Login successful, user role:', role); // Log เพื่อ Debug
 
       if (role) {
+        let targetPath = '/';
         if (role === 'ADMIN') {
-          // ใช้ router.push() ของ Next.js เพื่อประสบการณ์ใช้งานที่ดีกว่า (Client-side navigation)
-          // ตอนนี้มันจะทำงานได้แล้ว เพราะหน้าถัดไปจะสามารถอ่าน Cookie ที่ถูกตั้งค่าบนโดเมนเดียวกันได้
-          router.push('/admin/books');
+          targetPath = '/admin/books';
         } else if (role === 'STUDENT') {
-          router.push('/student/books');
+          targetPath = '/student/books';
         } else if (role === 'EXPERIENCE_MANAGER') {
-          router.push('/experience-manager/books');
+          targetPath = '/experience-manager/books';
         } else if (role === 'APPROVER_IN' || role === 'APPROVER_OUT') {
-          router.push('/approver/approved');
-        } else {
-          router.push('/');
+          targetPath = '/approver/approved';
         }
+
+        console.log(
+          '[LoginPage] Redirecting to (hard navigation):',
+          targetPath
+        );
+        window.location.href = targetPath; // ✅ เปลี่ยนมาใช้ window.location.href
       } else {
-        // กรณีที่ไม่คาดคิด
         setError('Login successful, but user role is missing.');
         if (submitButton) {
           submitButton.disabled = false;
@@ -74,7 +76,7 @@ export default function LoginPage() {
         }
       }
     } catch (err) {
-      console.error('Submit error:', err);
+      console.error('Login page submit error:', err);
       setError('An unexpected network error occurred.');
       if (submitButton) {
         submitButton.disabled = false;
