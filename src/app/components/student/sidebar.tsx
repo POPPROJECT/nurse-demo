@@ -90,13 +90,15 @@ function Sidebar() {
           <MenuItem isCollapsed={isCollapsed} icon={<MdOutlineManageSearch />} label="สั่งออกข้อมูล" />
         </Link> */}
 
-        <Link href="/api/auth/signout" className="text-black hover:text-white">
-          <MenuItem
-            isCollapsed={isCollapsed}
-            icon={<MdLogout />}
-            label="ออกจากระบบ"
-          />
-        </Link>
+        <MenuItem
+          isCollapsed={isCollapsed}
+          icon={<MdLogout />}
+          label="ออกจากระบบ"
+          onClick={async () => {
+            await fetch('/api/auth/signout', { method: 'POST' });
+            window.location.href = '/';
+          }}
+        />
       </nav>
     </aside>
   );

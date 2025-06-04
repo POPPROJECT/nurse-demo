@@ -5,6 +5,7 @@ import NavbarAdmin from '../components/admin/navbarAdmin'; // ตรวจสอ
 import SidenavAdmin from '../components/admin/sidenavAdmin'; // ตรวจสอบ Path ให้ถูกต้อง
 import { redirect } from 'next/navigation'; // ✅ Import redirect สำหรับ Server Component
 import { AuthProvider } from '../contexts/AuthContext';
+import Footer from '../components/Footer';
 
 // ✅ ทำให้เป็น async function เพื่อเรียก await getSession()
 export default async function AdminLayout({
@@ -39,6 +40,7 @@ export default async function AdminLayout({
             {children}
           </main>
         </div>
+        <Footer />
       </div>
     </AuthProvider>
   );
