@@ -32,16 +32,15 @@ const FeatureDisabledMessage = ({
   );
 };
 
-const session = await getSession(); // Get session from server-side (no useAuth here)
-
-const token = session?.accessToken;
-
-
 // ฟังก์ชันสำหรับตรวจสอบสถานะระบบนับประสบการณ์
 async function getExperienceCountingSystemStatus(): Promise<{
   enabled: boolean;
   error: string | null;
 }> {
+  const session = await getSession(); // Get session from server-side (SSR)
+
+  const token = session?.accessToken;
+
   try {
     const res = await fetch(
       `${process.env.NEXT_PUBLIC_BACKEND_URL}/admin/settings/get-status`,
@@ -132,6 +131,8 @@ interface StudentExperiencePageProps {
 export default async function StudentExperiencePage({
   params,
 }: StudentExperiencePageProps) {
+  const session = await getSession(); // Get session from server-side (no useAuth here)
+
   const { studentId } = params;
 
   if (

@@ -4,10 +4,11 @@ import StudentHistoryClient from './StudentHistoryClient';
 import { getSession } from 'lib/session';
 
 
-const session = await getSession(); // Get session from server-side (no useAuth here)
-const token = session?.accessToken;
+
 
 async function getExperienceCountingSystemStatus() {
+  const session = await getSession(); // Get session from server-side (no useAuth here)
+  const token = session?.accessToken;
   try {
     const res = await fetch(
       `${process.env.NEXT_PUBLIC_BACKEND_URL}/admin/settings/get-status`,
@@ -29,6 +30,7 @@ export default async function StudentHistoryPageServer({
 }: {
   params: { studentId: string };
 }) {
+  const session = await getSession(); // Get session from server-side (no useAuth here)
   if (
     !session ||
     !session.user ||
