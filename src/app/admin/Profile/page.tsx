@@ -21,6 +21,8 @@ interface UserProfile {
 
 export default function AdminProfilePage() {
   const [user, setUser] = useState<UserProfile | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({
     fullname: '',
@@ -32,6 +34,8 @@ export default function AdminProfilePage() {
 
   useEffect(() => {
     const fetchUser = async () => {
+      setLoading(true);
+      setError(null);
       try {
         const res = await axios.get(
           `${process.env.NEXT_PUBLIC_BACKEND_URL}/users/me`,
@@ -48,6 +52,8 @@ export default function AdminProfilePage() {
       } catch (err) {
         // ❌ ถ้าไม่มี session → redirect ไปหน้า login
         console.error('Error fetching user profile in AdminProfilePage:', err);
+      } finally {
+        setLoading(false);
       }
     };
     fetchUser();
@@ -85,8 +91,19 @@ export default function AdminProfilePage() {
     window.location.reload();
   };
 
-  if (!user) return <div className="p-10">Loading...</div>;
-
+  if (loading) return <div className="p-10 text-center">Loading...</div>;
+  if (error)
+    return (
+      <div className="p-10 text-center text-red-500">
+        Error loading profile: {error}
+      </div>
+    );
+  if (!user)
+    return (
+      <div className="p-10 text-center">
+        User data not available. You might have been logged out.
+      </div>
+    );
   return (
     <main className="flex-1 px-4 py-8 mt-10 md:px-12 sm:mt-0">
       <div className="max-w-3xl mx-auto overflow-hidden bg-white shadow-xl rounded-2xl">
