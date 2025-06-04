@@ -12,6 +12,7 @@ import {
 } from 'react-icons/fa';
 import { BACKEND_URL } from '../../../../lib/constants';
 import { useAuth } from '@/app/contexts/AuthContext';
+import Swal from 'sweetalert2';
 
 interface UserProfile {
   id: number;
@@ -98,22 +99,49 @@ export default function AdminProfilePage() {
   };
 
   const save = async () => {
+    if (!accessToken) {
+      Swal.fire(
+        'ข้อผิดพลาด',
+        'Session หมดอายุหรือไม่พบ Token กรุณาเข้าสู่ระบบใหม่อีกครั้ง',
+        'error'
+      );
+      // อาจจะ redirect ไปหน้า login
+      // window.location.href = '/';
+      return;
+    }
+
     const formData = new FormData();
     formData.append('fullname', form.fullname);
-    if (file) formData.append('avatar', file);
+    if (file) {
+      formData.append('avatar', file);
+    }
 
-    await axios.patch(
-      `${process.env.NEXT_PUBLIC_BACKEND_URL}/users/me`,
-      formData,
-      {
-        withCredentials: true,
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      }
-    );
-    setEditing(false);
-    window.location.reload();
+    try {
+      await axios.patch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/users/me`,
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data', // ถูกต้องสำหรับ FormData
+            Authorization: `Bearer ${accessToken}`, // ✅ ส่ง Token ใน Header
+          },
+          // withCredentials: true, // ไม่จำเป็นแล้วถ้าส่ง Token ใน Header
+        }
+      );
+      Swal.fire('สำเร็จ!', 'บันทึกข้อมูลเรียบร้อยแล้ว', 'success');
+      setEditing(false);
+      // พิจารณาการ Reload หรือการ Update State ท้องถิ่นแทนการ Reload ทั้งหน้า
+      // เพื่อประสบการณ์ใช้งานที่ดีขึ้น อาจจะเรียก fetchUser() อีกครั้ง หรืออัปเดต user state โดยตรง
+      window.location.reload(); // หรือ fetchUser() อีกครั้งเพื่ออัปเดตข้อมูลล่าสุด
+    } catch (err: any) {
+      console.error('Error saving profile:', err);
+      Swal.fire(
+        'เกิดข้อผิดพลาด',
+        err.response?.data?.message ||
+          'ไม่สามารถบันทึกข้อมูลได้ กรุณาลองใหม่อีกครั้ง',
+        'error'
+      );
+    }
   };
 
   if (loading) return <div className="p-10 text-center">Loading...</div>;

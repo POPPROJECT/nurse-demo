@@ -5,6 +5,7 @@ import Swal from 'sweetalert2';
 import TableSearchBar from './TableSearchBar';
 import TableDisplay from './TableDisplay';
 import TablePagination from './TablePagination';
+import { useAuth } from '@/app/contexts/AuthContext';
 
 interface User {
   id: number;
@@ -15,6 +16,7 @@ interface User {
 }
 
 export default function EditStudentTable() {
+  const { accessToken } = useAuth(); // ✅ ใช้ accessToken จาก context
   const [users, setUsers] = useState<User[]>([]);
   const [search, setSearch] = useState('');
   const [sortBy, setSortBy] = useState<'fullName' | 'email' | 'studentId'>(
@@ -26,24 +28,68 @@ export default function EditStudentTable() {
   const [page, setPage] = useState(1);
 
   useEffect(() => {
-    fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/users?role=STUDENT`, {
-      credentials: 'include',
-    })
-      .then((res) => res.json())
-      .then((data) => {
+    const fetchInitialUsers = async () => {
+      // ✅ เปลี่ยนชื่อฟังก์ชันให้สื่อความหมาย
+      try {
+        // 🎯 ตรวจสอบการเรียก API นี้
+        // ถ้า API นี้ต้องใช้ Token ให้แน่ใจว่าส่งไปใน Header อย่างถูกต้อง
+        // ถ้าใช้ Axios Instance ที่ตั้งค่า Interceptor ไว้แล้ว มันควรจะทำงานอัตโนมัติ
+        // ถ้าใช้ fetch โดยตรง ต้องมั่นใจว่าใส่ credentials: 'include' หรือ Authorization header
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/users?role=STUDENT`,
+          {
+            method: 'GET', // ระบุ method ให้ชัดเจน (ถึงแม้ GET จะเป็น default)
+            headers: accessToken
+              ? { Authorization: `Bearer ${accessToken}` }
+              : {}, // ส่ง Token ถ้ามี
+            // credentials: 'include', // ใช้ credentials หรือ Authorization header อย่างใดอย่างหนึ่ง
+          }
+        );
+
+        if (!res.ok) {
+          // ถ้าเกิด Error (เช่น 401) ให้แสดง Error แต่ "ห้าม" Redirect
+          const errorData = await res
+            .json()
+            .catch(() => ({ message: 'Failed to parse error response' }));
+          console.error(
+            'Error fetching students in EditStudentTable:',
+            res.status,
+            errorData
+          );
+          Swal.fire(
+            'ผิดพลาด',
+            `โหลดข้อมูลนิสิตไม่สำเร็จ (Status: ${res.status}): ${
+              errorData.message || 'Unknown error'
+            }`,
+            'error'
+          );
+          setUsers([]); // อาจจะ set เป็น [] หรือแสดงสถานะ Error ใน UI
+          return; // ออกจากฟังก์ชัน
+        }
+
+        const data = await res.json();
         setUsers(
           data.map((u: any) => ({
             id: u.id,
             studentId: u.studentProfile?.studentId ?? '',
             fullName: u.name,
             email: u.email,
-            status: u.status ?? 'ENABLED',
+            status: u.status ?? 'ENABLED', // ควรจะเป็น ENABLE หรือ DISABLE ตาม Enum
           }))
         );
-      })
+      } catch (err) {
+        console.error('Exception fetching students in EditStudentTable:', err);
+        Swal.fire(
+          'ผิดพลาด',
+          'โหลดข้อมูลนิสิตไม่สำเร็จ กรุณาลองใหม่อีกครั้ง',
+          'error'
+        );
+        setUsers([]);
+      }
+    };
 
-      .catch(() => Swal.fire('ผิดพลาด', 'โหลดข้อมูลไม่สำเร็จ', 'error'));
-  }, []);
+    fetchInitialUsers();
+  }, [accessToken]);
 
   const deleteUser = async (id: number) => {
     const confirm = await Swal.fire({
