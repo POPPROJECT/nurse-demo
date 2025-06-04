@@ -2,17 +2,9 @@
 
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import {
-  FaUser,
-  FaEnvelope,
-  FaEdit,
-  FaCheck,
-  FaTimes,
-  FaLock,
-  FaCamera,
-} from 'react-icons/fa';
-import { BACKEND_URL } from '../../../../lib/constants';
+import { FaUser, FaEnvelope, FaLock, FaCamera, FaTimes, FaCheck, FaEdit } from 'react-icons/fa';
 import { useAuth } from '@/app/contexts/AuthContext';
+import { BACKEND_URL } from 'lib/constants';
 
 interface UserProfile {
   id: number;
@@ -23,7 +15,6 @@ interface UserProfile {
 
 export default function StyledExperienceManagerProfile() {
   const { accessToken, session: authUser } = useAuth();
-
   const [user, setUser] = useState<UserProfile | null>(null);
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({
@@ -42,9 +33,7 @@ export default function StyledExperienceManagerProfile() {
         const res = await axios.get(
           `${process.env.NEXT_PUBLIC_BACKEND_URL}/users/me`,
           {
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-            },
+            headers: { Authorization: `Bearer ${accessToken}` },
           }
         );
         setUser(res.data);

@@ -39,7 +39,7 @@ export default function StudentExperienceClient({
   studentIdForApi,
   studentName,
   studentDisplayId,
-  session
+  session,
 }: StudentExperienceClientProps) {
   const { accessToken } = useAuth(); // ใช้ useAuth แทนการดึงจาก lib/session
   const userId = parseInt(studentIdForApi, 10);
@@ -84,23 +84,10 @@ export default function StudentExperienceClient({
         }
       )
       .then((res) => {
-        const initializedBooks = res.data.map((book: Book) => ({
-          ...book,
-          courses: book.courses.map((course: Course) => ({
-            ...course,
-            subCourses: course.subCourses.map((sub: SubCourse) => ({
-              ...sub,
-              progressCount: 0,
-              confirmedCount: 0,
-            })),
-          })),
-        }));
-        setBooks(initializedBooks);
-        if (initializedBooks.length > 0)
-          setSelectedBookId(initializedBooks[0].id); // Set the default selected book
+        setBooks(res.data);
+        if (res.data.length > 0) setSelectedBookId(res.data[0].id);
       })
       .catch((err) => {
-        console.error('Error fetching book details:', err);
         setMessage('ไม่สามารถโหลดข้อมูลสมุดที่ได้รับอนุญาตได้');
         setMessageType('error');
       });
