@@ -6,7 +6,6 @@ import { Session } from 'lib/session'; // ประเภทของ session �
 import FilterBar from '@/app/components/experience-manager/CountsExperience/FilterBar';
 import StudentTable from '@/app/components/experience-manager/CountsExperience/StudentTable';
 import Pagination from '@/app/components/experience-manager/CountsExperience/Pagination';
-import { useAuth } from '@/app/contexts/AuthContext';
 
 interface CountsExperienceClientProps {
   session: Session; // รับ session ที่มี accessToken และข้อมูลผู้ใช้

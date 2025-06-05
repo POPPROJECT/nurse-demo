@@ -70,34 +70,64 @@ export default function StudentExperienceClient({
 
   // useEffect for fetching book details
   useEffect(() => {
-    if (!token) return;
+    if (isNaN(userId) || !accessToken) {
+      // ตรวจสอบว่ามี userId และ accessToken หรือไม่
+      if (isNaN(userId))
+        console.error('StudentExperienceClient: Invalid userId for API call.');
+      if (!accessToken)
+        console.log('StudentExperienceClient: Waiting for access token.');
+      setBooks([]); // กำหนดให้ไม่มีสมุดถ้าข้อมูลไม่พร้อม
+      return;
+    }
+
     axios
-      .get(`${BACKEND_URL}/experience-books/details`, {
-        headers: { Authorization: `Bearer ${accessToken}` },
-        withCredentials: true,
+      .get(`${BACKEND_URL}/experience-books/authorized/student/${userId}`, {
+        // <--- เปลี่ยน Endpoint ตรงนี้
+        headers: { Authorization: `Bearer ${accessToken}` }, // ใช้ token ของผู้ที่ login
+        // withCredentials: true, // อาจไม่จำเป็นถ้าใช้ Bearer token และไม่มีการจัดการ session-based cookies ข้ามโดเมน
       })
       .then((res) => {
-        const initializedBooks = res.data.map((book: Book) => ({
+        // ข้อมูลที่ได้จาก r.data ควรจะเป็นรายการ Book ที่นิสิตคนนั้นมีสิทธิ์แล้ว
+        const authorizedBooks = res.data as Book[];
+
+        const initializedBooks = authorizedBooks.map((book: Book) => ({
           ...book,
-          courses: book.courses.map((course: Course) => ({
-            ...course,
-            subCourses: course.subCourses.map((sub: SubCourse) => ({
-              ...sub,
-              progressCount: 0,
-              confirmedCount: 0,
-            })),
-          })),
+          courses:
+            book.courses?.map((course: Course) => ({
+              // เพิ่มการตรวจสอบว่า courses มีค่าหรือไม่
+              ...course,
+              subCourses:
+                course.subCourses?.map((sub: SubCourse) => ({
+                  // เพิ่มการตรวจสอบว่า subCourses มีค่าหรือไม่
+                  ...sub,
+                  progressCount: 0,
+                  confirmedCount: 0,
+                })) || [],
+            })) || [],
         }));
+
         setBooks(initializedBooks);
-        if (initializedBooks.length > 0)
+        if (initializedBooks.length > 0) {
           setSelectedBookId(initializedBooks[0].id);
+        } else {
+          setSelectedBookId(null); // ไม่มีสมุดที่ได้รับอนุญาต
+          // อาจจะแสดงข้อความบอกผู้ใช้
+          // setMessage('ไม่พบสมุดบันทึกที่นิสิตคนนี้ได้รับอนุญาตให้เข้าถึง');
+          // setMessageType('error');
+        }
       })
       .catch((err) => {
-        console.error('Error fetching book details:', err);
-        setMessage('ไม่สามารถโหลดข้อมูลสมุดประสบการณ์ได้');
+        console.error(
+          `Error fetching authorized books for student ${userId}:`,
+          err
+        );
+        setMessage(
+          `ไม่สามารถโหลดข้อมูลสมุดประสบการณ์สำหรับนิสิต ${studentDisplayId} ได้`
+        );
         setMessageType('error');
+        setBooks([]); // เคลียร์ค่า books หากเกิดข้อผิดพลาด
       });
-  }, [token]);
+  }, [userId, accessToken, studentDisplayId]);
 
   // useEffect for fetching student progress
   useEffect(() => {
