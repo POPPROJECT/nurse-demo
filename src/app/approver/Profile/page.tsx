@@ -37,7 +37,7 @@ export default function ApproverProfilePage() {
   });
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const { accessToken, session: authSession } = useAuth(); // ✅ ดึง accessToken และ session จาก Context
+  const { accessToken } = useAuth(); // ✅ ดึง accessToken และ session จาก Context
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -92,8 +92,10 @@ export default function ApproverProfilePage() {
     if (file) formData.append('avatar', file);
 
     await axios.patch(`${BACKEND_URL}/users/me`, formData, {
-      withCredentials: true,
-      headers: { 'Content-Type': 'multipart/form-data' },
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'multipart/form-data',
+      },
     });
 
     setEditing(false);

@@ -2,9 +2,17 @@
 
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { FaUser, FaEnvelope, FaLock, FaCamera, FaTimes, FaCheck, FaEdit } from 'react-icons/fa';
+import {
+  FaUser,
+  FaEnvelope,
+  FaEdit,
+  FaCheck,
+  FaTimes,
+  FaLock,
+  FaCamera,
+} from 'react-icons/fa';
+import { BACKEND_URL } from '../../../../lib/constants';
 import { useAuth } from '@/app/contexts/AuthContext';
-import { BACKEND_URL } from 'lib/constants';
 
 interface UserProfile {
   id: number;
@@ -14,7 +22,6 @@ interface UserProfile {
 }
 
 export default function StyledExperienceManagerProfile() {
-  const { accessToken, session: authUser } = useAuth();
   const [user, setUser] = useState<UserProfile | null>(null);
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({
@@ -25,7 +32,7 @@ export default function StyledExperienceManagerProfile() {
   });
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { accessToken } = useAuth();
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -44,15 +51,12 @@ export default function StyledExperienceManagerProfile() {
           avatarUrl: res.data.avatarUrl || '',
         });
       } catch (err) {
+        // ❌ ถ้าไม่มี session → redirect ไปหน้า login
         window.location.href = '/';
       }
     };
-    if (accessToken) {
-      fetchUser();
-    } else {
-      setLoading(false);
-    }
-  }, [accessToken]);
+    fetchUser();
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
@@ -73,33 +77,21 @@ export default function StyledExperienceManagerProfile() {
     if (form.password) formData.append('password', form.password);
     if (file) formData.append('avatar', file);
 
-    try {
-      await axios.patch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/users/me`,
-        formData,
-        {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            'Content-Type': 'multipart/form-data',
-          },
-        }
-      );
-      setEditing(false);
-      window.location.reload();
-    } catch (err) {
-      console.error(err);
-      setEditing(false);
-      setForm({
-        email: user?.email || '',
-        fullname: user?.fullname || '',
-        password: '',
-        avatarUrl: user?.avatarUrl || '',
-      });
-    }
+    await axios.patch(
+      `${process.env.NEXT_PUBLIC_BACKEND_URL}/users/me`,
+      formData,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'multipart/form-data',
+        },
+      }
+    );
+    setEditing(false);
+    window.location.reload();
   };
 
-  if (loading) return <div className="p-10">Loading...</div>;
-  if (!user) return <div className="p-10">ไม่พบข้อมูลผู้ใช้</div>;
+  if (!user) return <div className="p-10">Loading...</div>;
 
   return (
     <main className="flex-1 px-4 py-8 md:px-12">
@@ -107,6 +99,7 @@ export default function StyledExperienceManagerProfile() {
         <div className="p-8 bg-[#F1A661] dark:bg-[#5A9ED1]">
           <div className="flex flex-col items-center md:flex-row">
             <div className="flex flex-col items-center space-y-3">
+              {/* รูปโปรไฟล์ + ปุ่มกล้อง */}
               <div className="relative">
                 {previewUrl || form.avatarUrl ? (
                   <img
@@ -124,6 +117,7 @@ export default function StyledExperienceManagerProfile() {
                     <FaUser className="text-4xl text-gray-400" />
                   </div>
                 )}
+
                 {editing && (
                   <button
                     type="button"
@@ -137,6 +131,8 @@ export default function StyledExperienceManagerProfile() {
                   </button>
                 )}
               </div>
+
+              {/* ปุ่มด้านล่าง */}
               {editing && (
                 <button
                   onClick={() =>
@@ -147,6 +143,8 @@ export default function StyledExperienceManagerProfile() {
                   คลิกเพื่อเปลี่ยนรูป
                 </button>
               )}
+
+              {/* ซ่อนไว้ */}
               <input
                 id="avatarInput"
                 type="file"
