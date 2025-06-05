@@ -1,8 +1,11 @@
+// app/experience-manager/CountsExperience/[studentId]/page.tsx
+
+import { getSession, Session } from 'lib/session';
 import { Role } from 'lib/type';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import StudentExperienceClient from './StudentExperienceClient'; // Your renamed client component
-import { getSession } from 'lib/session';
+import { useAuth } from '@/app/contexts/AuthContext';
 
 // Component สำหรับแสดงข้อความเมื่อฟีเจอร์ปิดหรือเข้าไม่ได้
 const FeatureDisabledMessage = ({
@@ -37,15 +40,12 @@ async function getExperienceCountingSystemStatus(): Promise<{
   enabled: boolean;
   error: string | null;
 }> {
-  const session = await getSession(); // Get session from server-side (SSR)
-
-  const token = session?.accessToken;
-
+  const { accessToken } = useAuth();
   try {
     const res = await fetch(
       `${process.env.NEXT_PUBLIC_BACKEND_URL}/admin/settings/get-status`,
       {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${accessToken}` },
         cache: 'no-store',
       }
     );
@@ -128,21 +128,26 @@ interface StudentExperiencePageProps {
   };
 }
 
-export default async function StudentExperiencePage({
-  params,
+export default async function StudentExperiencePageServer({
+  params: paramsProp, // Renamed to avoid conflict with the awaited 'params'
 }: StudentExperiencePageProps) {
-  const session = await getSession(); // Get session from server-side (no useAuth here)
+  // Attempt to address the "params should be awaited" error
+  // This assumes 'paramsProp' might be a promise-like object from Next.js runtime
+  const params = await (paramsProp as any); // Cast to 'any' to allow await for now
+  const { studentId: studentIdFromUrl } = params;
 
-  const { studentId } = params;
+  const session: Session | null = await getSession();
 
+  // 1. Authentication and Role Check
   if (
     !session ||
     !session.user ||
     session.user.role !== Role.EXPERIENCE_MANAGER
   ) {
-    redirect('/');
+    redirect('/'); // Or your login page
   }
 
+  // Ensure accessToken exists before proceeding with API calls that need it
   if (!session.accessToken) {
     console.error('StudentExperiencePageServer: No access token in session.');
     return (
@@ -154,27 +159,34 @@ export default async function StudentExperiencePage({
     );
   }
 
+  // 2. Check System Status (Corrected destructuring)
   const systemStatusResult = await getExperienceCountingSystemStatus();
   const { enabled: countingEnabled, error: statusFetchError } =
     systemStatusResult;
 
-  if (statusFetchError || !countingEnabled) {
+  if (statusFetchError) {
     return (
       <FeatureDisabledMessage
-        message={
-          statusFetchError
-            ? 'ไม่สามารถตรวจสอบสถานะของระบบนับประสบการณ์ได้ในขณะนี้'
-            : 'ระบบนับประสบการณ์ถูกปิดการใช้งานโดยผู้ดูแลระบบ'
-        }
+        message="ไม่สามารถตรวจสอบสถานะของระบบนับประสบการณ์ได้ในขณะนี้"
         backLink="/experience-manager/CountsExperience"
         backLinkText="กลับไปหน้ารายงานผล"
       />
     );
   }
 
-  // ✅ FIX: เปลี่ยนจาก studentIdFromUrl เป็น studentId
+  if (!countingEnabled) {
+    return (
+      <FeatureDisabledMessage
+        message="ระบบนับประสบการณ์ถูกปิดการใช้งานโดยผู้ดูแลระบบ"
+        backLink="/experience-manager/CountsExperience"
+        backLinkText="กลับไปหน้ารายงานผล"
+      />
+    );
+  }
+
+  // 3. Fetch Student Profile
   const studentProfile = await fetchStudentProfileByStudentId(
-    studentId,
+    studentIdFromUrl, // This is the ID from the URL, e.g., "45"
     session.accessToken
   );
 
@@ -184,23 +196,29 @@ export default async function StudentExperiencePage({
     !studentProfile.fullname
   ) {
     console.log(
-      `StudentExperiencePageServer: Student profile not found or invalid for URL param: ${studentId}. Profile data received:`,
+      `StudentExperiencePageServer: Student profile not found or invalid for URL param: ${studentIdFromUrl}. Profile data received:`,
       studentProfile
     );
     return (
       <FeatureDisabledMessage
-        message={`ไม่พบข้อมูลนิสิตสำหรับรหัส '${studentId}' หรือไม่มีสิทธิ์เข้าถึง`}
+        message={`ไม่พบข้อมูลนิสิตสำหรับรหัส '${studentIdFromUrl}' หรือไม่มีสิทธิ์เข้าถึง`}
         backLink="/experience-manager/CountsExperience"
         backLinkText="กลับไปหน้ารายงานผล"
       />
     );
   }
 
+  // 4. If all checks pass, render the client component
+  // studentIdForApi: This should be the ID your client component's APIs expect (e.g., the numeric primary key or the string student ID).
+  //                    Your client code uses parseInt(studentIdForApi, 10), so it expects something parsable to an int.
+  //                    If studentIdFromUrl is "45" and that's the PK, it's fine.
+  // studentDisplayId: This is the student ID string for display purposes (e.g., "64012345").
+  // studentName: The student's full name.
   return (
     <StudentExperienceClient
-      studentIdForApi={studentId}
+      studentIdForApi={studentIdFromUrl} // Assuming studentIdFromUrl from params is what your client needs for API calls after parseInt
       studentName={studentProfile.fullname}
-      studentDisplayId={studentProfile.studentId}
+      studentDisplayId={studentProfile.studentId} // The actual student ID string from profile
       session={session}
     />
   );

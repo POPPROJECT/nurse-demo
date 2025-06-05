@@ -5,10 +5,26 @@ import axios from 'axios';
 import Swal from 'sweetalert2';
 import { FaCheck } from 'react-icons/fa';
 import router from 'next/router';
-import { SessionUser, useAuth } from '@/app/contexts/AuthContext';
+import { useAuth } from '@/app/contexts/AuthContext';
 
 export default function RegisterUser() {
-  const { setSession, accessToken } = useAuth(); // ใช้ setSession เพื่ออัปเดต session
+  const { accessToken } = useAuth();
+  useEffect(() => {
+    const checkSession = async () => {
+      try {
+        await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/users/me`, {
+          headers: {
+            // ✅ ใช้ Authorization header
+            Authorization: `Bearer ${accessToken}`,
+          },
+        });
+      } catch (err) {
+        router.push('/');
+      }
+    };
+    checkSession();
+  }, []);
+
   const [role, setRole] = useState<
     'student' | 'approverIn' | 'approverOut' | 'experienceManager'
   >('student');
@@ -21,30 +37,6 @@ export default function RegisterUser() {
     hospital: '',
     ward: '',
   });
-
-  useEffect(() => {
-    const checkSession = async () => {
-      try {
-        // ใช้ accessToken ใน header
-        const res = await axios.get<SessionUser>(
-          `${process.env.NEXT_PUBLIC_BACKEND_URL}/users/me`,
-          {
-            headers: {
-              Authorization: `Bearer ${accessToken}`, // ใช้ Bearer token
-            },
-          }
-        );
-        // การตอบรับจาก API อาจจะถูกใช้ในที่นี้
-        // สามารถอัพเดต session หรือการตั้งค่าอื่นๆ ตามข้อมูลจาก API
-      } catch (err) {
-        console.error('Error fetching user data:', err);
-        router.push('/'); // ถ้าไม่มี session หรือ accessToken ไม่ถูกต้อง
-      }
-    };
-
-    // เรียกใช้งานฟังก์ชัน
-    checkSession();
-  }, [accessToken]); // accessToken จะเป็น dependency สำหรับ useEffect
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
@@ -113,22 +105,18 @@ export default function RegisterUser() {
     }
 
     try {
-      const response = await axios.post(
+      await axios.post(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/signup`,
-        dto,
         {
           headers: {
+            // ✅ ใช้ Authorization header
             Authorization: `Bearer ${accessToken}`,
           },
-        }
+        },
+        dto
       );
-
-      // เมื่อสมัครสำเร็จ ให้เซ็ต session ใหม่
-      const newSession = response.data; // สมมุติว่า backend ส่ง session กลับมา
-      setSession(newSession); // ใช้ setSession จาก context เพื่ออัปเดต session
       Swal.fire('สมัครสมาชิกสำเร็จ', '', 'success');
 
-      // รีเซ็ตฟอร์ม
       setForm({
         name: '',
         email: '',
