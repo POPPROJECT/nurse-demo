@@ -94,7 +94,7 @@ export default function CountsExperienceClient({
       {/* หัวข้อของหน้า */}
       <div className="p-6 mb-6 text-white bg-[linear-gradient(to_right,#f46b45_0%,#eea849_100%)] dark:bg-[#1E293B] rounded-xl shadow-md hover:shadow-lg transition-all duration-300 ease-in-out hover:-translate-y-1 ">
         <h1 className="text-xl font-semibold sm:text-2xl">
-          ระบบรายงานผลของนิสิต
+          จัดการประสบการณ์ของนิสิต
         </h1>
       </div>
 

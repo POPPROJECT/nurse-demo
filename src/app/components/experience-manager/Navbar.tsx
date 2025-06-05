@@ -7,6 +7,8 @@ import { FaBars, FaBookMedical, FaUser } from 'react-icons/fa';
 import { MdLogout } from 'react-icons/md';
 import ThemeToggle from '../ui/ThemeToggle';
 import { useAuth } from '@/app/contexts/AuthContext';
+import { TbReportSearch } from 'react-icons/tb';
+import { LuSquarePlus } from 'react-icons/lu';
 
 export default function Navbar() {
   const { session, accessToken } = useAuth(); // ✅ ดึง session และ accessToken จาก Context
@@ -136,10 +138,18 @@ export default function Navbar() {
                 href="/experience-manager/CountsExperience"
                 className="flex items-center py-2 space-x-2 rounded-md hover:bg-gray-200"
               >
-                <FaBookMedical />
-                <span>นับประสบการณ์</span>
+                <LuSquarePlus />
+                <span>จัดการประสบการณ์ของนิสิต</span>
               </Link>
             )}
+
+            <Link
+              href="/experience-manager/books"
+              className="flex items-center py-2 space-x-2 rounded-md hover:bg-gray-200"
+            >
+              <TbReportSearch />
+              <span>ภาพรวมความคืบหน้าของนิสิต</span>
+            </Link>
 
             <br />
 

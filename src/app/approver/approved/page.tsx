@@ -289,7 +289,7 @@ export default function ApprovedPage() {
   return (
     <div className="container max-w-6xl px-4 py-8 mx-auto mt-10 sm:mt-0">
       <div className="p-6 mb-6 text-white bg-[linear-gradient(to_right,#f46b45_0%,#eea849_100%)] dark:bg-[#1E293B] rounded-xl shadow-md hover:shadow-lg transition-all duration-300 ease-in-out hover:-translate-y-1 ">
-        <h1 className="text-xl font-semibold sm:text-2xl">บันทึกประสบการณ์</h1>
+        <h1 className="text-xl font-semibold sm:text-2xl">จัดการคำขอ</h1>
       </div>
       <main className="">
         <FilterBar
@@ -313,7 +313,7 @@ export default function ApprovedPage() {
               </label>
               <select
                 id="limit"
-                className="px-2 py-1 border border-gray-300 rounded dark:text-white"
+                className="px-2 py-1 border border-gray-300 rounded-lg bg-gray-50"
                 value={limit}
                 onChange={(e) => {
                   setLimit(+e.target.value);

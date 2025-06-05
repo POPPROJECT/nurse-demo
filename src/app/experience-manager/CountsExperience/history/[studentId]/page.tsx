@@ -3,9 +3,6 @@ import { redirect } from 'next/navigation';
 import StudentHistoryClient from './StudentHistoryClient';
 import { getSession } from 'lib/session';
 
-
-
-
 async function getExperienceCountingSystemStatus() {
   const session = await getSession(); // Get session from server-side (no useAuth here)
   const token = session?.accessToken;

@@ -4,6 +4,7 @@ import Chart from 'chart.js/auto';
 import { FaUsers, FaCheckCircle } from 'react-icons/fa';
 import { BACKEND_URL } from 'lib/constants';
 import { useAuth } from '@/app/contexts/AuthContext';
+import Select from 'react-select';
 
 type Book = { id: number; title: string };
 
@@ -31,24 +32,36 @@ function FilterBar({
   selectedBook: number | '';
   setSelectedBook: (v: number | '') => void;
 }) {
+  // สร้างตัวเลือกสำหรับ react-select
+  const bookOptions = books.map((b) => ({
+    value: b.id,
+    label: b.title,
+  }));
+
+  // หา object ของ option ที่ตรงกับ selectedBook (ถ้ามี)
+  const selectedOption =
+    bookOptions.find((opt) => opt.value === selectedBook) || null;
+
   return (
     <div className="mb-6">
       <div className="bg-white dark:bg-[#1E293B] rounded-xl shadow p-4 mb-6 flex items-center">
         <label className="block mb-1 font-medium dark:text-white">สมุด</label>
-        <select
-          className="block w-full px-3 py-2 ml-2 transition-colors duration-300 bg-gray-100 border border-gray-300 rounded-lg shadow-sm lg:w-1/3 dark:border-gray-700 dark:text-gray-800"
-          value={selectedBook}
-          onChange={(e) =>
-            setSelectedBook(e.target.value ? +e.target.value : '')
-          }
-        >
-          <option value="">-- เลือกสมุด --</option>
-          {books.map((b) => (
-            <option key={b.id} value={b.id}>
-              {b.title}
-            </option>
-          ))}
-        </select>
+
+        {/* ใช้ react-select แทน <select> */}
+        <div className="w-full ml-2 lg:w-1/3">
+          <Select
+            instanceId="book-select"
+            options={bookOptions}
+            value={selectedOption}
+            onChange={(opt) =>
+              setSelectedBook(opt ? (opt as { value: number }).value : '')
+            }
+            placeholder="-- เลือกสมุด --"
+            isClearable
+            className="react-select-container"
+            classNamePrefix="react-select"
+          />
+        </div>
       </div>
     </div>
   );

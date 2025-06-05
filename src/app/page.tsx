@@ -24,7 +24,7 @@ export default function LoginPage() {
     ) as HTMLButtonElement;
     if (submitButton) {
       submitButton.disabled = true;
-      submitButton.textContent = 'Logging in...';
+      submitButton.textContent = 'กำลังเข้าสู่ระบบ...';
     }
 
     try {
@@ -104,12 +104,12 @@ export default function LoginPage() {
           className="flex items-center justify-center w-full gap-2 py-3 mb-6 border rounded-md hover:bg-gray-100"
         >
           <FcGoogle size={20} />
-          <span className="font-medium">Login with Google</span>
+          <span className="font-medium">เข้าสู่ระบบด้วย Google</span>
         </a>
 
         <div className="flex items-center mb-6">
           <hr className="flex-grow border-gray-300" />
-          <span className="mx-4 text-gray-500">OR</span>
+          <span className="mx-4 text-gray-500">หรือ</span>
           <hr className="flex-grow border-gray-300" />
         </div>
 
@@ -155,7 +155,7 @@ export default function LoginPage() {
                 id="password"
                 name="password"
                 required
-                placeholder="********"
+                placeholder="password"
                 className="w-full py-3 bg-transparent focus:outline-none"
               />
             </div>
@@ -164,9 +164,9 @@ export default function LoginPage() {
           {/* Submit Button */}
           <button
             type="submit"
-            className="w-full py-3 font-semibold text-white transition bg-orange-500 rounded-md hover:bg-orange-600 disabled:bg-orange-300"
+            className="w-full py-3 font-semibold text-white transition bg-orange-500 rounded-md hover:bg-orange-600"
           >
-            Login
+            เข้าสู่ระบบ
           </button>
         </form>
       </div>

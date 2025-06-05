@@ -85,7 +85,7 @@ function Sidebar() {
             <MenuItem
               isCollapsed={isCollapsed}
               icon={<LuSquarePlus />}
-              label="นับประสบการณ์"
+              label="จัดการประสบการณ์ของนิสิต"
             />
           </Link>
         )}

@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Select from 'react-select';
 
 type Props = {
   books: { id: number; title: string }[];
@@ -21,27 +22,36 @@ export default function FilterBar({
   limit,
   setLimit,
 }: Props) {
+  // แปลง books เป็น options สำหรับ react-select
+  const bookOptions = books.map((b) => ({
+    value: b.id,
+    label: b.title,
+  }));
+
+  // หา option ที่ตรงกับ selectedBook (หรือ null ถ้าไม่เจอ)
+  const selectedOption =
+    bookOptions.find((opt) => opt.value === selectedBook) || null;
   return (
-    <div className="bg-white p-4 rounded-xl shadow flex flex-col lg:flex-row gap-4 items-center dark:bg-[#1E293B] dark:text-white">
+    <div className="bg-white p-4 rounded-xl shadow flex flex-col lg:flex-row gap-4 items-center dark:bg-[#1E293B] dark:text-white justify-between">
       {/* เล่ม */}
-      <label className="block mb-1 font-medium">เลือกเล่มสมุด</label>
-      <select
-        className="w-full px-3 py-2 text-gray-800 bg-gray-100 border border-gray-300 rounded-lg lg:w-1/4"
-        value={selectedBook}
-        onChange={(e) => setSelectedBook(e.target.value ? +e.target.value : '')}
-      >
-        <option value="" className="dark:text-gray-800">
-          -- เลือกสมุด --
-        </option>
-        {books.map((b) => (
-          <option key={b.id} value={b.id} className="dark:text-gray-800">
-            {b.title}
-          </option>
-        ))}
-      </select>
+      <div className="flex items-center w-full lg:w-1/2">
+        <label className="block mb-1 mr-2 font-medium">สมุด</label>
+        <Select
+          instanceId="book-select"
+          options={bookOptions}
+          value={selectedOption}
+          onChange={(opt) =>
+            setSelectedBook(opt ? (opt as { value: number }).value : '')
+          }
+          placeholder="-- เลือกสมุด --"
+          isClearable
+          className="w-full text-gray-800 react-select-container "
+          classNamePrefix="react-select"
+        />
+      </div>
 
       {/* ค้นหา */}
-      <div className="relative flex-1">
+      <div className="relative w-full lg:w-1/3">
         <input
           type="text"
           placeholder="ค้นหารหัสนิสิต หรือ ชื่อ-นามสกุล"
