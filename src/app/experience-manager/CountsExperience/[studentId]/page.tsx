@@ -44,10 +44,7 @@ async function getExperienceCountingSystemStatus(): Promise<{
   try {
     const res = await fetch(
       `${process.env.NEXT_PUBLIC_BACKEND_URL}/admin/settings/get-status`,
-      {
-        headers: { Authorization: `Bearer ${accessToken}` },
-        cache: 'no-store',
-      }
+      { headers: { Authorization: `Bearer ${accessToken}` }, cache: 'no-store' }
     );
     if (!res.ok) {
       console.error(
@@ -79,9 +76,9 @@ interface StudentProfile {
 
 // ฟังก์ชันสำหรับดึงข้อมูลโปรไฟล์นิสิตจาก backend
 async function fetchStudentProfileByStudentId(
-  studentIdFromUrlParam: string, // The ID from the URL (e.g., "45")
-  token: string
+  studentIdFromUrlParam: string // The ID from the URL (e.g., "45")
 ): Promise<StudentProfile | null> {
+  const { accessToken } = useAuth();
   try {
     // Endpoint นี้ควรใช้ identifier ที่ backend คาดหวัง
     // หาก :studentId ใน backend คือ database PK (integer), studentIdFromUrlParam ต้องเป็น PK นั้น
@@ -92,7 +89,7 @@ async function fetchStudentProfileByStudentId(
         process.env.NEXT_PUBLIC_BACKEND_URL
       }/users/student/${encodeURIComponent(studentIdFromUrlParam)}`,
       {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${accessToken}` },
         cache: 'no-store',
       }
     );
@@ -186,8 +183,7 @@ export default async function StudentExperiencePageServer({
 
   // 3. Fetch Student Profile
   const studentProfile = await fetchStudentProfileByStudentId(
-    studentIdFromUrl, // This is the ID from the URL, e.g., "45"
-    session.accessToken
+    studentIdFromUrl // This is the ID from the URL, e.g., "45"
   );
 
   if (
