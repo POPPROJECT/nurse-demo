@@ -78,13 +78,17 @@ async function fetchStudentProfileUsingDisplayId(
   accessToken: string
 ): Promise<StudentProfile | null> {
   try {
-    const res = await fetch(
-      `<span class="math-inline">\{process\.env\.NEXT\_PUBLIC\_BACKEND\_URL\}/users/student/</span>{encodeURIComponent(displayStudentId)}`, // Endpoint นี้จะไปเรียก findStudentProfile ใน users.controller.ts
-      {
-        headers: { Authorization: `Bearer ${accessToken}` },
-        cache: 'no-store',
-      }
-    );
+    const apiUrl = `${
+      process.env.NEXT_PUBLIC_BACKEND_URL
+    }/users/student/${encodeURIComponent(displayStudentId)}`; // <--- ใช้ backticks (`)
+    console.log('page.tsx: Attempting to fetch profile from URL:', apiUrl); // เพิ่ม log เพื่อดู URL ที่สร้างขึ้น
+
+    const res = await fetch(apiUrl, {
+      // <--- ใช้ตัวแปร apiUrl ที่สร้างจาก backticks
+      headers: { Authorization: `Bearer ${accessToken}` },
+      cache: 'no-store',
+    });
+
     if (!res.ok) {
       console.error(
         `page.tsx: Failed to fetch student profile for display ID ${displayStudentId}, status: ${
