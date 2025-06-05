@@ -107,15 +107,15 @@ export default function RegisterUser() {
     try {
       await axios.post(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/signup`,
+        dto, // data ที่จะส่งไปใน request body
         {
+          // config object
           headers: {
-            // ✅ ใช้ Authorization header
-            Authorization: `Bearer ${accessToken}`,
+            Authorization: `Bearer ${accessToken}`, // Token ของ Admin ผู้สร้างบัญชี
           },
-        },
-        dto
+        }
       );
-      Swal.fire('สมัครสมาชิกสำเร็จ', '', 'success');
+      Swal.fire('เพิ่มบัญชีผู้ใช้สำเร็จ', '', 'success');
 
       setForm({
         name: '',
