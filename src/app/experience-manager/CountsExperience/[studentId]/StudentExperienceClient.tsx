@@ -133,19 +133,17 @@ export default function StudentExperienceClient({
 
   // useEffect for fetching student progress (เมื่อมีการเลือกสมุด)
   useEffect(() => {
+    // userId ยังคงใช้สำหรับการตรวจสอบ isNaN หรือเงื่อนไขอื่นๆ ที่ต้องการ numeric ID
     if (isNaN(userId) || !selectedBookId || !accessToken) {
-      // ถ้ายังไม่มี selectedBookId หรือ token ก็ไม่ต้องทำอะไร
-      // หรือถ้า userId ไม่ถูกต้อง
       return;
     }
 
     axios
       .get(
-        `${BACKEND_URL}/experience-books/${selectedBookId}/progress/user-by-string-id/${studentIdForApi}`,
-        // หมายเหตุ: Endpoint นี้รับ studentIdForApi (string id) ซึ่งอาจจะต้องตรงกับที่ backend คาดหวัง
-        // หาก backend endpoint นี้คาดหวัง numeric User ID (เหมือน /authorized/student/:userId)
-        // คุณอาจจะต้องส่ง userId (number) แทน studentIdForApi (string) หรือปรับ backend
-        // จากโค้ดเดิม: user-by-string-id ดังนั้น studentIdForApi (string) น่าจะถูกต้องสำหรับ endpoint นี้
+        // เปลี่ยนจาก studentIdForApi เป็น studentDisplayId
+        `${BACKEND_URL}/experience-books/${selectedBookId}/progress/user-by-string-id/${encodeURIComponent(
+          studentDisplayId
+        )}`, // <--- **แก้ไขตรงนี้**
         {
           headers: { Authorization: `Bearer ${accessToken}` },
         }
@@ -171,11 +169,17 @@ export default function StudentExperienceClient({
         );
       })
       .catch((err) => {
-        console.error('Error fetching student progress:', err);
-        setMessage('ไม่สามารถโหลดข้อมูลความก้าวหน้าของนิสิตได้');
+        console.error(
+          `Error fetching student progress for displayId ${studentDisplayId}:`,
+          err
+        );
+        // แสดง message error จาก props หรือ state ที่คุณตั้งไว้
+        setMessage(
+          `ไม่สามารถโหลดข้อมูลความก้าวหน้าของนิสิต ${studentDisplayId} ได้`
+        );
         setMessageType('error');
       });
-  }, [selectedBookId, userId, accessToken, studentIdForApi]); // เพิ่ม accessToken และ studentIdForApi
+  }, [selectedBookId, userId, accessToken, studentDisplayId, BACKEND_URL]); // เพิ่ม accessToken และ studentIdForApi
 
   // updateProgress function (ไม่เปลี่ยนแปลง)
   const updateProgress = (courseId: number, subId: number, value: number) => {
@@ -237,17 +241,21 @@ export default function StudentExperienceClient({
 
     setSaving(true);
     try {
-      // Endpoint สำหรับ patch progress ควรใช้ studentIdForApi (string) หรือ userId (number)
-      // ให้สอดคล้องกับ backend API definition (จากโค้ดเดิมคือ studentIdForApi)
       await axios.patch(
-        `${BACKEND_URL}/experience-books/${selectedBookId}/progress/user-by-string-id/${studentIdForApi}`,
+        // เปลี่ยนจาก studentIdForApi เป็น studentDisplayId
+        `${BACKEND_URL}/experience-books/${selectedBookId}/progress/user-by-string-id/${encodeURIComponent(
+          studentDisplayId
+        )}`, // <--- **แก้ไขตรงนี้**
         { progress: progressPayload },
         { headers: { Authorization: `Bearer ${accessToken}` } }
       );
 
       // Re-fetch progress to update confirmed counts and reset progress counts
       const res = await axios.get(
-        `${BACKEND_URL}/experience-books/${selectedBookId}/progress/user-by-string-id/${studentIdForApi}`,
+        // เปลี่ยนจาก studentIdForApi เป็น studentDisplayId
+        `${BACKEND_URL}/experience-books/${selectedBookId}/progress/user-by-string-id/${encodeURIComponent(
+          studentDisplayId
+        )}`, // <--- **แก้ไขตรงนี้**
         { headers: { Authorization: `Bearer ${accessToken}` } }
       );
       const progressMap = res.data;
