@@ -6,6 +6,7 @@ import React, { createContext, useContext, useState, ReactNode } from 'react';
 
 export interface SessionUser {
   id: number;
+  email: string;
   name: string;
   role: Role;
   studentProfile: {

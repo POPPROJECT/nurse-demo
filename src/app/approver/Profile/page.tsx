@@ -13,6 +13,7 @@ import {
   FaCamera,
 } from 'react-icons/fa';
 import { BACKEND_URL } from 'lib/constants';
+import { useAuth } from '@/app/contexts/AuthContext';
 
 interface UserProfile {
   id: number;
@@ -36,12 +37,13 @@ export default function ApproverProfilePage() {
   });
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const { accessToken, session: authSession } = useAuth(); // ✅ ดึง accessToken และ session จาก Context
 
   useEffect(() => {
     const fetchUser = async () => {
       try {
         const res = await axios.get(`${BACKEND_URL}/users/me`, {
-          withCredentials: true,
+          headers: { Authorization: `Bearer ${accessToken}` },
         });
         setUser(res.data);
         setForm({
@@ -57,7 +59,7 @@ export default function ApproverProfilePage() {
       }
     };
     fetchUser();
-  }, []);
+  }, [accessToken]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;

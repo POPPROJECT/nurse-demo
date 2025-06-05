@@ -161,14 +161,16 @@ export default function ApprovedPage() {
     if (!accessToken) {
       /* ... แจ้ง Error ... */ return;
     }
-    // Role check (APPROVER_IN เท่านั้นที่ Confirm ได้?)
+    // Role check
+    const userRole = authSession?.user?.role;
+
     if (
-      actionType === 'confirm' &&
-      authSession?.user?.role !== Role.APPROVER_IN
+      !userRole ||
+      ![Role.APPROVER_IN, Role.APPROVER_OUT].includes(userRole)
     ) {
       Swal.fire(
         'ไม่ได้รับอนุญาต',
-        'เฉพาะผู้นิเทศภายในเท่านั้นที่สามารถยืนยันคำขอได้',
+        'เฉพาะผู้นิเทศในและผู้นิเทศภายนอกเท่านั้นที่สามารถยืนยันคำขอได้',
         'warning'
       );
       return;
@@ -234,17 +236,20 @@ export default function ApprovedPage() {
     if (!accessToken) {
       /* ... แจ้ง Error ... */ return;
     }
+
     if (selectedIds.length === 0) {
       /* ... แจ้งให้เลือกรายการ ... */ return;
     }
-    // Role check (APPROVER_IN เท่านั้นที่ Confirm ได้?)
+
+    const userRole = authSession?.user?.role;
+
     if (
-      actionType === 'confirm' &&
-      authSession?.user?.role !== Role.APPROVER_IN
+      !userRole ||
+      ![Role.APPROVER_IN, Role.APPROVER_OUT].includes(userRole)
     ) {
       Swal.fire(
         'ไม่ได้รับอนุญาต',
-        'เฉพาะผู้นิเทศภายในเท่านั้นที่สามารถยืนยันคำขอแบบกลุ่มได้',
+        'เฉพาะผู้นิเทศในและผู้นิเทศภายนอกเท่านั้นที่สามารถยืนยันคำขอแบบกลุ่มได้',
         'warning'
       );
       return;
