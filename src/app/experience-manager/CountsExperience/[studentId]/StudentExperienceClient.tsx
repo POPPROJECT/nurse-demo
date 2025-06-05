@@ -1,36 +1,38 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Session } from 'lib/session';
+import { Session } from 'lib/session'; // ตรวจสอบว่า Session interface ถูกต้อง
 import axios from 'axios';
 import { FaCheck } from 'react-icons/fa';
 import { BACKEND_URL } from 'lib/constants';
 import Swal from 'sweetalert2';
 import { useAuth } from '@/app/contexts/AuthContext';
 
-// ... (Interfaces: Book, Course, SubCourse, StudentExperienceClientProps) ...
 interface Book {
   id: number;
   title: string;
   courses: Course[];
 }
+
 interface Course {
   id: number;
   name: string;
   subCourses: SubCourse[];
 }
+
 interface SubCourse {
   id: number;
   name: string;
-  alwaycourse: number;
+  alwaycourse: number; // ชื่อ property อาจจะเป็น requiredCount หรือ targetCount
   progressCount: number;
   confirmedCount: number;
 }
+
 interface StudentExperienceClientProps {
-  studentIdForApi: string;
+  studentIdForApi: string; // ID ของนิสิตจาก URL (อาจจะเป็น User ID ที่เป็น PK)
   studentName: string;
-  studentDisplayId: string;
-  session: Session;
+  studentDisplayId: string; // รหัสนิสิตที่ใช้แสดงผล (เช่น "31423532")
+  session: Session; // session ของผู้ใช้ที่ login อยู่ (อาจจะเป็น Manager หรือตัวนิสิตเอง)
 }
 
 export default function StudentExperienceClient({
@@ -39,26 +41,21 @@ export default function StudentExperienceClient({
   studentDisplayId,
   session,
 }: StudentExperienceClientProps) {
+  // แปลง studentIdForApi (ที่มักจะเป็น string จาก URL params) เป็น number สำหรับใช้กับ API
+  // โดยสมมติว่า API /authorized/student/:studentId คาดหวัง numeric ID ของ User Profile
   const userId = parseInt(studentIdForApi, 10);
-  if (isNaN(userId)) {
-    // กรณีไม่ใช่เลข แสดงข้อความ error หรือ loading
-    return (
-      <div className="p-6 text-center text-red-600">
-        รหัสนิสิตไม่ถูกต้อง กรุณาตรวจสอบอีกครั้ง
-      </div>
-    );
-  }
+
   const [books, setBooks] = useState<Book[]>([]);
   const [selectedBookId, setSelectedBookId] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
-  const [messageType, setMessageType] = useState<'success' | 'error' | null>(
-    null
-  );
+  const [messageType, setMessageType] = useState<
+    'success' | 'error' | 'info' | null
+  >(null);
   const [expandedCourseIds, setExpandedCourseIds] = useState<number[]>([]);
-  const { accessToken } = useAuth();
 
-  const token = session?.accessToken;
+  // ดึง accessToken จาก AuthContext ของผู้ใช้ที่ login อยู่
+  const { accessToken } = useAuth();
 
   const toggleCourse = (courseId: number) => {
     setExpandedCourseIds((prev) =>
@@ -68,81 +65,93 @@ export default function StudentExperienceClient({
     );
   };
 
-  // useEffect for fetching book details
+  // useEffect for fetching authorized book details for the specific student
   useEffect(() => {
-    if (isNaN(userId) || !accessToken) {
-      // ตรวจสอบว่ามี userId และ accessToken หรือไม่
-      if (isNaN(userId))
-        console.error('StudentExperienceClient: Invalid userId for API call.');
-      if (!accessToken)
-        console.log('StudentExperienceClient: Waiting for access token.');
-      setBooks([]); // กำหนดให้ไม่มีสมุดถ้าข้อมูลไม่พร้อม
+    if (isNaN(userId)) {
+      console.error(
+        'StudentExperienceClient: Invalid studentIdForApi, parsed to NaN.'
+      );
+      setBooks([]);
+      setMessage('รหัสนิสิต (userId) ไม่ถูกต้องสำหรับการโหลดข้อมูลสมุด');
+      setMessageType('error');
+      return;
+    }
+
+    if (!accessToken) {
+      console.log(
+        'StudentExperienceClient: Access token not available for fetching books.'
+      );
+      // อาจจะตั้งค่า loading หรือปล่อยให้ UI แสดงข้อความ "กำลังโหลด..." ด้านล่าง
+      setBooks([]); // ไม่ควรแสดงข้อมูลเก่าถ้า token ไม่มี
       return;
     }
 
     axios
       .get(`${BACKEND_URL}/experience-books/authorized/student/${userId}`, {
-        // <--- เปลี่ยน Endpoint ตรงนี้
-        headers: { Authorization: `Bearer ${accessToken}` }, // ใช้ token ของผู้ที่ login
-        // withCredentials: true, // อาจไม่จำเป็นถ้าใช้ Bearer token และไม่มีการจัดการ session-based cookies ข้ามโดเมน
+        headers: { Authorization: `Bearer ${accessToken}` },
       })
       .then((res) => {
-        // ข้อมูลที่ได้จาก r.data ควรจะเป็นรายการ Book ที่นิสิตคนนั้นมีสิทธิ์แล้ว
         const authorizedBooks = res.data as Book[];
 
         const initializedBooks = authorizedBooks.map((book: Book) => ({
           ...book,
-          courses:
-            book.courses?.map((course: Course) => ({
-              // เพิ่มการตรวจสอบว่า courses มีค่าหรือไม่
-              ...course,
-              subCourses:
-                course.subCourses?.map((sub: SubCourse) => ({
-                  // เพิ่มการตรวจสอบว่า subCourses มีค่าหรือไม่
-                  ...sub,
-                  progressCount: 0,
-                  confirmedCount: 0,
-                })) || [],
-            })) || [],
+          courses: (book.courses || []).map((course: Course) => ({
+            ...course,
+            subCourses: (course.subCourses || []).map((sub: SubCourse) => ({
+              ...sub,
+              progressCount: 0,
+              confirmedCount: 0,
+            })),
+          })),
         }));
 
         setBooks(initializedBooks);
         if (initializedBooks.length > 0) {
           setSelectedBookId(initializedBooks[0].id);
+          setMessage(null);
+          setMessageType(null);
         } else {
-          setSelectedBookId(null); // ไม่มีสมุดที่ได้รับอนุญาต
-          // อาจจะแสดงข้อความบอกผู้ใช้
-          // setMessage('ไม่พบสมุดบันทึกที่นิสิตคนนี้ได้รับอนุญาตให้เข้าถึง');
-          // setMessageType('error');
+          setSelectedBookId(null);
+          setMessage(
+            `ไม่พบสมุดบันทึกที่นิสิต ${studentDisplayId} ได้รับอนุญาตให้เข้าถึง`
+          );
+          setMessageType('info'); // ใช้ 'info' หรือ 'warning' แทน 'error' ถ้าเป็นเคสปกติ
         }
       })
       .catch((err) => {
         console.error(
-          `Error fetching authorized books for student ${userId}:`,
+          `Error fetching authorized books for student ${userId} (${studentDisplayId}):`,
           err
         );
         setMessage(
-          `ไม่สามารถโหลดข้อมูลสมุดประสบการณ์สำหรับนิสิต ${studentDisplayId} ได้`
+          `เกิดข้อผิดพลาดในการโหลดข้อมูลสมุดของนิสิต ${studentDisplayId}`
         );
         setMessageType('error');
-        setBooks([]); // เคลียร์ค่า books หากเกิดข้อผิดพลาด
+        setBooks([]);
       });
-  }, [userId, accessToken, studentDisplayId]);
+  }, [userId, accessToken, studentDisplayId]); // Dependencies ที่ถูกต้อง
 
-  // useEffect for fetching student progress
+  // useEffect for fetching student progress (เมื่อมีการเลือกสมุด)
   useEffect(() => {
-    if (!token || !selectedBookId) return;
+    if (isNaN(userId) || !selectedBookId || !accessToken) {
+      // ถ้ายังไม่มี selectedBookId หรือ token ก็ไม่ต้องทำอะไร
+      // หรือถ้า userId ไม่ถูกต้อง
+      return;
+    }
 
     axios
       .get(
-        `${BACKEND_URL}/experience-books/${selectedBookId}/progress/user-by-string-id/${studentIdForApi}`, // <-- ใช้ path ใหม่
+        `${BACKEND_URL}/experience-books/${selectedBookId}/progress/user-by-string-id/${studentIdForApi}`,
+        // หมายเหตุ: Endpoint นี้รับ studentIdForApi (string id) ซึ่งอาจจะต้องตรงกับที่ backend คาดหวัง
+        // หาก backend endpoint นี้คาดหวัง numeric User ID (เหมือน /authorized/student/:userId)
+        // คุณอาจจะต้องส่ง userId (number) แทน studentIdForApi (string) หรือปรับ backend
+        // จากโค้ดเดิม: user-by-string-id ดังนั้น studentIdForApi (string) น่าจะถูกต้องสำหรับ endpoint นี้
         {
           headers: { Authorization: `Bearer ${accessToken}` },
-          withCredentials: true,
         }
       )
       .then((res) => {
-        const progressMap = res.data;
+        const progressMap = res.data; // สมมติ progressMap คือ { [subCourseName: string]: number }
         setBooks((prevBooks) =>
           prevBooks.map((book) =>
             book.id === selectedBookId
@@ -153,7 +162,7 @@ export default function StudentExperienceClient({
                     subCourses: course.subCourses.map((sub) => ({
                       ...sub,
                       confirmedCount: progressMap[sub.name] || 0,
-                      progressCount: 0,
+                      progressCount: 0, // Reset progressCount ที่กรอกใหม่
                     })),
                   })),
                 }
@@ -166,11 +175,11 @@ export default function StudentExperienceClient({
         setMessage('ไม่สามารถโหลดข้อมูลความก้าวหน้าของนิสิตได้');
         setMessageType('error');
       });
-  }, [token, selectedBookId, userId]);
+  }, [selectedBookId, userId, accessToken, studentIdForApi]); // เพิ่ม accessToken และ studentIdForApi
 
-  // updateProgress function
+  // updateProgress function (ไม่เปลี่ยนแปลง)
   const updateProgress = (courseId: number, subId: number, value: number) => {
-    const newValue = Math.max(0, value);
+    const newValue = Math.max(0, value); // Ensure value is not negative
     setBooks((prev) =>
       prev.map((book) =>
         book.id === selectedBookId
@@ -180,12 +189,11 @@ export default function StudentExperienceClient({
                 course.id === courseId
                   ? {
                       ...course,
-                      subCourses: course.subCourses.map((sub) => {
-                        if (sub.id === subId) {
-                          return { ...sub, progressCount: newValue };
-                        }
-                        return sub;
-                      }),
+                      subCourses: course.subCourses.map((sub) =>
+                        sub.id === subId
+                          ? { ...sub, progressCount: newValue }
+                          : sub
+                      ),
                     }
                   : course
               ),
@@ -195,15 +203,22 @@ export default function StudentExperienceClient({
     );
   };
 
-  // handleSave function
+  // handleSave function (ตรวจสอบการใช้ token)
   const handleSave = async () => {
-    if (!selectedBookId || isNaN(userId) || !token) return;
+    if (isNaN(userId) || !selectedBookId || !accessToken) {
+      Swal.fire(
+        'ข้อมูลไม่พร้อม',
+        'ไม่สามารถบันทึกได้เนื่องจากข้อมูลผู้ใช้หรือสมุดไม่สมบูรณ์',
+        'warning'
+      );
+      return;
+    }
     const currentBook = books.find((b) => b.id === selectedBookId);
     if (!currentBook) return;
 
     const progressPayload = currentBook.courses.flatMap((course) =>
       course.subCourses
-        .filter((sub) => (sub.progressCount || 0) > 0) // Ensure progressCount is defined before comparison
+        .filter((sub) => (sub.progressCount || 0) > 0)
         .map((sub) => ({
           subCourseId: sub.id,
           count: (sub.confirmedCount || 0) + (sub.progressCount || 0),
@@ -212,7 +227,7 @@ export default function StudentExperienceClient({
 
     if (progressPayload.length === 0) {
       setMessage('ไม่มีการเปลี่ยนแปลงที่จะบันทึก');
-      setMessageType('error');
+      setMessageType('info');
       setTimeout(() => {
         setMessage(null);
         setMessageType(null);
@@ -222,13 +237,17 @@ export default function StudentExperienceClient({
 
     setSaving(true);
     try {
+      // Endpoint สำหรับ patch progress ควรใช้ studentIdForApi (string) หรือ userId (number)
+      // ให้สอดคล้องกับ backend API definition (จากโค้ดเดิมคือ studentIdForApi)
       await axios.patch(
-        `${BACKEND_URL}/experience-books/${selectedBookId}/progress/user-by-string-id/${studentIdForApi}`, // <-- ใช้ path ใหม่
+        `${BACKEND_URL}/experience-books/${selectedBookId}/progress/user-by-string-id/${studentIdForApi}`,
         { progress: progressPayload },
         { headers: { Authorization: `Bearer ${accessToken}` } }
       );
+
+      // Re-fetch progress to update confirmed counts and reset progress counts
       const res = await axios.get(
-        `${BACKEND_URL}/experience-books/${selectedBookId}/progress/user-by-string-id/${studentIdForApi}`, // <-- ใช้ path ใหม่
+        `${BACKEND_URL}/experience-books/${selectedBookId}/progress/user-by-string-id/${studentIdForApi}`,
         { headers: { Authorization: `Bearer ${accessToken}` } }
       );
       const progressMap = res.data;
@@ -242,7 +261,7 @@ export default function StudentExperienceClient({
                   subCourses: course.subCourses.map((sub) => ({
                     ...sub,
                     confirmedCount: progressMap[sub.name] || 0,
-                    progressCount: 0,
+                    progressCount: 0, // Reset progressCount after save
                   })),
                 })),
               }
@@ -266,23 +285,26 @@ export default function StudentExperienceClient({
       });
     } finally {
       setSaving(false);
-      setTimeout(() => {
+      // Clear message related to "ไม่มีการเปลี่ยนแปลง"
+      if (message === 'ไม่มีการเปลี่ยนแปลงที่จะบันทึก') {
         setMessage(null);
         setMessageType(null);
-      }, 3000);
+      }
     }
   };
 
   const currentSelectedBook = books.find((b) => b.id === selectedBookId);
   const stats = (() => {
+    if (!currentSelectedBook)
+      return { total: 0, confirmed: 0, remaining: 0, percent: 0 };
     let totalRequired = 0;
     let totalProgressCounted = 0;
 
-    currentSelectedBook?.courses.forEach((course) =>
+    currentSelectedBook.courses.forEach((course) =>
       course.subCourses.forEach((sub) => {
         const required = sub.alwaycourse || 0;
         const confirmed = sub.confirmedCount || 0;
-        const progress = sub.progressCount || 0;
+        const progress = sub.progressCount || 0; // Count pending changes
 
         totalRequired += required;
         totalProgressCounted += Math.min(confirmed + progress, required);
@@ -303,17 +325,25 @@ export default function StudentExperienceClient({
     };
   })();
 
-  // ***** THIS IS THE CRITICAL CHANGE *****
-  if (!token) {
+  // Loading state check: ควรตรวจสอบ accessToken ที่ใช้จริง
+  if (!accessToken) {
     return (
       <div className="p-6 text-center">
         กำลังโหลดข้อมูลผู้ใช้หรือรอการยืนยันตัวตน...
       </div>
     );
   }
-  // ***** END OF CRITICAL CHANGE *****
 
-  // Main return statement for the component's UI
+  if (isNaN(userId) && messageType === 'error') {
+    // กรณี userId ไม่ถูกต้องตั้งแต่ต้น
+    return (
+      <div className="p-6 text-center text-red-600">
+        {message || 'รหัสนิสิตไม่ถูกต้อง'}
+      </div>
+    );
+  }
+
+  // UI Rendering
   return (
     <div>
       <div className="mb-3 dark:text-white bg-white dark:bg-[#1E293B] text-gray-800 rounded-xl shadow-md transition-shadow mt-7 max-w-5xl p-6 mx-auto duration-300 min-w-auto">
@@ -330,6 +360,7 @@ export default function StudentExperienceClient({
             onChange={(e) =>
               setSelectedBookId(e.target.value ? Number(e.target.value) : null)
             }
+            disabled={books.length === 0 && !message} // Disable if books are loading or genuinely none
           >
             <option value="">-- กรุณาเลือกเล่ม --</option>
             {books.map((b) => (
@@ -339,11 +370,22 @@ export default function StudentExperienceClient({
             ))}
           </select>
         </div>
+        {message && messageType === 'info' && books.length === 0 && (
+          <p className="mt-2 text-sm text-blue-600 dark:text-blue-400">
+            {message}
+          </p>
+        )}
       </div>
 
       <div className="max-w-5xl p-6 mx-auto bg-white shadow-lg dark:bg-slate-800 rounded-xl">
+        {message && messageType === 'error' && (
+          <div className="p-4 mb-4 text-center text-red-700 bg-red-100 rounded-md dark:bg-red-900 dark:text-red-300">
+            {message}
+          </div>
+        )}
         {selectedBookId && currentSelectedBook ? (
           <>
+            {/* Statistics Cards */}
             <div className="grid grid-cols-1 gap-4 mb-6 md:grid-cols-3">
               <div className="p-4 text-white bg-indigo-600 rounded-lg">
                 <h2 className="text-xl font-semibold">รวมทั้งหมด</h2>
@@ -361,6 +403,7 @@ export default function StudentExperienceClient({
               </div>
             </div>
 
+            {/* Overall Progress Bar */}
             <div className="mb-6 overflow-hidden bg-white border border-gray-200 rounded-lg shadow-sm dark:bg-slate-700 dark:border-gray-600">
               <div className="p-4 border-b border-gray-200 bg-indigo-50 dark:bg-indigo-900/50 dark:border-gray-600">
                 <h2 className="text-lg font-semibold text-indigo-800 dark:text-indigo-300">
@@ -382,6 +425,7 @@ export default function StudentExperienceClient({
               </div>
             </div>
 
+            {/* Courses and SubCourses */}
             {currentSelectedBook.courses.map((course, idx) => {
               let courseTotalRequired = 0;
               let courseCurrentTotalProgress = 0;
@@ -401,7 +445,6 @@ export default function StudentExperienceClient({
                       (courseCurrentTotalProgress / courseTotalRequired) * 100
                     )
                   : 0;
-
               const isExpanded = expandedCourseIds.includes(course.id);
 
               return (
@@ -409,7 +452,6 @@ export default function StudentExperienceClient({
                   key={course.id}
                   className="p-4 mb-6 rounded-lg bg-gray-50 dark:bg-slate-700/50"
                 >
-                  {/* Header ของหัวข้อ */}
                   <div
                     className="flex items-center justify-between p-4 text-black bg-gray-200 rounded-t-lg cursor-pointer hover:bg-gray-100 dark:bg-slate-600 dark:hover:bg-slate-500"
                     onClick={() => toggleCourse(course.id)}
@@ -425,35 +467,33 @@ export default function StudentExperienceClient({
                       </span>
                     </div>
                   </div>
-
-                  {/* Progress bar */}
-                  <div
+                  <div // Progress bar for course
                     className={`h-1 ${
                       coursePercent === 100
                         ? 'bg-green-400'
-                        : coursePercent >= 50 && coursePercent <= 99
+                        : coursePercent >= 50
                         ? 'bg-yellow-400'
                         : 'bg-red-400'
                     }`}
                     style={{ width: `${coursePercent}%` }}
                   />
-
-                  {/* ตารางย่อย subCourses */}
                   {isExpanded && (
-                    <div className="space-y-3 text-gray-700">
+                    <div className="pt-3 space-y-3 text-gray-700">
+                      {' '}
+                      {/* Added pt-3 for spacing */}
                       {course.subCourses.map((sub, sIdx) => {
                         const isFullyConfirmed =
                           (sub.confirmedCount || 0) >= (sub.alwaycourse || 0);
-                        const maxInput = Math.max(
-                          0,
-                          (sub.alwaycourse || 0) - (sub.confirmedCount || 0)
-                        );
+                        // const maxInput = Math.max(
+                        //   0,
+                        //   (sub.alwaycourse || 0) - (sub.confirmedCount || 0)
+                        // );
 
                         return (
                           <div
                             key={sub.id}
                             className={`flex flex-col md:flex-row md:items-center md:justify-between px-4 py-3 bg-white dark:bg-slate-700 rounded shadow-sm ${
-                              isFullyConfirmed
+                              isFullyConfirmed && (sub.progressCount || 0) === 0 // Only show green border if no pending changes
                                 ? 'border-l-4 border-green-500 dark:border-green-400'
                                 : 'border-l-4 border-transparent'
                             }`}
@@ -465,16 +505,14 @@ export default function StudentExperienceClient({
                               <span className="text-gray-800 dark:text-gray-200">
                                 {sub.name}
                               </span>
-                              {(sub.confirmedCount || 0) >=
-                                (sub.alwaycourse || 0) && (
-                                <span className="ml-2 px-2 py-0.5 text-xs font-medium text-green-700 bg-green-100 rounded dark:bg-green-800 dark:text-green-200">
-                                  เสร็จสมบูรณ์ (ตามที่บันทึก)
-                                </span>
-                              )}
+                              {isFullyConfirmed &&
+                                (sub.progressCount || 0) === 0 && (
+                                  <span className="ml-2 px-2 py-0.5 text-xs font-medium text-green-700 bg-green-100 rounded dark:bg-green-800 dark:text-green-200">
+                                    ครบแล้ว
+                                  </span>
+                                )}
                             </div>
-
-                            <div className="flex items-center gap-2">
-                              {/* ปุ่มลด */}
+                            <div className="flex items-center self-end gap-2 md:self-center">
                               <button
                                 className="w-8 h-8 text-gray-600 bg-gray-100 rounded-l hover:bg-gray-200 disabled:opacity-50 dark:bg-gray-600 dark:text-gray-300 dark:hover:bg-gray-500"
                                 onClick={() =>
@@ -488,11 +526,10 @@ export default function StudentExperienceClient({
                               >
                                 -
                               </button>
-
-                              {/* กล่องตัวเลข */}
                               <input
                                 type="number"
                                 min={0}
+                                // max={maxInput} // Optional: limit max input based on remaining
                                 value={sub.progressCount || 0}
                                 onChange={(e) =>
                                   updateProgress(
@@ -502,11 +539,14 @@ export default function StudentExperienceClient({
                                   )
                                 }
                                 className="w-16 h-8 px-2 text-center border border-gray-300 dark:bg-slate-600 dark:text-gray-100 dark:border-gray-500"
+                                disabled={
+                                  isFullyConfirmed &&
+                                  (sub.progressCount || 0) === 0 &&
+                                  (sub.alwaycourse || 0) > 0
+                                }
                               />
-
-                              {/* ปุ่มเพิ่ม */}
                               <button
-                                className="w-8 h-8 text-gray-600 bg-gray-100 rounded-r hover:bg-gray-200 dark:bg-gray-600 dark:text-gray-300 dark:hover:bg-gray-500"
+                                className="w-8 h-8 text-gray-600 bg-gray-100 rounded-r hover:bg-gray-200 disabled:opacity-50 dark:bg-gray-600 dark:text-gray-300 dark:hover:bg-gray-500"
                                 onClick={() =>
                                   updateProgress(
                                     course.id,
@@ -514,16 +554,14 @@ export default function StudentExperienceClient({
                                     (sub.progressCount || 0) + 1
                                   )
                                 }
+                                // disabled={isFullyConfirmed || (sub.progressCount || 0) >= maxInput}
                               >
                                 +
                               </button>
-
-                              {/* ข้อมูลรวม */}
-                              <span className="text-sm text-gray-700 dark:text-gray-300">
+                              <span className="ml-2 text-sm text-gray-700 dark:text-gray-300">
                                 / {sub.alwaycourse || 0} ครั้ง
-                                <span className="ml-2 text-xs text-blue-600 dark:text-blue-400">
-                                  (กำลังกรอก: {sub.progressCount || 0},
-                                  ยืนยันแล้ว: {sub.confirmedCount || 0})
+                                <span className="ml-1 text-xs text-blue-600 dark:text-blue-400 whitespace-nowrap">
+                                  (ยืนยัน: {sub.confirmedCount || 0})
                                 </span>
                               </span>
                             </div>
@@ -546,10 +584,16 @@ export default function StudentExperienceClient({
             </div>
           </>
         ) : (
+          // Show this message if no book is selected OR if there was an error message for books
           <div className="p-6 text-center text-gray-500 dark:text-gray-400">
-            {books.length > 0
-              ? 'กรุณาเลือกเล่มบันทึกเพื่อดูรายละเอียดและบันทึกจำนวนประสบการณ์'
-              : 'กำลังโหลดข้อมูลเล่มบันทึก...'}
+            {books.length > 0 &&
+              !selectedBookId &&
+              !message &&
+              'กรุณาเลือกเล่มบันทึกเพื่อดูรายละเอียดและบันทึกจำนวนประสบการณ์'}
+            {books.length === 0 &&
+              !message && // No error, no books, implies loading or genuinely none and no info message yet
+              'กำลังโหลดข้อมูลเล่มบันทึก...'}
+            {/* Error/Info message for book loading is handled above or within the main content area */}
           </div>
         )}
       </div>
