@@ -73,19 +73,13 @@ interface StudentProfile {
 }
 
 // ฟังก์ชันสำหรับดึงข้อมูลโปรไฟล์นิสิตจาก backend
-async function fetchStudentProfileByStudentId(
-  studentIdFromUrlParam: string, // The ID from the URL (e.g., "45")
+async function fetchStudentProfileUsingDisplayId(
+  displayStudentId: string, // รหัสนิสิตที่แสดงผลจาก URL
   accessToken: string
 ): Promise<StudentProfile | null> {
   try {
-    // Endpoint นี้ควรใช้ identifier ที่ backend คาดหวัง
-    // หาก :studentId ใน backend คือ database PK (integer), studentIdFromUrlParam ต้องเป็น PK นั้น
-    // หาก :studentId ใน backend คือ student ID string (เช่น "64012345"), studentIdFromUrlParam ต้องเป็น string นั้น
-    // จากการใช้งาน ดูเหมือน studentIdFromUrlParam คือ PK ที่ใช้ใน API path
     const res = await fetch(
-      `${
-        process.env.NEXT_PUBLIC_BACKEND_URL
-      }/users/student/${encodeURIComponent(studentIdFromUrlParam)}`,
+      `<span class="math-inline">\{process\.env\.NEXT\_PUBLIC\_BACKEND\_URL\}/users/student/</span>{encodeURIComponent(displayStudentId)}`, // Endpoint นี้จะไปเรียก findStudentProfile ใน users.controller.ts
       {
         headers: { Authorization: `Bearer ${accessToken}` },
         cache: 'no-store',
@@ -93,16 +87,22 @@ async function fetchStudentProfileByStudentId(
     );
     if (!res.ok) {
       console.error(
-        `CountsExperience/[studentId]/page (Server): Failed to fetch student profile for ID ${studentIdFromUrlParam}, status: ${
+        `page.tsx: Failed to fetch student profile for display ID ${displayStudentId}, status: ${
           res.status
         }, Body: ${await res.text()}`
       );
       return null;
     }
     const profileData = await res.json();
-    if (!profileData || !profileData.studentId || !profileData.fullname) {
+    // ตรวจสอบว่า profileData มี field ที่จำเป็น (id, studentId, fullname)
+    if (
+      !profileData ||
+      typeof profileData.id !== 'number' ||
+      !profileData.studentId ||
+      !profileData.fullname
+    ) {
       console.error(
-        `CountsExperience/[studentId]/page (Server): Fetched profile for ID ${studentIdFromUrlParam} is missing required fields:`,
+        `page.tsx: Fetched profile for display ID ${displayStudentId} is missing required fields or id is not a number:`,
         profileData
       );
       return null;
@@ -110,7 +110,7 @@ async function fetchStudentProfileByStudentId(
     return profileData as StudentProfile;
   } catch (err) {
     console.error(
-      `CountsExperience/[studentId]/page (Server): Exception fetching student profile for ID ${studentIdFromUrlParam}:`,
+      `page.tsx: Exception fetching student profile for display ID ${displayStudentId}:`,
       err
     );
     return null;
@@ -124,12 +124,10 @@ interface StudentExperiencePageProps {
 }
 
 export default async function StudentExperiencePageServer({
-  params: paramsProp, // Renamed to avoid conflict with the awaited 'params'
+  params: paramsProp,
 }: StudentExperiencePageProps) {
-  // Attempt to address the "params should be awaited" error
-  // This assumes 'paramsProp' might be a promise-like object from Next.js runtime
-  const params = await (paramsProp as any); // Cast to 'any' to allow await for now
-  const { studentId: studentIdFromUrl } = params;
+  const params = await (paramsProp as any);
+  const studentDisplayIdFromUrl = params.studentId; // นี่คือ Display ID เช่น "64366126"
 
   const session: Session | null = await getSession();
 
@@ -182,8 +180,8 @@ export default async function StudentExperiencePageServer({
   }
 
   // 3. Fetch Student Profile
-  const studentProfile = await fetchStudentProfileByStudentId(
-    studentIdFromUrl, // This is the ID from the URL, e.g., "45"
+  const studentProfile = await fetchStudentProfileUsingDisplayId(
+    studentDisplayIdFromUrl, // This is the ID from the URL, e.g., "45"
     session.accessToken
   );
 
@@ -193,12 +191,12 @@ export default async function StudentExperiencePageServer({
     !studentProfile.fullname
   ) {
     console.log(
-      `StudentExperiencePageServer: Student profile not found or invalid for URL param: ${studentIdFromUrl}. Profile data received:`,
+      `StudentExperiencePageServer: Student profile not found or invalid for URL param: ${studentDisplayIdFromUrl}. Profile data received:`,
       studentProfile
     );
     return (
       <FeatureDisabledMessage
-        message={`ไม่พบข้อมูลนิสิตสำหรับรหัส '${studentIdFromUrl}' หรือไม่มีสิทธิ์เข้าถึง`}
+        message={`ไม่พบข้อมูลนิสิตสำหรับรหัส '${studentDisplayIdFromUrl}' หรือไม่มีสิทธิ์เข้าถึง`}
         backLink="/experience-manager/CountsExperience"
         backLinkText="กลับไปหน้ารายงานผล"
       />
@@ -213,7 +211,7 @@ export default async function StudentExperiencePageServer({
   // studentName: The student's full name.
   return (
     <StudentExperienceClient
-      studentIdForApi={studentIdFromUrl} // Assuming studentIdFromUrl from params is what your client needs for API calls after parseInt
+      studentIdForApi={studentProfile.id.toString()} // Assuming studentIdFromUrl from params is what your client needs for API calls after parseInt
       studentName={studentProfile.fullname}
       studentDisplayId={studentProfile.studentId} // The actual student ID string from profile
       session={session}
