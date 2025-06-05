@@ -5,7 +5,6 @@ import { Role } from 'lib/type';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import StudentExperienceClient from './StudentExperienceClient'; // Your renamed client component
-import { useAuth } from '@/app/contexts/AuthContext';
 
 // Component สำหรับแสดงข้อความเมื่อฟีเจอร์ปิดหรือเข้าไม่ได้
 const FeatureDisabledMessage = ({
@@ -36,11 +35,10 @@ const FeatureDisabledMessage = ({
 };
 
 // ฟังก์ชันสำหรับตรวจสอบสถานะระบบนับประสบการณ์
-async function getExperienceCountingSystemStatus(): Promise<{
+async function getExperienceCountingSystemStatus(accessToken: string): Promise<{
   enabled: boolean;
   error: string | null;
 }> {
-  const { accessToken } = useAuth();
   try {
     const res = await fetch(
       `${process.env.NEXT_PUBLIC_BACKEND_URL}/admin/settings/get-status`,
@@ -76,9 +74,9 @@ interface StudentProfile {
 
 // ฟังก์ชันสำหรับดึงข้อมูลโปรไฟล์นิสิตจาก backend
 async function fetchStudentProfileByStudentId(
-  studentIdFromUrlParam: string // The ID from the URL (e.g., "45")
+  studentIdFromUrlParam: string, // The ID from the URL (e.g., "45")
+  accessToken: string
 ): Promise<StudentProfile | null> {
-  const { accessToken } = useAuth();
   try {
     // Endpoint นี้ควรใช้ identifier ที่ backend คาดหวัง
     // หาก :studentId ใน backend คือ database PK (integer), studentIdFromUrlParam ต้องเป็น PK นั้น
@@ -157,7 +155,9 @@ export default async function StudentExperiencePageServer({
   }
 
   // 2. Check System Status (Corrected destructuring)
-  const systemStatusResult = await getExperienceCountingSystemStatus();
+  const systemStatusResult = await getExperienceCountingSystemStatus(
+    session.accessToken
+  ); // <--- ส่ง accessToken
   const { enabled: countingEnabled, error: statusFetchError } =
     systemStatusResult;
 
@@ -183,7 +183,8 @@ export default async function StudentExperiencePageServer({
 
   // 3. Fetch Student Profile
   const studentProfile = await fetchStudentProfileByStudentId(
-    studentIdFromUrl // This is the ID from the URL, e.g., "45"
+    studentIdFromUrl, // This is the ID from the URL, e.g., "45"
+    session.accessToken
   );
 
   if (
