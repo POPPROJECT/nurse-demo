@@ -1,14 +1,25 @@
-// src/app/approver/logRequest/page.tsx
 'use client';
-import React, { useState, useEffect, useCallback } from 'react'; // ✅ เพิ่ม useCallback
-import axios from 'axios';
-import FilterBar from '@/app/components/approver/LogRequest/FilterBar'; // ตรวจสอบ Path
-import LogTable from '@/app/components/approver/LogRequest/LogTable'; // ตรวจสอบ Path
-import Pagination from '@/app/components/approver/LogRequest/Pagination'; // ตรวจสอบ Path
-import { useAuth } from '@/app/contexts/AuthContext';
-import { ExperienceStatus } from 'lib/type';
 
-// ✅ กำหนด Type สำหรับ Log data เพื่อความชัดเจน
+import React, {
+  useCallback,
+  useEffect,
+  useState
+} from 'react'; // ✅ เพิ่ม useCallback
+import axios
+  from 'axios';
+import FilterBar
+  from '@/app/components/approver/LogRequest/FilterBar'; // ตรวจสอบ Path
+import LogTable
+  from '@/app/components/approver/LogRequest/LogTable'; // ตรวจสอบ Path
+import Pagination
+  from '@/app/components/approver/LogRequest/Pagination'; // ตรวจสอบ Path
+import {
+  useAuth
+} from '@/app/contexts/AuthContext';
+import {
+  ExperienceStatus
+} from 'lib/type';
+
 interface LogTableRecord {
   id: number;
   student: { studentId: string; user: { name: string } };
@@ -73,18 +84,18 @@ export default function LogRequestPage() {
       // if (endDate) params.endDate = endDate;
 
       const res = await axios.get<FetchLogResponse>( // ✅ ใช้ Generic Type
-        `${BASE}/approver/log-requests`, // Endpoint ของคุณ
-        {
-          headers: { Authorization: `Bearer ${accessToken}` },
-          params,
-        }
+          `${BASE}/approver/log-requests`, // Endpoint ของคุณ
+          {
+            headers: { Authorization: `Bearer ${accessToken}` },
+            params,
+          }
       );
       setData(res.data.data);
       setTotal(res.data.total);
     } catch (err: any) {
       console.error('Error fetching logs:', err);
       setError(
-        err.response?.data?.message || err.message || 'Failed to load logs.'
+          err.response?.data?.message || err.message || 'Failed to load logs.'
       );
       setData([]); // เคลียร์ข้อมูลเก่าถ้าโหลดใหม่ไม่สำเร็จ
       setTotal(0);
@@ -124,64 +135,64 @@ export default function LogRequestPage() {
   // ถ้า ApproverLayout ป้องกันเส้นทางแล้ว ส่วนนี้อาจจะไม่จำเป็น
   if (!authSession?.user && !loading) {
     return (
-      <div className="p-10 text-center">
-        User session not available. Please{' '}
-        <a href="/" className="underline">
-          login
-        </a>
-        .
-      </div>
+        <div className="p-10 text-center">
+          User session not available. Please{' '}
+          <a href="/" className="underline">
+            login
+          </a>
+          .
+        </div>
     );
   }
 
   return (
-    <div className="container max-w-6xl px-4 py-8 mx-auto mt-10 sm:mt-0">
-      <div className="p-6 mb-6 text-white bg-[linear-gradient(to_right,#f46b45_0%,#eea849_100%)] dark:bg-[#1E293B] rounded-xl shadow-md hover:shadow-lg transition-all duration-300 ease-in-out hover:-translate-y-1 ">
-        <h1 className="text-xl font-semibold sm:text-2xl">
-          ประวัติการจัดการคำขอ
-        </h1>
+      <div className="container max-w-6xl px-4 py-8 mx-auto mt-10 sm:mt-0">
+        <div className="p-6 mb-6 text-white bg-[linear-gradient(to_right,#f46b45_0%,#eea849_100%)] dark:bg-[#1E293B] rounded-xl shadow-md hover:shadow-lg transition-all duration-300 ease-in-out hover:-translate-y-1 ">
+          <h1 className="text-xl font-semibold sm:text-2xl">
+            ประวัติการอนุมัติ
+          </h1>
+        </div>
+        <FilterBar
+            search={search}
+            setSearch={(v) => {
+              setSearch(v);
+              setPage(1);
+            }}
+            status={status}
+            setStatus={(v) => {
+              setStatus(v);
+              setPage(1);
+            }}
+            sortBy={sortBy}
+            order={order}
+            setSort={(by, ord) => {
+              setSortBy(by);
+              setOrder(ord);
+              setPage(1);
+            }}
+            limit={limit}
+            setLimit={(n) => {
+              setLimit(n);
+              setPage(1);
+            }}
+            // startDate={startDate} // ถ้าใช้
+            // setStartDate={(d) => { setStartDate(d); setPage(1); }} // ถ้าใช้
+            // endDate={endDate} // ถ้าใช้
+            // setEndDate={(d) => { setEndDate(d); setPage(1); }} // ถ้าใช้
+        />
+        {loading && data.length > 0 && (
+            <div className="p-4 text-center">Updating data...</div>
+        )}
+        <LogTable data={data} />
+        <div className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+          แสดง {data.length > 0 ? (page - 1) * limit + 1 : 0} -{' '}
+          {Math.min(page * limit, total)} จาก {total} รายการ
+        </div>
+        <Pagination
+            page={page}
+            totalPages={Math.ceil(total / limit)}
+            setPage={setPage}
+        />
       </div>
-      <FilterBar
-        search={search}
-        setSearch={(v) => {
-          setSearch(v);
-          setPage(1);
-        }}
-        status={status}
-        setStatus={(v) => {
-          setStatus(v);
-          setPage(1);
-        }}
-        sortBy={sortBy}
-        order={order}
-        setSort={(by, ord) => {
-          setSortBy(by);
-          setOrder(ord);
-          setPage(1);
-        }}
-        limit={limit}
-        setLimit={(n) => {
-          setLimit(n);
-          setPage(1);
-        }}
-        // startDate={startDate} // ถ้าใช้
-        // setStartDate={(d) => { setStartDate(d); setPage(1); }} // ถ้าใช้
-        // endDate={endDate} // ถ้าใช้
-        // setEndDate={(d) => { setEndDate(d); setPage(1); }} // ถ้าใช้
-      />
-      {loading && data.length > 0 && (
-        <div className="p-4 text-center">Updating data...</div>
-      )}
-      <LogTable data={data} />
-      <div className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-        แสดง {data.length > 0 ? (page - 1) * limit + 1 : 0} -{' '}
-        {Math.min(page * limit, total)} จาก {total} รายการ
-      </div>
-      <Pagination
-        page={page}
-        totalPages={Math.ceil(total / limit)}
-        setPage={setPage}
-      />
-    </div>
   );
 }

@@ -1,12 +1,27 @@
 'use client';
 
-import React, { useState } from 'react';
-import Link from 'next/link';
-import { MdLogout, MdOutlineManageSearch } from 'react-icons/md';
-import { FaUserEdit, FaBars } from 'react-icons/fa'; // นำเข้า FaBars
-import { FaBookMedical } from 'react-icons/fa6';
-import { GoChecklist } from 'react-icons/go';
-import { TbReportSearch } from 'react-icons/tb';
+import React, {
+  useState
+} from 'react';
+import Link
+  from 'next/link';
+import {
+  MdLogout,
+  MdOutlineManageSearch
+} from 'react-icons/md';
+import {
+  FaBars,
+  FaUserEdit
+} from 'react-icons/fa'; // นำเข้า FaBars
+import {
+  FaBookMedical
+} from 'react-icons/fa6';
+import {
+  GoChecklist
+} from 'react-icons/go';
+import {
+  TbReportSearch
+} from 'react-icons/tb';
 
 interface MenuItemProps {
   icon: React.ReactNode;
@@ -17,15 +32,15 @@ interface MenuItemProps {
 
 function MenuItem({ icon, label, isCollapsed, onClick }: MenuItemProps) {
   return (
-    <div
-      onClick={onClick}
-      className={`flex items-center gap-4 w-full px-4 py-3 rounded-lg hover:bg-[#da935a] bg-[#444444] hover:text-black text-white transition shadow-lg cursor-pointer ${
-        isCollapsed ? 'justify-center' : 'justify-start'
-      }`}
-    >
-      <div className="text-xl">{icon}</div>
-      {!isCollapsed && <span className="text-sm">{label}</span>}
-    </div>
+      <div
+          onClick={onClick}
+          className={`flex items-center gap-4 w-full px-4 py-3 rounded-lg hover:bg-[#da935a] bg-[#444444] hover:text-black text-white transition shadow-lg cursor-pointer ${
+              isCollapsed ? 'justify-center' : 'justify-start'
+          }`}
+      >
+        <div className="text-xl">{icon}</div>
+        {!isCollapsed && <span className="text-sm">{label}</span>}
+      </div>
   );
 }
 
@@ -35,133 +50,144 @@ function SidenavAdmin() {
   const [isRegisterDropdownOpen, setIsRegisterDropdownOpen] = useState(false);
 
   return (
-    <aside
-      className={`bg-[#FEF1E6] dark:bg-[#1E293B] text-white min-h-screen hidden md:flex ${
-        isCollapsed ? 'w-20' : 'w-64'
-      } transition-all duration-300 flex flex-col items-center shadow-lg`}
-    >
-      {/* ปุ่ม Toggle */}
-      <button
-        onClick={() => setIsCollapsed(!isCollapsed)}
-        className="mt-4 mb-8 hover:text-white dark:text-white text-black hover:bg-[#da935a] p-2 rounded-lg transition self-end mr-4"
+      <aside
+          className={`bg-[#FEF1E6] dark:bg-[#1E293B] text-white min-h-screen hidden md:flex ${
+              isCollapsed ? 'w-20' : 'w-64'
+          } transition-all duration-300 flex flex-col items-center shadow-lg`}
       >
-        <FaBars className="w-5 h-5" />
-      </button>
-
-      {/* เมนู */}
-      <nav className="flex flex-col w-full gap-4 px-2">
-        <Link href="/admin/books" className="text-black hover:text-white">
-          <MenuItem
-            isCollapsed={isCollapsed}
-            icon={<FaBookMedical />}
-            label="จัดการเล่มบันทึกระสบการณ์"
-          />
-        </Link>
-
-        {/* Dropdown เมนูสำหรับจัดการผู้ใช้ */}
-        <div>
-          <MenuItem
-            isCollapsed={isCollapsed}
-            icon={<FaUserEdit />}
-            label="จัดการผู้ใช้"
-            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-          />
-          {!isCollapsed && isDropdownOpen && (
-            <ul className="flex flex-col gap-2 pl-8 mt-2">
-              <li>
-                <Link
-                  href="/admin/edituser/student"
-                  className="block px-4 py-2 rounded-lg bg-[#555555] text-white hover:bg-[#da935a] hover:text-black transition"
-                >
-                  นิสิต
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/admin/edituser/approveIn"
-                  className="block px-4 py-2 rounded-lg bg-[#555555] text-white hover:bg-[#da935a] hover:text-black transition"
-                >
-                  ผู้นิเทศภายใน
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/admin/edituser/approveOut"
-                  className="block px-4 py-2 rounded-lg bg-[#555555] text-white hover:bg-[#da935a] hover:text-black transition"
-                >
-                  ผู้นิเทศภายนอก
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/admin/edituser/experience-manager"
-                  className="block px-4 py-2 rounded-lg bg-[#555555] text-white hover:bg-[#da935a] hover:text-black transition"
-                >
-                  ผู้จัดการเล่มบันทึก
-                </Link>
-              </li>
-            </ul>
-          )}
-        </div>
-
-        <div>
-          <MenuItem
-            isCollapsed={isCollapsed}
-            icon={<MdOutlineManageSearch />}
-            label="เพิ่มบัญชีผู้ใช้งาน"
-            onClick={() => setIsRegisterDropdownOpen(!isRegisterDropdownOpen)}
-          />
-          {!isCollapsed && isRegisterDropdownOpen && (
-            <ul className="flex flex-col gap-2 pl-8 mt-2">
-              <li>
-                <Link
-                  href="/admin/RegisterUser"
-                  className="block px-4 py-2 rounded-lg bg-[#555555] text-white hover:bg-[#da935a] hover:text-black transition"
-                >
-                  เพิ่มบัญชีผู้ใช้งาน
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/admin/ImportUser"
-                  className="block px-4 py-2 rounded-lg bg-[#555555] text-white hover:bg-[#da935a] hover:text-black transition"
-                >
-                  📁 นำเข้าบัญชีผู้ใช้งาน
-                </Link>
-              </li>
-            </ul>
-          )}
-        </div>
-
-        <Link
-          href="/admin/dashboard-student"
-          className="text-black hover:text-white"
+        {/* ปุ่ม Toggle */}
+        <button
+            onClick={() => setIsCollapsed(!isCollapsed)}
+            className="mt-4 mb-8 hover:text-white dark:text-white text-black hover:bg-[#da935a] p-2 rounded-lg transition self-end mr-4"
         >
-          <MenuItem
-            isCollapsed={isCollapsed}
-            icon={<TbReportSearch />}
-            label="ภาพรวมความคืบหน้าของนิสิต"
-          />
-        </Link>
+          <FaBars className="w-5 h-5" />
+        </button>
 
-        <Link href="/admin/logAdmin" className="text-black hover:text-white">
+        {/* เมนู */}
+        <nav className="flex flex-col w-full gap-4 px-2">
+          <Link href="/admin/books" className="text-black hover:text-white">
+            <MenuItem
+                isCollapsed={isCollapsed}
+                icon={<FaBookMedical />}
+                label="จัดการเล่มบันทึกระสบการณ์"
+            />
+          </Link>
+
+          {/* Dropdown เมนูสำหรับจัดการผู้ใช้ */}
+          <div>
+            <MenuItem
+                isCollapsed={isCollapsed}
+                icon={<FaUserEdit />}
+                label="จัดการผู้ใช้"
+                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+            />
+            {!isCollapsed && isDropdownOpen && (
+                <ul className="flex flex-col gap-2 pl-8 mt-2">
+                  <li>
+                    <Link
+                        href="/admin/edituser/student"
+                        className="block px-4 py-2 rounded-lg bg-[#555555] text-white hover:bg-[#da935a] hover:text-black transition"
+                    >
+                      นิสิต
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                        href="/admin/edituser/approveIn"
+                        className="block px-4 py-2 rounded-lg bg-[#555555] text-white hover:bg-[#da935a] hover:text-black transition"
+                    >
+                      ผู้นิเทศภายใน
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                        href="/admin/edituser/approveOut"
+                        className="block px-4 py-2 rounded-lg bg-[#555555] text-white hover:bg-[#da935a] hover:text-black transition"
+                    >
+                      ผู้นิเทศภายนอก
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                        href="/admin/edituser/experience-manager"
+                        className="block px-4 py-2 rounded-lg bg-[#555555] text-white hover:bg-[#da935a] hover:text-black transition"
+                    >
+                      ผู้จัดการเล่มบันทึก
+                    </Link>
+                  </li>
+                </ul>
+            )}
+          </div>
+
+          <div>
+            <MenuItem
+                isCollapsed={isCollapsed}
+                icon={<MdOutlineManageSearch />}
+                label="เพิ่มบัญชีผู้ใช้งาน"
+                onClick={() => setIsRegisterDropdownOpen(!isRegisterDropdownOpen)}
+            />
+            {!isCollapsed && isRegisterDropdownOpen && (
+                <ul className="flex flex-col gap-2 pl-8 mt-2">
+                  <li>
+                    <Link
+                        href="/admin/RegisterUser"
+                        className="block px-4 py-2 rounded-lg bg-[#555555] text-white hover:bg-[#da935a] hover:text-black transition"
+                    >
+                      เพิ่มบัญชีผู้ใช้งาน
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                        href="/admin/ImportUser"
+                        className="block px-4 py-2 rounded-lg bg-[#555555] text-white hover:bg-[#da935a] hover:text-black transition"
+                    >
+                      📁 นำเข้าบัญชีผู้ใช้งาน
+                    </Link>
+                  </li>
+                </ul>
+            )}
+          </div>
+
+          <Link
+              href="/admin/dashboard-subject"
+              className="text-black hover:text-white"
+          >
+            <MenuItem
+                isCollapsed={isCollapsed}
+                icon={<TbReportSearch />}
+                label="ภาพรวมความคืบหน้ารายวิชา"
+            />
+          </Link>
+
+          <Link
+              href="/admin/dashboard-student"
+              className="text-black hover:text-white"
+          >
+            <MenuItem
+                isCollapsed={isCollapsed}
+                icon={<TbReportSearch />}
+                label="ภาพรวมความคืบหน้าตลอดหลักสูตร"
+            />
+          </Link>
+
+          <Link href="/admin/logAdmin" className="text-black hover:text-white">
+            <MenuItem
+                isCollapsed={isCollapsed}
+                icon={<GoChecklist />}
+                label="ตรวจสอบ log"
+            />
+          </Link>
           <MenuItem
-            isCollapsed={isCollapsed}
-            icon={<GoChecklist />}
-            label="ตรวจสอบ log"
+              isCollapsed={isCollapsed}
+              icon={<MdLogout />}
+              label="ออกจากระบบ"
+              onClick={async () => {
+                await fetch('/api/auth/signout', { method: 'POST' });
+                window.location.href = '/';
+              }}
           />
-        </Link>
-        <MenuItem
-          isCollapsed={isCollapsed}
-          icon={<MdLogout />}
-          label="ออกจากระบบ"
-          onClick={async () => {
-            await fetch('/api/auth/signout', { method: 'POST' });
-            window.location.href = '/';
-          }}
-        />
-      </nav>
-    </aside>
+        </nav>
+      </aside>
   );
 }
 

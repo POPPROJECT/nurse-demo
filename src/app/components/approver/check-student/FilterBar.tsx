@@ -1,22 +1,41 @@
-'use client';
+//nurse-demo\src\app\components\approver\check-student\FilterBar.tsx
+"use client";
 
-import React from 'react';
-import Select from 'react-select';
+import React from "react";
+import Select from "react-select";
 
+// ▼▼▼ [แก้ไข] เปลี่ยน Type จาก courses เป็น subjects (number[]) ▼▼▼
 type Props = {
   books: { id: number; title: string }[];
   selectedBook: number | string;
   setSelectedBook: (v: number | string) => void;
+  subjects: string[]; // <-- แก้ไขตรงนี้
+  progressMode: string;
+  setProgressMode: (v: string) => void;
   search: string;
   setSearch: (v: string) => void;
   limit: number;
   setLimit: (v: number) => void;
 };
+// ▲▲▲ [สิ้นสุดส่วนที่แก้ไข] ▲▲▲
+
+// type Props = {
+//   books: { id: number; title: string }[];
+//   selectedBook: number | string;
+//   setSelectedBook: (v: number | string) => void;
+//   search: string;
+//   setSearch: (v: string) => void;
+//   limit: number;
+//   setLimit: (v: number) => void;
+// };
 
 export default function FilterBar({
   books,
   selectedBook,
   setSelectedBook,
+  subjects,
+  progressMode,
+  setProgressMode,
   search,
   setSearch,
   limit,
@@ -31,24 +50,51 @@ export default function FilterBar({
   // หา option ที่ตรงกับ selectedBook (หรือ null ถ้าไม่เจอ)
   const selectedOption =
     bookOptions.find((opt) => opt.value === selectedBook) || null;
+
+  // ▼▼▼ [แก้ไข] สร้าง Options จาก subjects ที่เป็น number[] ▼▼▼
+  const progressModeOptions = [
+    { value: "all", label: "ตลอดหลักสูตร" },
+    ...subjects.map((s) => ({ value: s.toString(), label: `รายวิชา ${s}` })),
+  ];
+  const selectedProgressModeOption =
+    progressModeOptions.find((opt) => opt.value === progressMode) || null;
+  // ▲▲▲ [สิ้นสุดส่วนที่แก้ไข] ▲▲▲
+
   return (
     <div className="bg-white p-4 rounded-xl shadow flex flex-col lg:flex-row gap-4 items-center dark:bg-[#1E293B] dark:text-white justify-between">
       {/* เล่ม */}
-      <div className="flex items-center w-full lg:w-1/2">
-        <label className="block mb-1 mr-2 font-medium">สมุด</label>
+      <div className="w-full lg:w-1/2 flex items-center">
+        <label className="block mb-1 font-medium mr-2">สมุด</label>
         <Select
           instanceId="book-select"
           options={bookOptions}
           value={selectedOption}
           onChange={(opt) =>
-            setSelectedBook(opt ? (opt as { value: number }).value : '')
+            setSelectedBook(opt ? (opt as { value: number }).value : "")
           }
           placeholder="-- เลือกสมุด --"
           isClearable
-          className="w-full text-gray-800 react-select-container "
+          className="react-select-container text-gray-800 w-full "
           classNamePrefix="react-select"
         />
       </div>
+
+      {/* ▼▼▼ [เพิ่ม] Progress Mode Select ▼▼▼ */}
+      <div className="w-full lg:w-1/3 flex items-center">
+        <label className="block font-medium mr-2 whitespace-nowrap">
+          ความคืบหน้า
+        </label>
+        <Select
+          instanceId="progress-mode-select"
+          options={progressModeOptions}
+          value={selectedProgressModeOption}
+          onChange={(opt) => setProgressMode(opt ? opt.value : "all")}
+          isDisabled={!selectedBook}
+          className="react-select-container text-gray-800 w-full"
+          classNamePrefix="react-select"
+        />
+      </div>
+      {/* ▲▲▲ [สิ้นสุดส่วนที่เพิ่ม] ▲▲▲ */}
 
       {/* ค้นหา */}
       <div className="relative w-full lg:w-1/3">

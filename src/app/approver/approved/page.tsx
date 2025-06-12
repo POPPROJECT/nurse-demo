@@ -51,9 +51,9 @@ function getPageNumbers(current: number, total: number): (number | '...')[] {
 
   for (let i = 1; i <= total; i++) {
     if (
-      i === 1 ||
-      i === total ||
-      (i >= current - delta && i <= current + delta)
+        i === 1 ||
+        i === total ||
+        (i >= current - delta && i <= current + delta)
     ) {
       range.push(i);
     }
@@ -80,9 +80,14 @@ export default function ApprovedPage() {
   const [error, setError] = useState<string | null>(null);
 
   const [search, setSearch] = useState('');
-  const [sortBy, setSortBy] = useState<'createdAt' | 'course' | 'subCourse'>(
-    'createdAt'
-  );
+
+  // ▼▼▼ ส่วนที่เพิ่มเข้ามา: 1. สร้าง state สำหรับ debounced value ▼▼▼
+  const [debouncedSearch, setDebouncedSearch] = useState(search);
+  // ▲▲▲ สิ้นสุดส่วนที่เพิ่มเข้ามา ▲▲▲
+
+  const [sortBy, setSortBy] = useState<
+      'createdAt' | 'course' | 'subCourse' | 'studentName'
+  >('createdAt');
   const [order, setOrder] = useState<'asc' | 'desc'>('desc');
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
@@ -93,7 +98,7 @@ export default function ApprovedPage() {
   const fetchRequests = useCallback(async () => {
     if (!accessToken) {
       console.log(
-        '[ApprovedPage] No accessToken, waiting for session from AuthContext.'
+          '[ApprovedPage] No accessToken, waiting for session from AuthContext.'
       );
       //setError('Waiting for authentication...');
       setLoading(false);
@@ -108,22 +113,23 @@ export default function ApprovedPage() {
         sortBy,
         order,
       };
-      if (search) params.search = search;
-      // เพิ่ม params อื่นๆ ถ้า FilterBar มี (เช่น status, date)
+      // ใช้ debouncedSearch แทน search
+      if (debouncedSearch) params.search = debouncedSearch;
+
 
       const res = await axios.get<FetchRequestsResponse>(
-        `${BASE}/approver/requests`, // Endpoint สำหรับดึงรายการคำขอ
-        {
-          headers: { Authorization: `Bearer ${accessToken}` },
-          params,
-        }
+          `${BASE}/approver/requests`, // Endpoint สำหรับดึงรายการคำขอ
+          {
+            headers: { Authorization: `Bearer ${accessToken}` },
+            params,
+          }
       );
       setRequests(res.data.data);
       setTotal(res.data.total);
     } catch (e: any) {
       console.error('Error fetching requests for approver:', e);
       setError(
-        e.response?.data?.message || e.message || 'Failed to load requests.'
+          e.response?.data?.message || e.message || 'Failed to load requests.'
       );
       Swal.fire('Error', 'โหลดรายการคำขอไม่สำเร็จ', 'error');
       setRequests([]);
@@ -131,7 +137,7 @@ export default function ApprovedPage() {
     } finally {
       setLoading(false);
     }
-  }, [accessToken, page, limit, search, sortBy, order, BASE]);
+  }, [accessToken, page, limit, debouncedSearch, sortBy, order, BASE]);
 
   useEffect(() => {
     if (accessToken) {
@@ -142,21 +148,25 @@ export default function ApprovedPage() {
     }
   }, [accessToken, authSession, fetchRequests]); // ใช้ fetchRequests เป็น dependency
 
-  // useEffect สำหรับ Debounced Search (ถ้าต้องการ)
+  // ▼▼▼ ส่วนที่เพิ่มเข้ามา: 2. สร้าง useEffect สำหรับ Debouncing ▼▼▼
   useEffect(() => {
+    // ตั้งเวลา delay
     const handler = setTimeout(() => {
-      if (accessToken && search !== undefined) {
-        setPage(1); // Reset page to 1
-        fetchRequests();
-      }
-    }, 500);
-    return () => clearTimeout(handler);
-  }, [search, accessToken, fetchRequests]);
+      setPage(1); // กลับไปหน้า 1 เมื่อมีการค้นหาใหม่
+      setDebouncedSearch(search); // อัปเดตค่าที่จะใช้ค้นหาจริง
+    }, 500); // delay 500 ms
+
+    // สั่งยกเลิก timeout ทุกครั้งที่มีการพิมพ์ใหม่ (cleanup function)
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [search]); // useEffect นี้จะทำงานทุกครั้งที่ค่า `search` (จากช่อง input) เปลี่ยน
+  // ▲▲▲ สิ้นสุดส่วนที่เพิ่มเข้ามา ▲▲▲
 
   const handleConfirmOrReject = async (
-    actionType: 'confirm' | 'reject',
-    experienceId: number,
-    pinValue?: string
+      actionType: 'confirm' | 'reject',
+      experienceId: number,
+      pinValue?: string
   ) => {
     if (!accessToken) {
       /* ... แจ้ง Error ... */ return;
@@ -165,13 +175,13 @@ export default function ApprovedPage() {
     const userRole = authSession?.user?.role;
 
     if (
-      !userRole ||
-      ![Role.APPROVER_IN, Role.APPROVER_OUT].includes(userRole)
+        !userRole ||
+        ![Role.APPROVER_IN, Role.APPROVER_OUT].includes(userRole)
     ) {
       Swal.fire(
-        'ไม่ได้รับอนุญาต',
-        'เฉพาะผู้นิเทศในและผู้นิเทศภายนอกเท่านั้นที่สามารถยืนยันคำขอได้',
-        'warning'
+          'ไม่ได้รับอนุญาต',
+          'เฉพาะผู้นิเทศในและผู้นิเทศภายนอกเท่านั้นที่สามารถยืนยันคำขอได้',
+          'warning'
       );
       return;
     }
@@ -180,7 +190,7 @@ export default function ApprovedPage() {
     if (!pinValue) {
       const { value: pin } = await Swal.fire({
         title: `กรุณาใส่ PIN 6 หลักเพื่อ ${
-          actionType === 'confirm' ? 'ยืนยัน' : 'ปฏิเสธ'
+            actionType === 'confirm' ? 'ยืนยัน' : 'ปฏิเสธ'
         }`,
         input: 'password',
         inputPlaceholder: 'Enter your PIN',
@@ -204,23 +214,23 @@ export default function ApprovedPage() {
     try {
       const endpoint = `${BASE}/approver/requests/${experienceId}/${actionType}`; // Endpoint ของคุณ
       await axios.patch(
-        // หรือ POST ตามที่ Backend กำหนด
-        endpoint,
-        { pin: pinValue },
-        { headers: { Authorization: `Bearer ${accessToken}` } }
+          // หรือ POST ตามที่ Backend กำหนด
+          endpoint,
+          { pin: pinValue },
+          { headers: { Authorization: `Bearer ${accessToken}` } }
       );
       Swal.fire(
-        'สำเร็จ!',
-        `${actionType === 'confirm' ? 'ยืนยัน' : 'ปฏิเสธ'}คำขอเรียบร้อยแล้ว`,
-        'success'
+          'สำเร็จ!',
+          `${actionType === 'confirm' ? 'ยืนยัน' : 'ปฏิเสธ'}คำขอเรียบร้อยแล้ว`,
+          'success'
       );
       fetchRequests(); // โหลดข้อมูลใหม่
     } catch (e: any) {
       console.error(`Error ${actionType} request:`, e);
       const msg = e.response?.data?.message || 'เกิดข้อผิดพลาด';
       if (
-        e.response?.status === 400 &&
-        (msg.includes('PIN') || msg.includes('pin'))
+          e.response?.status === 400 &&
+          (msg.includes('PIN') || msg.includes('pin'))
       ) {
         Swal.fire({ icon: 'warning', title: 'PIN ไม่ถูกต้อง', text: msg });
       } else {
@@ -230,8 +240,8 @@ export default function ApprovedPage() {
   };
 
   const handleBulkAction = async (
-    actionType: 'confirm' | 'reject',
-    pin: string
+      actionType: 'confirm' | 'reject',
+      pin: string
   ) => {
     if (!accessToken) {
       /* ... แจ้ง Error ... */ return;
@@ -244,13 +254,13 @@ export default function ApprovedPage() {
     const userRole = authSession?.user?.role;
 
     if (
-      !userRole ||
-      ![Role.APPROVER_IN, Role.APPROVER_OUT].includes(userRole)
+        !userRole ||
+        ![Role.APPROVER_IN, Role.APPROVER_OUT].includes(userRole)
     ) {
       Swal.fire(
-        'ไม่ได้รับอนุญาต',
-        'เฉพาะผู้นิเทศในและผู้นิเทศภายนอกเท่านั้นที่สามารถยืนยันคำขอแบบกลุ่มได้',
-        'warning'
+          'ไม่ได้รับอนุญาต',
+          'เฉพาะผู้นิเทศในและผู้นิเทศภายนอกเท่านั้นที่สามารถยืนยันคำขอแบบกลุ่มได้',
+          'warning'
       );
       return;
     }
@@ -258,17 +268,17 @@ export default function ApprovedPage() {
     try {
       const endpoint = `${BASE}/approver/requests/bulk-${actionType}`;
       await axios.patch(
-        // หรือ POST
-        endpoint,
-        { ids: selectedIds, pin },
-        { headers: { Authorization: `Bearer ${accessToken}` } }
+          // หรือ POST
+          endpoint,
+          { ids: selectedIds, pin },
+          { headers: { Authorization: `Bearer ${accessToken}` } }
       );
       Swal.fire(
-        'สำเร็จ',
-        `${actionType === 'confirm' ? 'ยืนยัน' : 'ปฏิเสธ'} ${
-          selectedIds.length
-        } รายการเรียบร้อยแล้ว`,
-        'success'
+          'สำเร็จ',
+          `${actionType === 'confirm' ? 'ยืนยัน' : 'ปฏิเสธ'} ${
+              selectedIds.length
+          } รายการเรียบร้อยแล้ว`,
+          'success'
       );
       setSelectedIds([]);
       fetchRequests();
@@ -287,205 +297,159 @@ export default function ApprovedPage() {
   }
 
   return (
-    <div className="container max-w-6xl px-4 py-8 mx-auto mt-10 sm:mt-0">
-      <div className="p-6 mb-6 text-white bg-[linear-gradient(to_right,#f46b45_0%,#eea849_100%)] dark:bg-[#1E293B] rounded-xl shadow-md hover:shadow-lg transition-all duration-300 ease-in-out hover:-translate-y-1 ">
-        <h1 className="text-xl font-semibold sm:text-2xl">จัดการคำขอ</h1>
-      </div>
-      <main className="">
-        <FilterBar
-          search={search}
-          setSearch={setSearch}
-          sortBy={sortBy}
-          setSortBy={setSortBy}
-          order={order}
-          setOrder={setOrder}
-        />
+      <div className="container max-w-6xl px-4 py-8 mx-auto mt-10 sm:mt-0">
+        <div className="p-6 mb-6 text-white bg-[linear-gradient(to_right,#f46b45_0%,#eea849_100%)] dark:bg-[#1E293B] rounded-xl shadow-md hover:shadow-lg transition-all duration-300 ease-in-out hover:-translate-y-1 ">
+          <h1 className="text-xl font-semibold sm:text-2xl">รออนุมัติรายการ</h1>
+        </div>
+        <main className="">
+          <FilterBar
+              search={search}
+              setSearch={setSearch}
+              sortBy={sortBy}
+              setSortBy={setSortBy}
+              order={order}
+              setOrder={setOrder}
+          />
 
-        {/* Limit selector */}
-        <div className="flex justify-center mt-4 sm:justify-start">
-          <div className="p-2 bg-white dark:bg-[#1E293B]  rounded-lg shadow">
-            <div className="flex items-center px-4">
-              <label
-                htmlFor="limit"
-                className="mr-2 text-sm font-medium dark:text-white"
-              >
-                แสดง:
-              </label>
-              <select
-                id="limit"
-                className="px-2 py-1 border border-gray-300 rounded-lg bg-gray-50"
-                value={limit}
-                onChange={(e) => {
-                  setLimit(+e.target.value);
-                  setPage(1);
-                }}
-              >
-                {[5, 10, 20, 50].map((n) => (
-                  <option key={n} value={n} className="text-gray-800">
-                    {n}
-                  </option>
-                ))}
-              </select>
-              <span className="ml-2 text-sm text-gray-600 dark:text-white">
+          {/* Limit selector */}
+          <div className="flex justify-center mt-4 sm:justify-start">
+            <div className="p-2 bg-white dark:bg-[#1E293B]  rounded-lg shadow">
+              <div className="flex items-center px-4">
+                <label
+                    htmlFor="limit"
+                    className="mr-2 text-sm font-medium dark:text-white"
+                >
+                  แสดง:
+                </label>
+                <select
+                    id="limit"
+                    className="bg-gray-50 px-2 py-1 border border-gray-300  rounded-lg"
+                    value={limit}
+                    onChange={(e) => {
+                      setLimit(+e.target.value);
+                      setPage(1);
+                    }}
+                >
+                  {[5, 10, 20, 50].map((n) => (
+                      <option key={n} value={n} className="text-gray-800">
+                        {n}
+                      </option>
+                  ))}
+                </select>
+                <span className="ml-2 text-sm text-gray-600 dark:text-white">
                 รายการ
               </span>
+              </div>
             </div>
           </div>
-        </div>
 
-        {selectedIds.length > 0 && (
-          <BulkActions
-            selectedCount={selectedIds.length}
-            onConfirmAll={(pinFromModal) =>
-              handleBulkAction('confirm', pinFromModal)
-            }
-            onRejectAll={(pinFromModal) =>
-              handleBulkAction('reject', pinFromModal)
-            }
-          />
-        )}
-
-        <div className="mt-4 space-y-4">
-          {loading && requests.length === 0 ? (
-            <div className="py-10 text-center">กำลังโหลด…</div>
-          ) : requests.length === 0 && !error ? (
-            <div className="py-10 text-center text-gray-500">
-              ไม่พบรายการคำขอ
-            </div>
-          ) : (
-            requests.map((req) => (
-              <RequestCard
-                key={req.id}
-                req={req}
-                selected={selectedIds.includes(req.id)}
-                onCheck={(checked) =>
-                  setSelectedIds((prev) =>
-                    checked
-                      ? [...prev, req.id]
-                      : prev.filter((i) => i !== req.id)
-                  )
-                }
-                onConfirm={(pin) =>
-                  handleConfirmOrReject('confirm', req.id, pin)
-                }
-                onReject={(pin) => handleConfirmOrReject('reject', req.id, pin)}
-                currentUserRole={authSession?.user?.role as Role | undefined}
+          {selectedIds.length > 0 && (
+              <BulkActions
+                  selectedCount={selectedIds.length}
+                  onConfirmAll={(pinFromModal) =>
+                      handleBulkAction('confirm', pinFromModal)
+                  }
+                  onRejectAll={(pinFromModal) =>
+                      handleBulkAction('reject', pinFromModal)
+                  }
               />
-            ))
           )}
-        </div>
 
-        <div className="flex items-center justify-center pt-4 mt-6 space-x-1 border-t border-gray-200 dark:border-gray-700 sm:space-x-2">
-          {/* หน้าแรก */}
-          <button
-            onClick={() => setPage(1)}
-            disabled={page === 1}
-            className="px-2 py-1 text-sm font-medium text-gray-600 transition-colors duration-200 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 hover:text-gray-800 dark:text-gray-300 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700 dark:hover:text-white disabled:opacity-50 disabled:cursor-not-allowed sm:px-3"
-          >
-            หน้าแรก
-          </button>
-
-          {/* ก่อนหน้า */}
-          <button
-            onClick={() => setPage(Math.max(1, page - 1))}
-            disabled={page === 1}
-            className="px-2 py-1 text-sm font-medium text-gray-600 transition-colors duration-200 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 hover:text-gray-800 dark:text-gray-300 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700 dark:hover:text-white disabled:opacity-50 disabled:cursor-not-allowed sm:px-3"
-          >
-            ก่อนหน้า
-          </button>
-
-          {/* ตัวเลขหน้า */}
-          {getPageNumbers(page, totalPages).map((pNo, idx) => (
-            <div key={idx}>
-              {pNo === '...' ? (
-                <span className="px-2 py-1 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-lg dark:text-gray-300 dark:bg-gray-800 dark:border-gray-700 sm:px-3">
-                  …
-                </span>
-              ) : (
-                <button
-                  onClick={() => setPage(pNo as number)}
-                  aria-current={pNo === page ? 'page' : undefined}
-                  className={`
-                px-2 sm:px-3 py-1 border text-sm font-medium rounded-lg transition-colors duration-200
-                ${
-                  pNo === page
-                    ? 'bg-blue-600 border-blue-600 text-white shadow-sm hover:bg-blue-700 dark:bg-blue-700 dark:border-blue-700 dark:text-white dark:hover:bg-blue-800'
-                    : 'bg-white border-gray-300 text-gray-600 hover:bg-gray-100 hover:text-gray-800 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white'
-                }
-              `}
-                >
-                  {pNo}
-                </button>
-              )}
-            </div>
-          ))}
-
-          {/* ถัดไป */}
-          <button
-            onClick={() => setPage(Math.min(totalPages, page + 1))}
-            disabled={page === totalPages || totalPages === 0}
-            className="px-2 py-1 text-sm font-medium text-gray-600 transition-colors duration-200 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 hover:text-gray-800 dark:text-gray-300 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700 dark:hover:text-white disabled:opacity-50 disabled:cursor-not-allowed sm:px-3"
-          >
-            ถัดไป
-          </button>
-
-          {/* หน้าสุดท้าย */}
-          <button
-            onClick={() => setPage(totalPages)}
-            disabled={page === totalPages || totalPages === 0}
-            className="px-2 py-1 text-sm font-medium text-gray-600 transition-colors duration-200 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 hover:text-gray-800 dark:text-gray-300 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700 dark:hover:text-white disabled:opacity-50 disabled:cursor-not-allowed sm:px-3"
-          >
-            หน้าสุดท้าย
-          </button>
-        </div>
-        {/* Pagination
-      <div className="flex items-center justify-center pt-4 mt-6 space-x-1 border-t border-gray-200 sm:space-x-2">
-        <button
-          onClick={() => setPage(1)}
-          disabled={page === 1}
-          className="px-2 py-1 border rounded sm:px-3 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          หน้าแรก
-        </button>
-        <button
-          onClick={() => setPage((p) => Math.max(1, p - 1))}
-          disabled={page === 1}
-          className="px-2 py-1 border rounded sm:px-3 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          ก่อนหน้า
-        </button>
-        {getPageNumbers(page, totalPages).map((pNo, idx) => (
-          <div key={idx}>
-            {pNo === '...' ? (
-              <span className="px-2 py-1 border rounded">…</span>
+          <div className="mt-4 space-y-4">
+            {loading && requests.length === 0 ? (
+                <div className="py-10 text-center">กำลังโหลด…</div>
+            ) : requests.length === 0 && !error ? (
+                <div className="py-10 text-center text-gray-500">
+                  ไม่พบรายการคำขอ
+                </div>
             ) : (
-              <button
-                onClick={() => setPage(pNo as number)}
-                className={`px-2 py-1 border rounded ${
-                  pNo === page ? 'bg-blue-500 text-white' : 'bg-white'
-                }`}
-              >
-                {pNo}
-              </button>
+                requests.map((req) => (
+                    <RequestCard
+                        key={req.id}
+                        req={req}
+                        selected={selectedIds.includes(req.id)}
+                        onCheck={(checked) =>
+                            setSelectedIds((prev) =>
+                                checked
+                                    ? [...prev, req.id]
+                                    : prev.filter((i) => i !== req.id)
+                            )
+                        }
+                        onConfirm={(pin) =>
+                            handleConfirmOrReject('confirm', req.id, pin)
+                        }
+                        onReject={(pin) => handleConfirmOrReject('reject', req.id, pin)}
+                        currentUserRole={authSession?.user?.role as Role | undefined}
+                    />
+                ))
             )}
           </div>
-        ))}
-        <button
-          onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-          disabled={page === totalPages || requests.length < limit}
-          className="px-2 py-1 border rounded sm:px-3 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          ถัดไป
-        </button>
-        <button
-          onClick={() => setPage(totalPages)}
-          disabled={page === totalPages || requests.length < limit}
-          className="px-2 py-1 border rounded sm:px-3 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          หน้าสุดท้าย
-        </button>
-      </div> */}
-      </main>
-    </div>
+
+          <div className="flex items-center justify-center pt-4 mt-6 space-x-1 border-t border-gray-200 dark:border-gray-700 sm:space-x-2">
+            {/* หน้าแรก */}
+            <button
+                onClick={() => setPage(1)}
+                disabled={page === 1}
+                className="px-2 py-1 text-sm font-medium text-gray-600 transition-colors duration-200 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 hover:text-gray-800 dark:text-gray-300 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700 dark:hover:text-white disabled:opacity-50 disabled:cursor-not-allowed sm:px-3"
+            >
+              หน้าแรก
+            </button>
+
+            {/* ก่อนหน้า */}
+            <button
+                onClick={() => setPage(Math.max(1, page - 1))}
+                disabled={page === 1}
+                className="px-2 py-1 text-sm font-medium text-gray-600 transition-colors duration-200 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 hover:text-gray-800 dark:text-gray-300 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700 dark:hover:text-white disabled:opacity-50 disabled:cursor-not-allowed sm:px-3"
+            >
+              ก่อนหน้า
+            </button>
+
+            {/* ตัวเลขหน้า */}
+            {getPageNumbers(page, totalPages).map((pNo, idx) => (
+                <div key={idx}>
+                  {pNo === '...' ? (
+                      <span className="px-2 py-1 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-lg dark:text-gray-300 dark:bg-gray-800 dark:border-gray-700 sm:px-3">
+                  …
+                </span>
+                  ) : (
+                      <button
+                          onClick={() => setPage(pNo as number)}
+                          aria-current={pNo === page ? 'page' : undefined}
+                          className={`
+                px-2 sm:px-3 py-1 border text-sm font-medium rounded-lg transition-colors duration-200
+                ${
+                              pNo === page
+                                  ? 'bg-blue-600 border-blue-600 text-white shadow-sm hover:bg-blue-700 dark:bg-blue-700 dark:border-blue-700 dark:text-white dark:hover:bg-blue-800'
+                                  : 'bg-white border-gray-300 text-gray-600 hover:bg-gray-100 hover:text-gray-800 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white'
+                          }
+              `}
+                      >
+                        {pNo}
+                      </button>
+                  )}
+                </div>
+            ))}
+
+            {/* ถัดไป */}
+            <button
+                onClick={() => setPage(Math.min(totalPages, page + 1))}
+                disabled={page === totalPages || totalPages === 0}
+                className="px-2 py-1 text-sm font-medium text-gray-600 transition-colors duration-200 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 hover:text-gray-800 dark:text-gray-300 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700 dark:hover:text-white disabled:opacity-50 disabled:cursor-not-allowed sm:px-3"
+            >
+              ถัดไป
+            </button>
+
+            {/* หน้าสุดท้าย */}
+            <button
+                onClick={() => setPage(totalPages)}
+                disabled={page === totalPages || totalPages === 0}
+                className="px-2 py-1 text-sm font-medium text-gray-600 transition-colors duration-200 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 hover:text-gray-800 dark:text-gray-300 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700 dark:hover:text-white disabled:opacity-50 disabled:cursor-not-allowed sm:px-3"
+            >
+              หน้าสุดท้าย
+            </button>
+          </div>
+
+        </main>
+      </div>
   );
 }

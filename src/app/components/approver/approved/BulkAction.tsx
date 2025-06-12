@@ -17,13 +17,13 @@ export default function BulkActions({
     actionText: string
   ) => {
     const { isConfirmed, value } = await Swal.fire({
-      title: `${actionText} ${selectedCount} รายการ`,
-      text: `คุณแน่ใจจะ${actionText.toLowerCase()} ${selectedCount} รายการ?`,
+      title: `กรุณากรอก PIN`,
+      text: `${actionText.toLowerCase()} ${selectedCount} รายการ`,
       input: 'password',
       inputAttributes: { maxlength: '6', minlength: '6' },
       showCancelButton: true,
+      cancelButtonText: 'ยกเลิก',
       confirmButtonText: actionText,
-      icon: 'question',
     });
     if (!isConfirmed || !value) return;
     try {
