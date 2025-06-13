@@ -1,5 +1,5 @@
-import { RowData } from 'lib/type';
-import React from 'react';
+import { RowData } from "lib/type";
+import React from "react";
 
 interface Props {
   rows: RowData[];
@@ -18,7 +18,7 @@ export default function PreviewTable({
 }: Props) {
   return (
     <div className="p-6 bg-white shadow rounded-xl">
-      <h2 className="mb-4 text-lg font-semibold">
+      <h2 className="mb-4 text-lg font-semibold text-black">
         รายการที่นำเข้า ({rows.length})
       </h2>
 
@@ -34,33 +34,33 @@ export default function PreviewTable({
               <th className="p-2 text-center border">สถานะ</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className="text-black">
             {rows.map((r, idx) => {
               const valid = validateRow(r);
               return (
-                <tr key={idx} className={!valid ? 'bg-red-50' : ''}>
+                <tr key={idx} className={!valid ? "bg-red-50" : ""}>
                   <td className="p-2 border">
-                    {typeof r.name === 'string'
+                    {typeof r.name === "string"
                       ? r.name
                       : r.name
-                      ? `${r.name.prefix || ''}${r.name.firstName || ''} ${
-                          r.name.lastName || ''
-                        }`.trim()
-                      : '-'}
+                        ? `${r.name.prefix || ""}${r.name.firstName || ""} ${
+                            r.name.lastName || ""
+                          }`.trim()
+                        : "-"}
                   </td>
-                  <td className="p-2 border">{r.email || '-'}</td>
-                  <td className="p-2 border">{r.studentId ?? '-'}</td>
-                  <td className="p-2 border">{r.password ?? '-'}</td>
+                  <td className="p-2 border">{r.email || "-"}</td>
+                  <td className="p-2 border">{r.studentId ?? "-"}</td>
+                  <td className="p-2 border">{r.password ?? "-"}</td>
                   <td className="p-2 border">{r.provider}</td>
                   <td className="p-2 text-center border">
                     <span
                       className={`px-2 py-1 rounded-full text-xs font-medium ${
                         valid
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-red-100 text-red-800'
+                          ? "bg-green-100 text-green-800"
+                          : "bg-red-100 text-red-800"
                       }`}
                     >
-                      {valid ? 'ถูกต้อง' : 'ไม่ถูกต้อง'}
+                      {valid ? "ถูกต้อง" : "ไม่ถูกต้อง"}
                     </span>
                   </td>
                 </tr>
@@ -78,8 +78,8 @@ export default function PreviewTable({
               onClick={() => onPageChange(page)}
               className={`px-3 py-1 rounded border text-sm ${
                 page === currentPage
-                  ? 'bg-indigo-600 text-white'
-                  : 'bg-white border-gray-300 text-gray-600 hover:bg-gray-100'
+                  ? "bg-indigo-600 text-white"
+                  : "bg-white border-gray-300 text-gray-600 hover:bg-gray-100"
               }`}
             >
               {page}

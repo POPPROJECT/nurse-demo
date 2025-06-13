@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { useEffect, useRef, useState } from 'react';
-import CourseManager, { Course } from './CourseManager';
-import SubCourseManager from './SubCourseManager';
+import { useEffect, useRef, useState } from "react";
+import CourseManager, { Course } from "./CourseManager";
+import SubCourseManager from "./SubCourseManager";
 
 export default function AdminCourseSubCourseManager({
   bookId,
@@ -54,11 +54,16 @@ export default function AdminCourseSubCourseManager({
                 setSelectedCourseId(parseInt(e.target.value, 10))
               }
             >
-              {courses.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
+              {courses
+                .slice()
+                .sort((a, b) =>
+                  a.name.localeCompare(b.name, undefined, { numeric: true }),
+                )
+                .map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
             </select>
           </div>
         )}

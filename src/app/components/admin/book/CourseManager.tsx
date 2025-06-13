@@ -1,16 +1,16 @@
-'use client';
+"use client";
 
-import { useState, useEffect, FormEvent } from 'react';
-import axios from 'axios';
-import Swal from 'sweetalert2';
+import { FormEvent, useEffect, useState } from "react";
+import axios from "axios";
+import Swal from "sweetalert2";
 import {
-  FaTrash,
+  FaCheck,
+  FaEdit,
   FaPlus,
   FaSpinner,
-  FaEdit,
-  FaCheck,
   FaTimes,
-} from 'react-icons/fa';
+  FaTrash,
+} from "react-icons/fa";
 
 export interface Course {
   id: number;
@@ -29,11 +29,11 @@ export default function CourseManager({
   onListChange,
 }: CourseManagerProps) {
   const [courses, setCourses] = useState<Course[]>([]);
-  const [name, setName] = useState('');
+  const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
   const [adding, setAdding] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
-  const [editName, setEditName] = useState<string>('');
+  const [editName, setEditName] = useState<string>("");
 
   const BASE = process.env.NEXT_PUBLIC_BACKEND_URL!;
   const authHeader = { headers: { Authorization: `Bearer ${accessToken}` } };
@@ -43,14 +43,14 @@ export default function CourseManager({
     try {
       const res = await axios.get<Course[]>(
         `${BASE}/experience-books/${bookId}/courses`,
-        authHeader
+        authHeader,
       );
       setCourses(res.data);
       setTimeout(() => {
         onListChange?.(res.data);
       }, 0);
     } catch {
-      Swal.fire('โหลดหมวดหมู่ไม่สำเร็จ', '', 'error');
+      Swal.fire("โหลดหมวดหมู่ไม่สำเร็จ", "", "error");
     } finally {
       setLoading(false);
     }
@@ -64,7 +64,7 @@ export default function CourseManager({
     e.preventDefault();
     const trimmed = name.trim();
     if (!trimmed) {
-      Swal.fire('ข้อผิดพลาด', 'กรุณากรอกชื่อหมวดหมู่', 'error');
+      Swal.fire("ข้อผิดพลาด", "กรุณากรอกชื่อหมวดหมู่", "error");
       return;
     }
     setAdding(true);
@@ -72,13 +72,13 @@ export default function CourseManager({
       await axios.post(
         `${BASE}/experience-books/${bookId}/courses`,
         { name: trimmed },
-        authHeader
+        authHeader,
       );
-      Swal.fire('เพิ่มหมวดหมู่สำเร็จ', '', 'success');
-      setName('');
+      Swal.fire("เพิ่มหมวดหมู่สำเร็จ", "", "success");
+      setName("");
       await fetchCourses();
     } catch {
-      Swal.fire('เพิ่มหมวดหมู่ไม่สำเร็จ', '', 'error');
+      Swal.fire("เพิ่มหมวดหมู่ไม่สำเร็จ", "", "error");
     } finally {
       setAdding(false);
     }
@@ -86,28 +86,28 @@ export default function CourseManager({
 
   const deleteCourse = (id: number) => {
     Swal.fire({
-      title: 'ยืนยันการลบ',
-      text: 'คุณต้องการลบหมวดหมู่นี้ใช่หรือไม่?',
-      icon: 'warning',
+      title: "ยืนยันการลบ",
+      text: "คุณต้องการลบหมวดหมู่นี้ใช่หรือไม่?",
+      icon: "warning",
       showCancelButton: true,
-      confirmButtonText: 'ลบ',
-      cancelButtonText: 'ยกเลิก',
-      confirmButtonColor: '#ef4444',
-      cancelButtonColor: '#6b7280',
+      confirmButtonText: "ลบ",
+      cancelButtonText: "ยกเลิก",
+      confirmButtonColor: "#ef4444",
+      cancelButtonColor: "#6b7280",
     }).then((result) => {
       if (result.isConfirmed) {
         axios
           .delete(
             `${BASE}/experience-books/${bookId}/courses/${id}`,
-            authHeader
+            authHeader,
           )
           .then(() => {
-            Swal.fire('ลบหมวดหมู่สำเร็จ', '', 'success');
+            Swal.fire("ลบหมวดหมู่สำเร็จ", "", "success");
             const updated = courses.filter((c) => c.id !== id);
             setCourses(updated);
             setTimeout(() => onListChange?.(updated), 0);
           })
-          .catch(() => Swal.fire('ลบไม่สำเร็จ', '', 'error'));
+          .catch(() => Swal.fire("ลบไม่สำเร็จ", "", "error"));
       }
     });
   };
@@ -119,27 +119,27 @@ export default function CourseManager({
 
   const cancelEdit = () => {
     setEditingId(null);
-    setEditName('');
+    setEditName("");
   };
 
   const saveEdit = async (courseId: number) => {
     const trimmed = editName.trim();
     if (!trimmed) {
-      Swal.fire('ข้อผิดพลาด', 'กรุณากรอกชื่อหมวดหมู่', 'error');
+      Swal.fire("ข้อผิดพลาด", "กรุณากรอกชื่อหมวดหมู่", "error");
       return;
     }
     try {
       await axios.patch(
         `${BASE}/experience-books/${bookId}/courses/${courseId}`,
         { name: trimmed },
-        authHeader
+        authHeader,
       );
-      Swal.fire('อัปเดตหมวดหมู่สำเร็จ', '', 'success');
+      Swal.fire("อัปเดตหมวดหมู่สำเร็จ", "", "success");
       setEditingId(null);
-      setEditName('');
+      setEditName("");
       await fetchCourses();
     } catch {
-      Swal.fire('อัปเดตหมวดหมู่ไม่สำเร็จ', '', 'error');
+      Swal.fire("อัปเดตหมวดหมู่ไม่สำเร็จ", "", "error");
     }
   };
 
@@ -164,7 +164,7 @@ export default function CourseManager({
             ) : (
               <FaPlus className="mr-2" />
             )}
-            {adding ? 'กำลังเพิ่ม...' : 'เพิ่มหมวดหมู่'}
+            {adding ? "กำลังเพิ่ม..." : "เพิ่มหมวดหมู่"}
           </button>
         </form>
       </div>
@@ -180,63 +180,67 @@ export default function CourseManager({
           </div>
         ) : (
           <ul className="space-y-3 max-h-[350px] overflow-y-auto pr-1">
-            {courses.map((c) => (
-              <li
-                key={c.id}
-                className="flex items-center justify-between p-4 transition-all rounded-lg bg-gray-50 hover:bg-gray-100"
-              >
-                {editingId === c.id ? (
-                  <>
-                    <input
-                      type="text"
-                      value={editName}
-                      onChange={(e) => setEditName(e.target.value)}
-                      className="flex-1 px-3 py-1.5 border border-gray-300 rounded-lg mr-2"
-                    />
-                    <div className="flex space-x-2">
-                      <button
-                        onClick={() => saveEdit(c.id)}
-                        className="px-3 py-2 text-white bg-green-600 rounded hover:text-green-800"
-                      >
-                        <FaCheck className="inline mr-1" />
-                        บันทึก
-                      </button>
-                      <button
-                        onClick={cancelEdit}
-                        className="px-3 py-2 text-white bg-red-500 rounded hover:text-red-700"
-                      >
-                        <FaTimes className="inline mr-1" />
-                        ยกเลิก
-                      </button>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <span className="flex-1 font-medium text-gray-800">
-                      {c.name}
-                    </span>
-                    <div className="flex gap-2">
+            {courses
+              .slice()
+              .sort((a, b) => a.id - b.id)
+              .map((c, index) => (
+                <li
+                  key={c.id}
+                  className="flex items-center justify-between p-4 transition-all rounded-lg bg-gray-50 hover:bg-gray-100"
+                >
+                  {editingId === c.id ? (
+                    <>
+                      <input
+                        type="text"
+                        value={editName}
+                        onChange={(e) => setEditName(e.target.value)}
+                        className="flex-1 px-3 py-1.5 border border-gray-300 rounded-lg mr-2"
+                      />
                       <div className="flex space-x-2">
                         <button
-                          onClick={() => startEdit(c)}
-                          className="px-2 py-2 text-blue-500 hover:text-blue-700"
+                          onClick={() => saveEdit(c.id)}
+                          className="px-3 py-2 text-white bg-green-600 rounded hover:text-green-800"
                         >
-                          <FaEdit className="inline mr-1" />
-                          แก้ไข
+                          <FaCheck className="inline mr-1" />
+                          บันทึก
                         </button>
                         <button
-                          onClick={() => deleteCourse(c.id)}
-                          className="px-2 py-2 text-red-500 hover:text-red-700"
+                          onClick={cancelEdit}
+                          className="px-3 py-2 text-white bg-red-500 rounded hover:text-red-700"
                         >
-                          <FaTrash className="inline mr-1" />
-                          ลบ
+                          <FaTimes className="inline mr-1" />
+                          ยกเลิก
                         </button>
                       </div>
-                    </div>
-                  </>
-                )}
-              </li>
-            ))}
+                    </>
+                  ) : (
+                    <>
+                      <span className="w-6 text-gray-500">{index + 1}.</span>
+                      <span className="flex-1 font-medium text-gray-800">
+                        {c.name}
+                      </span>
+                      <div className="flex gap-2">
+                        <div className="flex space-x-2">
+                          <button
+                            onClick={() => startEdit(c)}
+                            className="px-2 py-2 text-blue-500 hover:text-blue-700"
+                          >
+                            <FaEdit className="inline mr-1" />
+                            แก้ไข
+                          </button>
+                          <button
+                            onClick={() => deleteCourse(c.id)}
+                            className="px-2 py-2 text-red-500 hover:text-red-700"
+                          >
+                            <FaTrash className="inline mr-1" />
+                            ลบ
+                          </button>
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </li>
+              ))}
           </ul>
         )}
       </div>

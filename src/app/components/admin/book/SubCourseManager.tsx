@@ -177,74 +177,81 @@ export default function SubCourseManager({
         ) : list.length === 0 ? (
           <p className="text-center text-gray-500">ยังไม่มีหมวดหมู่ย่อย</p>
         ) : (
-          list.map((sub) => (
-            <li
-              key={sub.id}
-              className="flex items-center justify-between p-3 rounded bg-gray-50 hover:bg-gray-100"
-            >
-              {editingId === sub.id ? (
-                <div className="flex flex-wrap items-end w-full gap-3">
-                  <input
-                    className="flex-grow px-2 py-1 border rounded"
-                    value={editName}
-                    onChange={(e) => setEditName(e.target.value)}
-                  />
-                  {/* [แก้ไข] 4. เปลี่ยน Input แก้ไขเป็น type="text" */}
-                  <input
-                    className="w-20 px-2 py-1 border rounded"
-                    type="text"
-                    value={editSubject}
-                    onChange={(e) => setEditSubject(e.target.value)}
-                  />
-                  <input
-                    className="w-20 px-2 py-1 border rounded"
-                    type="number"
-                    value={editAlwaycourse}
-                    onChange={(e) => setEditAlwaycourse(Number(e.target.value))}
-                  />
-                  <button
-                    onClick={() => saveEdit(sub.id)}
-                    className="px-3 py-2 text-white bg-green-600 rounded hover:bg-green-700"
-                  >
-                    <FaCheck className="inline mr-1" /> บันทึก
-                  </button>
-                  <button
-                    onClick={cancelEdit}
-                    className="px-3 py-2 text-white bg-gray-500 rounded hover:bg-gray-600"
-                  >
-                    <FaTimes className="inline mr-1" /> ยกเลิก
-                  </button>
-                </div>
-              ) : (
-                <>
-                  <div className="flex-1 space-x-4">
-                    <span className="font-medium">{sub.name}</span>
-                    <span className="text-gray-500">
-                      | รายวิชา: {sub.subject || "-"}
-                    </span>{" "}
-                    {/* แสดงชื่อ subject */}
-                    <span className="text-gray-500">
-                      | ตลอดหลักสูตร: {sub.alwaycourse}
-                    </span>
-                  </div>
-                  <div className="flex gap-2">
+          list
+            .slice()
+            .sort((a, b) =>
+              a.name.localeCompare(b.name, undefined, { numeric: true }),
+            )
+            .map((sub) => (
+              <li
+                key={sub.id}
+                className="flex items-center justify-between p-3 rounded bg-gray-50 hover:bg-gray-100"
+              >
+                {editingId === sub.id ? (
+                  <div className="flex flex-wrap items-end w-full gap-3">
+                    <input
+                      className="flex-grow px-2 py-1 border rounded"
+                      value={editName}
+                      onChange={(e) => setEditName(e.target.value)}
+                    />
+                    {/* [แก้ไข] 4. เปลี่ยน Input แก้ไขเป็น type="text" */}
+                    <input
+                      className="w-20 px-2 py-1 border rounded"
+                      type="text"
+                      value={editSubject}
+                      onChange={(e) => setEditSubject(e.target.value)}
+                    />
+                    <input
+                      className="w-20 px-2 py-1 border rounded"
+                      type="number"
+                      value={editAlwaycourse}
+                      onChange={(e) =>
+                        setEditAlwaycourse(Number(e.target.value))
+                      }
+                    />
                     <button
-                      onClick={() => startEdit(sub)}
-                      className="px-2 py-2 text-blue-500 hover:text-blue-700"
+                      onClick={() => saveEdit(sub.id)}
+                      className="px-3 py-2 text-white bg-green-600 rounded hover:bg-green-700"
                     >
-                      <FaEdit className="inline mr-1" /> แก้ไข
+                      <FaCheck className="inline mr-1" /> บันทึก
                     </button>
                     <button
-                      onClick={() => deleteSub(sub.id)}
-                      className="px-2 py-2 text-red-500 hover:text-red-700"
+                      onClick={cancelEdit}
+                      className="px-3 py-2 text-white bg-gray-500 rounded hover:bg-gray-600"
                     >
-                      <FaTrash className="inline mr-1" /> ลบ
+                      <FaTimes className="inline mr-1" /> ยกเลิก
                     </button>
                   </div>
-                </>
-              )}
-            </li>
-          ))
+                ) : (
+                  <>
+                    <div className="flex-1 space-x-4">
+                      <span className="font-medium">{sub.name}</span>
+                      <span className="text-gray-500">
+                        | รายวิชา: {sub.subject || "-"}
+                      </span>{" "}
+                      {/* แสดงชื่อ subject */}
+                      <span className="text-gray-500">
+                        | ตลอดหลักสูตร: {sub.alwaycourse}
+                      </span>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => startEdit(sub)}
+                        className="px-2 py-2 text-blue-500 hover:text-blue-700"
+                      >
+                        <FaEdit className="inline mr-1" /> แก้ไข
+                      </button>
+                      <button
+                        onClick={() => deleteSub(sub.id)}
+                        className="px-2 py-2 text-red-500 hover:text-red-700"
+                      >
+                        <FaTrash className="inline mr-1" /> ลบ
+                      </button>
+                    </div>
+                  </>
+                )}
+              </li>
+            ))
         )}
       </ul>
     </div>
