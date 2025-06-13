@@ -1,7 +1,7 @@
-import { redirect } from 'next/navigation';
-import React from 'react';
-import { getSession } from '../../../../lib/session';
-import ExportPdfClient from '@/app/components/student/pdf/ExportPdfClient';
+import { redirect } from "next/navigation";
+import React from "react";
+import { getSession } from "../../../../lib/session";
+import ExportPdfClient from "@/app/components/student/pdf/ExportPdfClient";
 
 type Book = {
   id: number;
@@ -13,7 +13,7 @@ export default async function StudentExportPage() {
   // 1. ตรวจสอบ session
   const session = await getSession();
   if (!session) {
-    redirect('/');
+    redirect("/");
   }
 
   // 2. ดึงรายการสมุดที่อนุญาต
@@ -25,13 +25,13 @@ export default async function StudentExportPage() {
       headers: {
         Authorization: `Bearer ${session.accessToken}`,
       },
-      cache: 'no-store', // เพื่อให้ดึงข้อมูลใหม่ทุกครั้ง
-      credentials: 'include',
+      cache: "no-store", // เพื่อให้ดึงข้อมูลใหม่ทุกครั้ง
+      credentials: "include",
     });
 
     if (res.status === 401) {
       // token หมดอายุ หรือไม่ผ่าน auth → กลับไปล็อกอินใหม่
-      redirect('/');
+      redirect("/");
     }
 
     if (res.ok) {
@@ -39,15 +39,15 @@ export default async function StudentExportPage() {
     } else {
       // ถ้าสถานะอื่นผิดพลาด จะไม่โยน แต่เก็บให้เป็น empty array
       console.error(
-        'Fetch authorized books failed:',
+        "Fetch authorized books failed:",
         res.status,
-        await res.text()
+        await res.text(),
       );
       books = [];
     }
   } catch (err) {
     // network error หรือ exception อื่น ๆ
-    console.error('Error fetching authorized books:', err);
+    console.error("Error fetching authorized books:", err);
     books = [];
   }
 
@@ -55,9 +55,7 @@ export default async function StudentExportPage() {
   return (
     <div className="container max-w-6xl px-4 py-8 mx-auto mt-10 sm:mt-0">
       <div className="p-6 mb-6 text-white bg-[linear-gradient(to_right,#f46b45_0%,#eea849_100%)] dark:bg-[#1E293B] rounded-xl shadow-md hover:shadow-lg duration-300 ease-in-out transition-all hover:-translate-y-1">
-        <h1 className="text-xl font-semibold sm:text-2xl">
-          ส่งออกรายงานความคืบหน้า
-        </h1>
+        <h1 className="text-xl font-semibold sm:text-2xl">ส่งออกข้อมูล</h1>
       </div>
 
       <div className="bg-white dark:bg-[#1E293B] shadow-md rounded-xl p-6">
