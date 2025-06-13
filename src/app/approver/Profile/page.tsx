@@ -1,19 +1,19 @@
-'use client';
+"use client";
 
-import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import React, { useEffect, useState } from "react";
+import axios from "axios";
 import {
-  FaUser,
+  FaCamera,
+  FaCheck,
+  FaEdit,
   FaEnvelope,
   FaKey,
-  FaEdit,
-  FaCheck,
-  FaTimes,
   FaLock,
-  FaCamera,
-} from 'react-icons/fa';
-import { BACKEND_URL } from 'lib/constants';
-import { useAuth } from '@/app/contexts/AuthContext';
+  FaTimes,
+  FaUser,
+} from "react-icons/fa";
+import { BACKEND_URL } from "lib/constants";
+import { useAuth } from "@/app/contexts/AuthContext";
 
 interface UserProfile {
   id: number;
@@ -29,11 +29,11 @@ export default function ApproverProfilePage() {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({
-    fullname: '',
-    email: '',
-    pin: '',
-    password: '',
-    avatarUrl: '',
+    fullname: "",
+    email: "",
+    pin: "",
+    password: "",
+    avatarUrl: "",
   });
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -50,12 +50,12 @@ export default function ApproverProfilePage() {
           fullname: res.data.fullname,
           email: res.data.email,
           pin: res.data.pin,
-          password: '',
-          avatarUrl: res.data.avatarUrl || '',
+          password: "",
+          avatarUrl: res.data.avatarUrl || "",
         });
       } catch (err) {
         // ❌ ถ้าไม่มี session → redirect ไปหน้า login
-        window.location.href = '/';
+        window.location.href = "/";
       }
     };
     fetchUser();
@@ -63,9 +63,10 @@ export default function ApproverProfilePage() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
-    if (id === 'pin') {
-      const alphanumericOnly = value.replace(/[^a-zA-Z0-9]/g, '');
-      setForm((prev) => ({ ...prev, [id]: alphanumericOnly }));
+    if (id === "pin") {
+      // แก้ไขให้รับเฉพาะตัวเลข (เป็นมาตรฐานที่ดีกว่าสำหรับ PIN)
+      const digitsOnly = value.replace(/\D/g, "");
+      setForm((prev) => ({ ...prev, [id]: digitsOnly }));
     } else {
       setForm((prev) => ({ ...prev, [id]: value }));
     }
@@ -80,21 +81,23 @@ export default function ApproverProfilePage() {
   };
 
   const save = async () => {
-    if (form.pin.length !== 6) {
-      alert('กรุณากรอกรหัส PIN ให้ครบ 6 ตัวอักษร');
+    // แก้ไขเงื่อนไขการตรวจสอบความยาว
+    if (form.pin.length < 6) {
+      // แก้ไขข้อความแจ้งเตือน
+      alert("กรุณากรอกรหัส PIN อย่างน้อย 6 ตัว");
       return;
     }
 
     const formData = new FormData();
-    formData.append('fullname', form.fullname);
-    formData.append('pin', form.pin);
-    if (form.password) formData.append('password', form.password);
-    if (file) formData.append('avatar', file);
+    formData.append("fullname", form.fullname);
+    formData.append("pin", form.pin);
+    if (form.password) formData.append("password", form.password);
+    if (file) formData.append("avatar", file);
 
     await axios.patch(`${BACKEND_URL}/users/me`, formData, {
       headers: {
         Authorization: `Bearer ${accessToken}`,
-        'Content-Type': 'multipart/form-data',
+        "Content-Type": "multipart/form-data",
       },
     });
 
@@ -104,7 +107,7 @@ export default function ApproverProfilePage() {
 
   if (!user) return <div className="p-10">Loading...</div>;
 
-  const isApproverOut = user.role === 'APPROVER_OUT';
+  const isApproverOut = user.role === "APPROVER_OUT";
 
   return (
     <main className="flex-1 px-4 py-8 md:px-12">
@@ -120,7 +123,7 @@ export default function ApproverProfilePage() {
                       <img
                         src={
                           previewUrl ||
-                          (form.avatarUrl.startsWith('http')
+                          (form.avatarUrl.startsWith("http")
                             ? form.avatarUrl
                             : `${BACKEND_URL}${form.avatarUrl}`)
                         }
@@ -136,7 +139,7 @@ export default function ApproverProfilePage() {
                     <button
                       type="button"
                       onClick={() =>
-                        document.getElementById('avatarInput')?.click()
+                        document.getElementById("avatarInput")?.click()
                       }
                       className="absolute bottom-0 right-0 p-2 bg-blue-600 rounded-full shadow-lg hover:bg-blue-700"
                       title="เปลี่ยนรูปโปรไฟล์"
@@ -149,7 +152,7 @@ export default function ApproverProfilePage() {
                     {user.avatarUrl ? (
                       <img
                         src={
-                          user.avatarUrl.startsWith('http')
+                          user.avatarUrl.startsWith("http")
                             ? user.avatarUrl
                             : `${BACKEND_URL}${user.avatarUrl}`
                         }
@@ -167,7 +170,7 @@ export default function ApproverProfilePage() {
               {editing && (
                 <button
                   onClick={() =>
-                    document.getElementById('avatarInput')?.click()
+                    document.getElementById("avatarInput")?.click()
                   }
                   className="px-4 py-1 text-sm font-bold text-white bg-gray-700 rounded-full shadow hover:bg-gray-800"
                 >
@@ -193,9 +196,9 @@ export default function ApproverProfilePage() {
               <p className="text-sm text-white opacity-90">ข้อมูลส่วนตัว</p>
               <div className="mt-2 space-x-2">
                 <span className="px-3 py-1 text-sm text-black bg-white rounded-full bg-opacity-80">
-                  {user.role === 'APPROVER_OUT'
-                    ? 'ผู้นิเทศภายนอก'
-                    : 'ผู้นิเทศภายใน'}
+                  {user.role === "APPROVER_OUT"
+                    ? "ผู้นิเทศภายนอก"
+                    : "ผู้นิเทศภายใน"}
                 </span>
               </div>
             </div>
@@ -264,8 +267,8 @@ export default function ApproverProfilePage() {
                       email: user.email,
                       fullname: user.fullname,
                       pin: user.pin,
-                      password: '',
-                      avatarUrl: user.avatarUrl || '',
+                      password: "",
+                      avatarUrl: user.avatarUrl || "",
                     });
                     setFile(null);
                   }}
@@ -301,8 +304,8 @@ function Field({
   hideValue?: boolean;
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }) {
-  const isPinField = id === 'pin';
-  const isPasswordField = id === 'password';
+  const isPinField = id === "pin";
+  const isPasswordField = id === "password";
 
   return (
     <div className="flex flex-col">
@@ -312,17 +315,16 @@ function Field({
       {editing && !readOnly ? (
         <input
           id={id}
-          type={isPasswordField ? 'password' : 'text'}
+          type={isPasswordField ? "password" : "text"}
           value={value}
           onChange={onChange}
-          inputMode={isPinField ? 'numeric' : undefined}
-          maxLength={isPinField ? 6 : undefined}
+          inputMode={isPinField ? "numeric" : undefined}
           className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400"
         />
       ) : (
         <p className="px-1 text-lg font-semibold">
           {hideValue || isPasswordField
-            ? '●'.repeat(value?.length || 8)
+            ? "●".repeat(value?.length || 8)
             : value}
         </p>
       )}

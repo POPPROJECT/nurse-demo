@@ -1,12 +1,12 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import axios from 'axios';
-import Select from 'react-select';
-import Swal from 'sweetalert2';
-import { CiMenuKebab } from 'react-icons/ci';
-import withReactContent from 'sweetalert2-react-content';
-import { FaCheck } from 'react-icons/fa';
+import { useEffect, useState } from "react";
+import axios from "axios";
+import Select from "react-select";
+import Swal from "sweetalert2";
+import { CiMenuKebab } from "react-icons/ci";
+import withReactContent from "sweetalert2-react-content";
+import { FaCheck } from "react-icons/fa";
 
 const MySwal = withReactContent(Swal);
 
@@ -26,7 +26,7 @@ interface Book {
 interface FieldConfig {
   id: number;
   label: string;
-  type: 'TEXT' | 'NUMBER' | 'DATE' | 'SELECT' | 'TEXTAREA';
+  type: "TEXT" | "NUMBER" | "DATE" | "SELECT" | "TEXTAREA";
   required: boolean;
   options?: string[]; // สำหรับ SELECT
 }
@@ -42,9 +42,9 @@ interface Experience {
   bookId: number;
   course: string;
   subCourse: string;
-  approverRole: 'APPROVER_IN' | 'APPROVER_OUT';
+  approverRole: "APPROVER_IN" | "APPROVER_OUT";
   approverName: string;
-  status: 'PENDING' | 'CONFIRMED' | 'CANCEL';
+  status: "PENDING" | "CONFIRMED" | "CANCEL";
   createdAt: string;
   fieldValues: FieldValue[];
 }
@@ -94,14 +94,14 @@ export default function RecordTable({ accessToken }: { accessToken: string }) {
   /** ---------- state ---------- */
   const [books, setBooks] = useState<Book[]>([]);
   const [bookFilter, setBookFilter] = useState<number | null>(null);
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<
-    'ALL' | 'PENDING' | 'CONFIRMED' | 'CANCEL'
-  >('ALL');
+    "ALL" | "PENDING" | "CONFIRMED" | "CANCEL"
+  >("ALL");
   const [limit, setLimit] = useState(5);
   const [sortBy, setSortBy] = useState<
-    '' | 'date-desc' | 'date-asc' | 'course-asc' | 'status-asc'
-  >('');
+    "" | "date-desc" | "date-asc" | "course-asc" | "status-asc"
+  >("");
   const [page, setPage] = useState(1);
   const [records, setRecords] = useState<Experience[]>([]);
   const [total, setTotal] = useState(0); // เก็บจำนวนหลัง filter
@@ -113,7 +113,7 @@ export default function RecordTable({ accessToken }: { accessToken: string }) {
   const [editId, setEditId] = useState<number | null>(null);
   const [editCourse, setEditCourse] = useState<Option | null>(null);
   const [editSubCourse, setEditSubCourse] = useState<SubCourseOption | null>(
-    null
+    null,
   );
   const [editApproverType, setEditApproverType] = useState<Option | null>(null);
   const [editApproverName, setEditApproverName] = useState<Option | null>(null);
@@ -125,8 +125,8 @@ export default function RecordTable({ accessToken }: { accessToken: string }) {
   const [approverOptions, setApproverOptions] = useState<Option[]>([]);
 
   const approverTypeOptions: Option[] = [
-    { value: 'APPROVER_IN', label: 'อาจารย์ภายใน' },
-    { value: 'APPROVER_OUT', label: 'อาจารย์ภายนอก' },
+    { value: "APPROVER_IN", label: "อาจารย์ภายใน" },
+    { value: "APPROVER_OUT", label: "อาจารย์ภายนอก" },
   ];
 
   /** ---------- axios helper ---------- */
@@ -140,16 +140,19 @@ export default function RecordTable({ accessToken }: { accessToken: string }) {
   const handleConfirm = async (rec: Experience) => {
     // require same approverName check  ให้แน่ใจว่า rec.approverName ตรงกับ backend
     const pinRes = await MySwal.fire({
-      title: `กรุณากรอก PIN 6 หลัก`,
+      title: `กรุณากรอก PIN`,
       text: `PIN สำหรับ ${rec.approverName}`,
-      input: 'password',
+      input: "password",
       inputAttributes: {
-        maxlength: '6',
-        minlength: '6',
-        autocapitalize: 'off',
+        autocapitalize: "off",
       },
       showCancelButton: true,
-      confirmButtonText: 'ยืนยัน',
+      confirmButtonText: "ยืนยัน",
+      inputValidator: (value) => {
+        if (!value || !/^\d{6,}$/.test(value)) {
+          return "PIN ต้องเป็นตัวเลขอย่างน้อย 6 ตัว!";
+        }
+      },
     });
     if (!pinRes.isConfirmed || !pinRes.value) return;
     try {
@@ -157,20 +160,20 @@ export default function RecordTable({ accessToken }: { accessToken: string }) {
       await axios.post(
         `${BASE}/student-experiences/${rec.id}/confirm-by-approver`,
         { approverName: rec.approverName, pin: pinRes.value },
-        authHeader
+        authHeader,
       );
 
-      Swal.fire('สำเร็จ', 'ยืนยันแล้ว', 'success');
+      Swal.fire("สำเร็จ", "ยืนยันแล้ว", "success");
       // reload only this record
       setRecords((rs) =>
-        rs.map((r) => (r.id === rec.id ? { ...r, status: 'CONFIRMED' } : r))
+        rs.map((r) => (r.id === rec.id ? { ...r, status: "CONFIRMED" } : r)),
       );
     } catch (e: any) {
-      const msg = e.response?.data?.message || 'เกิดข้อผิดพลาด';
+      const msg = e.response?.data?.message || "เกิดข้อผิดพลาด";
       Swal.fire(
-        msg.includes('PIN') ? 'warning' : 'error',
+        msg.includes("PIN") ? "warning" : "error",
         msg,
-        msg.includes('PIN') ? 'warning' : 'error'
+        msg.includes("PIN") ? "warning" : "error",
       );
     }
   };
@@ -182,13 +185,13 @@ export default function RecordTable({ accessToken }: { accessToken: string }) {
     const names = new Set(
       records
         .filter((r) => selectedIds.includes(r.id))
-        .map((r) => r.approverName)
+        .map((r) => r.approverName),
     );
     if (names.size > 1) {
       return Swal.fire(
-        'Warning',
-        'กรุณาเลือกรายการที่มีผู้นิเทศคนเดียวกัน',
-        'warning'
+        "Warning",
+        "กรุณาเลือกรายการที่มีผู้นิเทศคนเดียวกัน",
+        "warning",
       );
     }
 
@@ -197,12 +200,16 @@ export default function RecordTable({ accessToken }: { accessToken: string }) {
     if (!firstApproverName) return;
 
     const pinRes = await MySwal.fire({
-      title: `กรุณากรอก PIN 6 หลัก`,
+      title: `กรุณากรอก PIN`,
       text: `PIN สำหรับ ${firstApproverName}`,
-      input: 'password',
-      inputAttributes: { maxlength: '6', minlength: '6' },
+      input: "password",
       showCancelButton: true,
-      confirmButtonText: 'ยืนยันทั้งหมด',
+      confirmButtonText: "ยืนยันทั้งหมด",
+      inputValidator: (value) => {
+        if (!value || !/^\d{6,}$/.test(value)) {
+          return "PIN ต้องเป็นตัวเลขอย่างน้อย 6 ตัว!";
+        }
+      },
     });
     if (!pinRes.isConfirmed || !pinRes.value) return;
     try {
@@ -215,22 +222,22 @@ export default function RecordTable({ accessToken }: { accessToken: string }) {
           // Prisma DTO ต้องการ string[] – map ให้เป็น string
           ids: selectedIds.map((i) => i.toString()),
         },
-        authHeader
+        authHeader,
       );
 
-      Swal.fire('สำเร็จ', 'ยืนยันทั้งหมดแล้ว', 'success');
+      Swal.fire("สำเร็จ", "ยืนยันทั้งหมดแล้ว", "success");
       setRecords((rs) =>
         rs.map((r) =>
-          selectedIds.includes(r.id) ? { ...r, status: 'CONFIRMED' } : r
-        )
+          selectedIds.includes(r.id) ? { ...r, status: "CONFIRMED" } : r,
+        ),
       );
       setSelectedIds([]);
     } catch (e: any) {
-      const msg = e.response?.data?.message || 'เกิดข้อผิดพลาด';
+      const msg = e.response?.data?.message || "เกิดข้อผิดพลาด";
       Swal.fire(
-        msg.includes('PIN') ? 'warning' : 'error',
+        msg.includes("PIN") ? "warning" : "error",
         msg,
-        msg.includes('PIN') ? 'warning' : 'error'
+        msg.includes("PIN") ? "warning" : "error",
       );
     }
   };
@@ -240,7 +247,7 @@ export default function RecordTable({ accessToken }: { accessToken: string }) {
     axios
       .get<Book[]>(`${BASE}/experience-books/authorized`, authHeader)
       .then((r) => setBooks(r.data))
-      .catch(() => Swal.fire('Error', 'โหลดสมุดไม่ได้', 'error'));
+      .catch(() => Swal.fire("Error", "โหลดสมุดไม่ได้", "error"));
   }, [BASE, accessToken]);
 
   /** 2. โหลด field config ของสมุด */
@@ -253,10 +260,10 @@ export default function RecordTable({ accessToken }: { accessToken: string }) {
     axios
       .get<FieldConfig[]>(
         `${BASE}/experience-books/${bookFilter}/fields`,
-        authHeader
+        authHeader,
       )
       .then((r) => setFieldConfigs(r.data))
-      .catch(() => Swal.fire('Error', 'โหลดฟิลด์ไม่สำเร็จ', 'error'));
+      .catch(() => Swal.fire("Error", "โหลดฟิลด์ไม่สำเร็จ", "error"));
   }, [bookFilter, BASE, accessToken]);
 
   /** 3. โหลดรายการ + client-side search/status */
@@ -270,16 +277,16 @@ export default function RecordTable({ accessToken }: { accessToken: string }) {
     let sb: string | undefined, so: string | undefined;
     if (sortBy) {
       // ตรวจสอบว่า sortBy มีค่าก่อน split
-      [sb, so] = sortBy.split('-');
+      [sb, so] = sortBy.split("-");
     }
 
     const params: any = {
       page,
       limit,
       bookId: bookFilter,
-      ...(sb && so && { sortBy: sb === 'date' ? 'createdAt' : sb, order: so }),
-      ...((search || '').trim() && { search: (search || '').trim() }),
-      ...(statusFilter !== 'ALL' && { status: statusFilter }), // <--- ตรงนี้คือการส่ง status filter
+      ...(sb && so && { sortBy: sb === "date" ? "createdAt" : sb, order: so }),
+      ...((search || "").trim() && { search: (search || "").trim() }),
+      ...(statusFilter !== "ALL" && { status: statusFilter }), // <--- ตรงนี้คือการส่ง status filter
     };
 
     axios
@@ -293,7 +300,7 @@ export default function RecordTable({ accessToken }: { accessToken: string }) {
         // เอาข้อมูลหน้าปัจจุบันมาแสดง โดยไม่กรองซ้ำ
         setRecords(r.data.data);
       })
-      .catch(() => Swal.fire('Error', 'โหลดรายการไม่ได้', 'error'));
+      .catch(() => Swal.fire("Error", "โหลดรายการไม่ได้", "error"));
   }, [
     bookFilter,
     statusFilter,
@@ -314,12 +321,12 @@ export default function RecordTable({ accessToken }: { accessToken: string }) {
     axios
       .get<{ id: number; name: string }[]>(
         `${BASE}/experience-books/${bookFilter}/courses`,
-        authHeader
+        authHeader,
       )
       .then((r) =>
         setCourses(
-          r.data.map((c) => ({ value: c.id.toString(), label: c.name }))
-        )
+          r.data.map((c) => ({ value: c.id.toString(), label: c.name })),
+        ),
       )
       .catch(() => {});
   }, [bookFilter, BASE, accessToken]);
@@ -365,12 +372,12 @@ export default function RecordTable({ accessToken }: { accessToken: string }) {
     axios
       .get<{ id: string; approverName: string }[]>(
         `${BASE}/approvers/by-role/${editApproverType.value}`,
-        authHeader
+        authHeader,
       )
       .then((r) =>
         setApproverOptions(
-          r.data.map((a) => ({ value: a.id, label: a.approverName }))
-        )
+          r.data.map((a) => ({ value: a.id, label: a.approverName })),
+        ),
       )
       .catch(() => {});
   }, [editApproverType, BASE, accessToken]);
@@ -391,16 +398,16 @@ export default function RecordTable({ accessToken }: { accessToken: string }) {
     }, 0);
     // approverType + approverName
     const aproTypeOption = approverTypeOptions.find(
-      (o) => o.value === rec.approverRole
+      (o) => o.value === rec.approverRole,
     )!;
     setEditApproverType(aproTypeOption);
     // จะโหลด approverOptions จาก useEffect ข้างบน → จากนั้น match name
     setTimeout(() => {
       const foundApr = approverOptions.find(
-        (a) => a.label === rec.approverName
+        (a) => a.label === rec.approverName,
       );
       setEditApproverName(
-        foundApr || { value: rec.approverName, label: rec.approverName }
+        foundApr || { value: rec.approverName, label: rec.approverName },
       );
     }, 0);
     // fieldValues
@@ -408,7 +415,7 @@ export default function RecordTable({ accessToken }: { accessToken: string }) {
       rec.fieldValues.map((fv) => ({
         fieldId: fv.fieldId,
         value: fv.value,
-      }))
+      })),
     );
     setIsEditing(true);
     setOpenMenuId(null);
@@ -420,77 +427,77 @@ export default function RecordTable({ accessToken }: { accessToken: string }) {
 
     // --- validation: ต้องกรอก 4 ฟิลด์นี้ให้ครบ ---
     if (!editCourse) {
-      Swal.fire('Error', 'กรุณาเลือกหมวดหมู่', 'warning');
+      Swal.fire("Error", "กรุณาเลือกหมวดหมู่", "warning");
       return;
     }
     if (!editSubCourse) {
-      Swal.fire('Error', 'กรุณาเลือกหมวดหมู่ย่อย', 'warning');
+      Swal.fire("Error", "กรุณาเลือกหมวดหมู่ย่อย", "warning");
       return;
     }
     if (!editApproverType) {
-      Swal.fire('Error', 'กรุณาเลือกประเภทผู้นิเทศก์', 'warning');
+      Swal.fire("Error", "กรุณาเลือกประเภทผู้นิเทศก์", "warning");
       return;
     }
     if (!editApproverName) {
-      Swal.fire('Error', 'กรุณาเลือกผู้นิเทศก์', 'warning');
+      Swal.fire("Error", "กรุณาเลือกผู้นิเทศก์", "warning");
       return;
     }
 
     const payload = {
-      course: editCourse?.label || '',
-      subCourse: editSubCourse?.label || '',
+      course: editCourse?.label || "",
+      subCourse: editSubCourse?.label || "",
       subject: editSubCourse.subject,
       alwaycourse: editSubCourse.alwaycourse,
-      approverRole: editApproverType?.value || '',
-      approverName: editApproverName?.label || '',
+      approverRole: editApproverType?.value || "",
+      approverName: editApproverName?.label || "",
       fieldValues: editFieldValues,
     };
     axios
       .patch<Experience>(
         `${BASE}/student-experiences/${editId}`,
         payload,
-        authHeader
+        authHeader,
       )
       .then((r) => {
-        Swal.fire('สำเร็จ', 'บันทึกการแก้ไขแล้ว', 'success');
+        Swal.fire("สำเร็จ", "บันทึกการแก้ไขแล้ว", "success");
         setRecords((prev) =>
           prev.map((rec) =>
-            rec.id === r.data.id ? { ...rec, ...r.data } : rec
-          )
+            rec.id === r.data.id ? { ...rec, ...r.data } : rec,
+          ),
         );
         setIsEditing(false);
       })
       .catch((err) => {
-        const msg = err.response?.data?.message || 'บันทึกไม่สำเร็จ';
-        Swal.fire('Error', msg, 'error');
+        const msg = err.response?.data?.message || "บันทึกไม่สำเร็จ";
+        Swal.fire("Error", msg, "error");
       });
   };
 
   /** ยกเลิกรายการ */
   const onCancel = (id: number) => {
     Swal.fire({
-      title: 'ยกเลิกรายการ?',
-      text: 'คุณแน่ใจว่าต้องการยกเลิกรายการนี้หรือไม่?',
-      icon: 'warning',
+      title: "ยกเลิกรายการ?",
+      text: "คุณแน่ใจว่าต้องการยกเลิกรายการนี้หรือไม่?",
+      icon: "warning",
       showCancelButton: true,
-      confirmButtonText: 'ยืนยัน',
-      cancelButtonText: 'ยกเลิก',
-      confirmButtonColor: '#ef4444',
+      confirmButtonText: "ยืนยัน",
+      cancelButtonText: "ยกเลิก",
+      confirmButtonColor: "#ef4444",
     }).then((res) => {
       if (!res.isConfirmed) return;
       axios
         .delete(`${BASE}/student-experiences/${id}`, authHeader)
         .then(() => {
-          Swal.fire('ยกเลิกแล้ว', 'รายการถูกยกเลิกเรียบร้อย', 'success');
+          Swal.fire("ยกเลิกแล้ว", "รายการถูกยกเลิกเรียบร้อย", "success");
           setOpenMenuId(null);
           setRecords((prev) => prev.filter((r) => r.id !== id));
           setTotal((prev) => prev - 1);
         })
         .catch((err) => {
           Swal.fire(
-            'Error',
-            err.response?.data?.message || 'ยกเลิกไม่สำเร็จ',
-            'error'
+            "Error",
+            err.response?.data?.message || "ยกเลิกไม่สำเร็จ",
+            "error",
           );
         });
     });
@@ -499,27 +506,27 @@ export default function RecordTable({ accessToken }: { accessToken: string }) {
   /** ลบรายการ */
   const onDelete = (id: number) => {
     Swal.fire({
-      title: 'ลบรายการนี้?',
-      text: 'ลบแล้วไม่สามารถกู้คืนได้',
-      icon: 'warning',
+      title: "ลบรายการนี้?",
+      text: "ลบแล้วไม่สามารถกู้คืนได้",
+      icon: "warning",
       showCancelButton: true,
-      confirmButtonText: 'ลบ',
-      cancelButtonText: 'ยกเลิก',
-      confirmButtonColor: '#ef4444',
+      confirmButtonText: "ลบ",
+      cancelButtonText: "ยกเลิก",
+      confirmButtonColor: "#ef4444",
     }).then((res) => {
       if (!res.isConfirmed) return;
       axios
         .delete(`${BASE}/student-experiences/${id}`, authHeader)
         .then(() => {
-          Swal.fire('ลบแล้ว', 'รายการถูกลบเรียบร้อย', 'success');
+          Swal.fire("ลบแล้ว", "รายการถูกลบเรียบร้อย", "success");
           setRecords((prev) => prev.filter((r) => r.id !== id));
           setTotal((prev) => prev - 1);
         })
         .catch((err) => {
           Swal.fire(
-            'Error',
-            err.response?.data?.message || 'ลบไม่สำเร็จ',
-            'error'
+            "Error",
+            err.response?.data?.message || "ลบไม่สำเร็จ",
+            "error",
           );
         });
     });
@@ -529,7 +536,7 @@ export default function RecordTable({ accessToken }: { accessToken: string }) {
 
   //padding เลขหน้า
   function getPageNumbers(current: number, total: number, delta = 2) {
-    const range: (number | '...')[] = [];
+    const range: (number | "...")[] = [];
     let l = 0;
     for (let i = 1; i <= total; i++) {
       if (
@@ -538,7 +545,7 @@ export default function RecordTable({ accessToken }: { accessToken: string }) {
         (i >= current - delta && i <= current + delta)
       ) {
         if (l + 1 !== i) {
-          range.push('...');
+          range.push("...");
         }
         range.push(i);
         l = i;
@@ -552,14 +559,14 @@ export default function RecordTable({ accessToken }: { accessToken: string }) {
       {/* Edit Modal */}
       {isEditing && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-opacity-80 backdrop-blur-sm">
-          {' '}
+          {" "}
           {/* เพิ่ม p-4 เพื่อให้มีระยะห่างรอบ modal บนมือถือ */}
           <div className="w-full max-w-md p-4 bg-white rounded-lg shadow-lg sm:p-6">
-            {' '}
+            {" "}
             {/* เปลี่ยน max-w-lg เป็น max-w-md และปรับ padding */}
             <h2 className="mb-4 text-lg font-semibold text-center sm:text-xl">
               แก้ไขรายการ
-            </h2>{' '}
+            </h2>{" "}
             {/* ลดขนาด font เล็กน้อยบนมือถือ */}
             {/* เลือก Course */}
             <div className="mb-4">
@@ -568,7 +575,7 @@ export default function RecordTable({ accessToken }: { accessToken: string }) {
                 className="block mb-1 text-sm font-medium"
               >
                 หมวดหมู่
-              </label>{' '}
+              </label>{" "}
               {/* เพิ่ม htmlFor */}
               <Select
                 id="editCourse" // เพิ่ม id ให้สอดคล้องกับ htmlFor
@@ -645,7 +652,7 @@ export default function RecordTable({ accessToken }: { accessToken: string }) {
                     {cfg.required && <span className="text-red-500">*</span>}
                   </label>
 
-                  {cfg.type === 'SELECT' ? (
+                  {cfg.type === "SELECT" ? (
                     <Select
                       instanceId={`field-${cfg.id}`}
                       options={
@@ -657,18 +664,18 @@ export default function RecordTable({ accessToken }: { accessToken: string }) {
                       value={
                         cfg.options
                           ? {
-                              value: fv?.value || '',
-                              label: fv?.value || '-- เลือก --',
+                              value: fv?.value || "",
+                              label: fv?.value || "-- เลือก --",
                             }
                           : null
                       }
                       isClearable={!cfg.required}
                       onChange={(opt) => {
-                        const v = opt ? (opt as { value: string }).value : '';
+                        const v = opt ? (opt as { value: string }).value : "";
                         setEditFieldValues((prev) =>
                           prev.map((x) =>
-                            x.fieldId === cfg.id ? { ...x, value: v } : x
-                          )
+                            x.fieldId === cfg.id ? { ...x, value: v } : x,
+                          ),
                         );
                       }}
                       placeholder="-- เลือก --"
@@ -679,21 +686,21 @@ export default function RecordTable({ accessToken }: { accessToken: string }) {
                     <input
                       id={`field-${cfg.id}`}
                       type={
-                        cfg.type === 'NUMBER'
-                          ? 'number'
-                          : cfg.type === 'DATE'
-                          ? 'date'
-                          : 'text'
+                        cfg.type === "NUMBER"
+                          ? "number"
+                          : cfg.type === "DATE"
+                            ? "date"
+                            : "text"
                       }
                       required={cfg.required}
                       className="w-full px-3 py-2 text-sm border border-gray-300 rounded hover:border-gray-400"
-                      value={fv?.value || ''}
+                      value={fv?.value || ""}
                       onChange={(e) => {
                         const val = e.target.value;
                         setEditFieldValues((prev) =>
                           prev.map((x) =>
-                            x.fieldId === cfg.id ? { ...x, value: val } : x
-                          )
+                            x.fieldId === cfg.id ? { ...x, value: val } : x,
+                          ),
                         );
                       }}
                     />
@@ -710,8 +717,8 @@ export default function RecordTable({ accessToken }: { accessToken: string }) {
                   !editSubCourse ||
                   !editApproverType ||
                   !editApproverName
-                    ? 'bg-gray-400 cursor-not-allowed'
-                    : 'bg-blue-600 hover:bg-blue-700'
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : "bg-blue-600 hover:bg-blue-700"
                 } text-white`}
                 onClick={onSaveEdit}
                 disabled={
@@ -755,7 +762,7 @@ export default function RecordTable({ accessToken }: { accessToken: string }) {
               <select
                 id="bookFilter"
                 className="px-3 py-2 bg-white border border-gray-300 rounded-lg dark:text-gray-800"
-                value={bookFilter ?? ''}
+                value={bookFilter ?? ""}
                 onChange={(e) => {
                   const v = Number(e.target.value);
                   setBookFilter(isNaN(v) ? null : v);
@@ -911,7 +918,7 @@ export default function RecordTable({ accessToken }: { accessToken: string }) {
                 onClick={handleBulkConfirm}
                 className="flex items-center px-4 py-2 text-white bg-green-600 rounded-lg hover:bg-green-700"
               >
-                <FaCheck className="mr-2" /> ยืนยันทั้งหมด ({selectedIds.length}{' '}
+                <FaCheck className="mr-2" /> ยืนยันทั้งหมด ({selectedIds.length}{" "}
                 รายการ)
               </button>
             </div>
@@ -933,15 +940,15 @@ export default function RecordTable({ accessToken }: { accessToken: string }) {
               <div
                 key={rec.id}
                 className={`bg-white dark:bg-[#1E293B] hover:-translate-y-1 hover:shadow-lg   transition-all  dark:text-white rounded-xl shadow border-l-4 overflow-hidden
-                       ${rec.status === 'PENDING' ? 'border-yellow-400' : ''}
-                       ${rec.status === 'CONFIRMED' ? 'border-green-400' : ''}
-                       ${rec.status === 'CANCEL' ? 'border-red-400' : ''}`}
+                       ${rec.status === "PENDING" ? "border-yellow-400" : ""}
+                       ${rec.status === "CONFIRMED" ? "border-green-400" : ""}
+                       ${rec.status === "CANCEL" ? "border-red-400" : ""}`}
               >
                 <div className="p-6">
                   <div className="flex flex-col justify-between md:flex-row">
                     <div className="flex-1">
                       {/* checkbox */}
-                      {rec.status === 'PENDING' && (
+                      {rec.status === "PENDING" && (
                         <input
                           type="checkbox"
                           checked={selectedIds.includes(rec.id)}
@@ -950,7 +957,7 @@ export default function RecordTable({ accessToken }: { accessToken: string }) {
                               setSelectedIds((s) => [...s, rec.id]);
                             else
                               setSelectedIds((s) =>
-                                s.filter((i) => i !== rec.id)
+                                s.filter((i) => i !== rec.id),
                               );
                           }}
                           className="mt-1"
@@ -964,27 +971,27 @@ export default function RecordTable({ accessToken }: { accessToken: string }) {
                           className={`
                             text-xs px-2 py-1 rounded-full font-medium
                             ${
-                              rec.status === 'PENDING'
-                                ? 'bg-yellow-100 text-yellow-800'
-                                : ''
+                              rec.status === "PENDING"
+                                ? "bg-yellow-100 text-yellow-800"
+                                : ""
                             }
                             ${
-                              rec.status === 'CONFIRMED'
-                                ? 'bg-green-100 text-green-800'
-                                : ''
+                              rec.status === "CONFIRMED"
+                                ? "bg-green-100 text-green-800"
+                                : ""
                             }
                             ${
-                              rec.status === 'CANCEL'
-                                ? 'bg-red-100 text-red-800'
-                                : ''
+                              rec.status === "CANCEL"
+                                ? "bg-red-100 text-red-800"
+                                : ""
                             }
                           `}
                         >
-                          {rec.status === 'PENDING'
-                            ? 'รอดำเนินการ'
-                            : rec.status === 'CONFIRMED'
-                            ? 'ยืนยันแล้ว'
-                            : 'ปฏิเสธ'}
+                          {rec.status === "PENDING"
+                            ? "รอดำเนินการ"
+                            : rec.status === "CONFIRMED"
+                              ? "ยืนยันแล้ว"
+                              : "ปฏิเสธ"}
                         </span>
                       </div>
                       <div className="mb-2 font-medium text-blue-600">
@@ -996,7 +1003,7 @@ export default function RecordTable({ accessToken }: { accessToken: string }) {
                             fv.field?.label ??
                             fieldConfigs.find((f) => f.id === fv.fieldId!)
                               ?.label ??
-                            '';
+                            "";
                           return (
                             <div key={i}>
                               <span className="text-gray-600 dark:text-gray-300">
@@ -1010,21 +1017,21 @@ export default function RecordTable({ accessToken }: { accessToken: string }) {
                         })}
                       </div>
                       <div className="text-gray-600 dark:text-gray-300">
-                        ผู้นิเทศก์:{' '}
+                        ผู้นิเทศก์:{" "}
                         <span className="font-medium text-blue-600">
                           {rec.approverName}
                         </span>
                       </div>
                       <div className="mt-1 mb-1 text-gray-400">
-                        วันที่ส่งข้อมูล:{' '}
+                        วันที่ส่งข้อมูล:{" "}
                         <span className="">
-                          {new Date(rec.createdAt).toLocaleDateString('th')}
+                          {new Date(rec.createdAt).toLocaleDateString("th")}
                         </span>
                       </div>
                     </div>
                     {/* actions */}
                     <div className="flex items-start mt-4 space-x-2 md:mt-0 md:ml-4">
-                      {rec.status === 'PENDING' && (
+                      {rec.status === "PENDING" && (
                         <>
                           {/* บนหน้าจอขนาด sm ขึ้นไป: ใช้เมนู kebab */}
                           <div className="relative hidden sm:block">
@@ -1032,7 +1039,7 @@ export default function RecordTable({ accessToken }: { accessToken: string }) {
                               className="p-2 rounded-full cursor-pointer hover:bg-gray-100"
                               onClick={() =>
                                 setOpenMenuId(
-                                  openMenuId === rec.id ? null : rec.id
+                                  openMenuId === rec.id ? null : rec.id,
                                 )
                               }
                             >
@@ -1095,7 +1102,7 @@ export default function RecordTable({ accessToken }: { accessToken: string }) {
                         </>
                       )}
 
-                      {rec.status === 'CANCEL' && (
+                      {rec.status === "CANCEL" && (
                         <button
                           className="sm:text-gray-400 text-red-500 hover:text-red-500 p-1.5 rounded-full hover:bg-red-50 bg-red-100 sm:bg-white transition-colors"
                           onClick={() => onDelete(rec.id)}
@@ -1135,7 +1142,7 @@ export default function RecordTable({ accessToken }: { accessToken: string }) {
           {/* เลขหน้า */}
           {getPageNumbers(page, totalPages).map((pNo, index) => (
             <div key={index}>
-              {pNo === '...' ? (
+              {pNo === "..." ? (
                 <span className="px-2 py-1 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-lg dark:text-gray-300 dark:bg-gray-800 dark:border-gray-700 sm:px-3">
                   ...
                 </span>
@@ -1146,16 +1153,16 @@ export default function RecordTable({ accessToken }: { accessToken: string }) {
             px-2 sm:px-3 py-1 border text-sm font-medium rounded-lg transition-colors duration-200
             ${
               pNo === page
-                ? 'bg-blue-600 border-blue-600 text-white shadow-sm hover:bg-blue-700' // Active state for Light mode
-                : 'bg-white border-gray-300 text-gray-600 hover:bg-gray-100 hover:text-gray-800' // Inactive state for Light mode
+                ? "bg-blue-600 border-blue-600 text-white shadow-sm hover:bg-blue-700" // Active state for Light mode
+                : "bg-white border-gray-300 text-gray-600 hover:bg-gray-100 hover:text-gray-800" // Inactive state for Light mode
             }
             ${
               pNo === page
-                ? 'dark:bg-blue-700 dark:border-blue-700 dark:text-white dark:hover:bg-blue-800' // Active state for Dark mode
-                : 'dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white' // Inactive state for Dark mode
+                ? "dark:bg-blue-700 dark:border-blue-700 dark:text-white dark:hover:bg-blue-800" // Active state for Dark mode
+                : "dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white" // Inactive state for Dark mode
             }
           `}
-                  aria-current={pNo === page ? 'page' : undefined}
+                  aria-current={pNo === page ? "page" : undefined}
                 >
                   {pNo}
                 </button>

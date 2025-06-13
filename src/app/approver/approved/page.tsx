@@ -188,13 +188,12 @@ export default function ApprovedPage() {
     // ทั้ง Confirm และ Reject ต้องการ PIN
     if (!pinValue) {
       const { value: pin } = await Swal.fire({
-        title: `กรุณาใส่ PIN 6 หลักเพื่อ ${
+        title: `กรุณาใส่ PIN เพื่อ ${
           actionType === "confirm" ? "ยืนยัน" : "ปฏิเสธ"
         }`,
         input: "password",
         inputPlaceholder: "Enter your PIN",
         inputAttributes: {
-          maxlength: "6",
           autocapitalize: "off",
           autocorrect: "off",
         },
@@ -202,8 +201,8 @@ export default function ApprovedPage() {
         confirmButtonText: actionType === "confirm" ? "ยืนยัน" : "ปฏิเสธ",
         cancelButtonText: "ยกเลิก",
         inputValidator: (value) => {
-          if (!value || !/^\d{6}$/.test(value))
-            return "PIN ต้องเป็นตัวเลข 6 หลัก!";
+          if (!value || !/^\d{6,}$/.test(value))
+            return "PIN ต้องเป็นตัวเลขอย่างน้อย 6 ตัว!";
         },
       });
       if (!pin) return;
