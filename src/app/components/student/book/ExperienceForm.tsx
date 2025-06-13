@@ -438,7 +438,7 @@ export default function ExperienceForm({
           <strong>ชื่อผู้อนุมัติ:</strong> {summary?.approverName}
         </li>
       </ul>
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4">
         <button
           onClick={finalize}
           disabled={isSubmitting}

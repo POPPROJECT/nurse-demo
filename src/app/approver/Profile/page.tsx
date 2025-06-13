@@ -14,6 +14,7 @@ import {
 } from "react-icons/fa";
 import { BACKEND_URL } from "lib/constants";
 import { useAuth } from "@/app/contexts/AuthContext";
+import Swal from "sweetalert2";
 
 interface UserProfile {
   id: number;
@@ -83,8 +84,13 @@ export default function ApproverProfilePage() {
   const save = async () => {
     // แก้ไขเงื่อนไขการตรวจสอบความยาว
     if (form.pin.length < 6) {
-      // แก้ไขข้อความแจ้งเตือน
-      alert("กรุณากรอกรหัส PIN อย่างน้อย 6 ตัว");
+      // เปลี่ยนมาใช้ Swal.fire
+      Swal.fire({
+        title: "ข้อมูลไม่ถูกต้อง",
+        text: "กรุณากรอกรหัส PIN อย่างน้อย 6 ตัว",
+        icon: "warning",
+        confirmButtonText: "ตกลง",
+      });
       return;
     }
 
