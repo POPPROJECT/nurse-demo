@@ -87,7 +87,9 @@ export default function ExperienceForm({
       .then((r) =>
         setCourses(
           r.data
-            .sort((a, b) => a.name.localeCompare(b.name, "th")) // <-- เพิ่มตรงนี้
+            .sort((a, b) =>
+              a.name.localeCompare(b.name, "th", { numeric: true }),
+            )
             .map((c) => ({ value: c.id.toString(), label: c.name })),
         ),
       )
