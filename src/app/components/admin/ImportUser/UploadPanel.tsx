@@ -1,35 +1,35 @@
-'use client';
-import React, { useRef } from 'react';
+"use client";
+import React, { useRef } from "react";
 
 interface Props {
   currentStep: 1 | 2 | 3;
   fileName: string | null;
-  onFileSelect: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  onRemoveFile: () => void;
+  onFileSelectAction: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onRemoveFileAction: () => void;
 }
 
 export default function UploadPanel({
   currentStep,
   fileName,
-  onFileSelect,
-  onRemoveFile,
+  onFileSelectAction,
+  onRemoveFileAction,
 }: Props) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const steps = [
-    { title: 'อัพโหลดไฟล์', desc: 'เลือกไฟล์ Excel' },
-    { title: 'ตรวจสอบข้อมูล', desc: 'ตรวจสอบความถูกต้อง' },
-    { title: 'นำเข้าข้อมูล', desc: 'ยืนยันการนำเข้า' },
+    { title: "อัพโหลดไฟล์", desc: "เลือกไฟล์ Excel" },
+    { title: "ตรวจสอบข้อมูล", desc: "ตรวจสอบความถูกต้อง" },
+    { title: "นำเข้าข้อมูล", desc: "ยืนยันการนำเข้า" },
   ];
 
   const handleSelectFile = (e: React.ChangeEvent<HTMLInputElement>) => {
-    onFileSelect(e);
-    if (fileInputRef.current) fileInputRef.current.value = '';
+    onFileSelectAction(e);
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const handleRemoveFile = () => {
-    if (fileInputRef.current) fileInputRef.current.value = '';
-    onRemoveFile();
+    if (fileInputRef.current) fileInputRef.current.value = "";
+    onRemoveFileAction();
   };
 
   return (
@@ -54,15 +54,15 @@ export default function UploadPanel({
                   <div
                     className={`w-10 h-10 flex items-center justify-center rounded-full font-semibold ${
                       isActive
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-gray-200 text-gray-600'
+                        ? "bg-blue-600 text-white"
+                        : "bg-gray-200 text-gray-600"
                     }`}
                   >
                     {i + 1}
                   </div>
                   <div
                     className={`mt-2 font-medium ${
-                      isActive ? 'text-blue-900' : 'text-gray-500'
+                      isActive ? "text-blue-900" : "text-gray-500"
                     }`}
                   >
                     {step.title}
@@ -147,27 +147,27 @@ export default function UploadPanel({
             <h2 className="mb-4 text-xl font-semibold md:mb-0">อัพโหลดไฟล์</h2>
             <div className="flex flex-wrap gap-2">
               {[
-                'STUDENT',
-                'APPROVER_IN',
-                'APPROVER_OUT',
-                'EXPERIENCE_MANAGER',
+                "STUDENT",
+                "APPROVER_IN",
+                "APPROVER_OUT",
+                "EXPERIENCE_MANAGER",
               ].map((role) => {
                 const labelMap = {
-                  STUDENT: 'นิสิต',
-                  APPROVER_IN: 'ผู้อนุมัติภายใน',
-                  APPROVER_OUT: 'ผู้อนุมัติภายนอก',
-                  EXPERIENCE_MANAGER: 'ผู้จัดการเล่ม',
+                  STUDENT: "นิสิต",
+                  APPROVER_IN: "ผู้อนุมัติภายใน",
+                  APPROVER_OUT: "ผู้อนุมัติภายนอก",
+                  EXPERIENCE_MANAGER: "ผู้จัดการเล่ม",
                 };
 
                 const colorClassMap = {
                   STUDENT:
-                    'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100',
+                    "bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100",
                   APPROVER_IN:
-                    'bg-teal-50 text-teal-700 border-teal-200 hover:bg-teal-100',
+                    "bg-teal-50 text-teal-700 border-teal-200 hover:bg-teal-100",
                   APPROVER_OUT:
-                    'bg-orange-50 text-orange-700 border-orange-200 hover:bg-orange-100',
+                    "bg-orange-50 text-orange-700 border-orange-200 hover:bg-orange-100",
                   EXPERIENCE_MANAGER:
-                    'bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100',
+                    "bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100",
                 };
 
                 return (
@@ -176,7 +176,7 @@ export default function UploadPanel({
                     onClick={() =>
                       window.open(
                         `/template/${role.toLowerCase()}-template.xlsx`,
-                        '_blank'
+                        "_blank",
                       )
                     }
                     className={`px-3 py-1.5 text-sm rounded-lg border flex items-center ${

@@ -8,14 +8,14 @@ import Select from "react-select";
 type Props = {
   books: { id: number; title: string }[];
   selectedBook: number | string;
-  setSelectedBook: (v: number | string) => void;
+  setSelectedBookAction: (v: number | string) => void;
   subjects: string[]; // <-- แก้ไขตรงนี้
   progressMode: string;
-  setProgressMode: (v: string) => void;
+  setProgressModeAction: (v: string) => void;
   search: string;
-  setSearch: (v: string) => void;
+  setSearchAction: (v: string) => void;
   limit: number;
-  setLimit: (v: number) => void;
+  setLimitAction: (v: number) => void;
 };
 // ▲▲▲ [สิ้นสุดส่วนที่แก้ไข] ▲▲▲
 
@@ -32,14 +32,14 @@ type Props = {
 export default function FilterBar({
   books,
   selectedBook,
-  setSelectedBook,
+  setSelectedBookAction,
   subjects,
   progressMode,
-  setProgressMode,
+  setProgressModeAction,
   search,
-  setSearch,
+  setSearchAction,
   limit,
-  setLimit,
+  setLimitAction,
 }: Props) {
   // แปลง books เป็น options สำหรับ react-select
   const bookOptions = books.map((b) => ({
@@ -70,7 +70,7 @@ export default function FilterBar({
           options={bookOptions}
           value={selectedOption}
           onChange={(opt) =>
-            setSelectedBook(opt ? (opt as { value: number }).value : "")
+            setSelectedBookAction(opt ? (opt as { value: number }).value : "")
           }
           placeholder="-- เลือกสมุด --"
           isClearable
@@ -88,7 +88,7 @@ export default function FilterBar({
           instanceId="progress-mode-select"
           options={progressModeOptions}
           value={selectedProgressModeOption}
-          onChange={(opt) => setProgressMode(opt ? opt.value : "all")}
+          onChange={(opt) => setProgressModeAction(opt ? opt.value : "all")}
           isDisabled={!selectedBook}
           className="react-select-container text-gray-800 w-full"
           classNamePrefix="react-select"
@@ -103,7 +103,7 @@ export default function FilterBar({
           placeholder="ค้นหารหัสนิสิต หรือ ชื่อ-นามสกุล"
           className="w-full px-3 py-2 pl-10 pr-4 text-gray-800 bg-gray-100 border border-gray-300 rounded-lg"
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) => setSearchAction(e.target.value)}
         />
         <span className="absolute text-gray-400 -translate-y-1/2 left-3 top-1/2">
           <svg
@@ -129,7 +129,7 @@ export default function FilterBar({
         <select
           className="px-2 py-1 text-gray-800 bg-gray-100 border border-gray-300 rounded-lg"
           value={limit}
-          onChange={(e) => setLimit(+e.target.value)}
+          onChange={(e) => setLimitAction(+e.target.value)}
         >
           {[5, 10, 15, 20, 50].map((n) => (
             <option key={n} value={n} className="dark:text-gray-800">

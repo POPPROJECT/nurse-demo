@@ -1,14 +1,18 @@
-'use client';
-import React, { useEffect, useState } from 'react';
-import { RowData, SkippedEntry } from 'lib/type';
+"use client";
+import React, { useEffect, useState } from "react";
+import { RowData, SkippedEntry } from "lib/type";
 
 interface Props {
   successList: RowData[];
   skipped: SkippedEntry[];
-  onUndo: () => void;
+  onUndoAction: () => void;
 }
 
-export default function ImportResult({ successList, skipped, onUndo }: Props) {
+export default function ImportResult({
+  successList,
+  skipped,
+  onUndoAction,
+}: Props) {
   const [countdown, setCountdown] = useState(60);
 
   useEffect(() => {
@@ -17,6 +21,13 @@ export default function ImportResult({ successList, skipped, onUndo }: Props) {
     }, 1000);
     return () => clearInterval(timer);
   }, []);
+
+  function formatName(
+    name: string | { prefix?: string; firstName?: string; lastName?: string },
+  ) {
+    if (typeof name === "string") return name;
+    return `${name.prefix ?? ""}${name.firstName ?? ""} ${name.lastName ?? ""}`.trim();
+  }
 
   return (
     <div className="space-y-6">
@@ -28,7 +39,7 @@ export default function ImportResult({ successList, skipped, onUndo }: Props) {
               ✅ นำเข้าสำเร็จ {successList.length} รายการ
             </p>
             <button
-              onClick={onUndo}
+              onClick={onUndoAction}
               className="px-3 py-1 text-sm text-red-600 bg-white border border-red-300 rounded hover:bg-red-50"
             >
               🗑 ยกเลิกการนำเข้าล่าสุด ({countdown}s)
@@ -48,9 +59,9 @@ export default function ImportResult({ successList, skipped, onUndo }: Props) {
               <tbody>
                 {successList.map((u, i) => (
                   <tr key={i} className="text-gray-800">
-                    <td className="p-2 border">{u.name}</td>
+                    <td className="p-2 border">{formatName(u.name)}</td>
                     <td className="p-2 border">{u.email}</td>
-                    <td className="p-2 border">{u.studentId || '-'}</td>
+                    <td className="p-2 border">{u.studentId || "-"}</td>
                     <td className="p-2 border">{u.provider}</td>
                     <td className="p-2 border">{u.role}</td>
                   </tr>
@@ -84,7 +95,7 @@ export default function ImportResult({ successList, skipped, onUndo }: Props) {
                   <tr key={i}>
                     <td className="p-2 border">{s.name}</td>
                     <td className="p-2 border">{s.email}</td>
-                    <td className="p-2 border">{s.studentId || '-'}</td>
+                    <td className="p-2 border">{s.studentId || "-"}</td>
                     <td className="p-2 border">{s.provider}</td>
                     <td className="p-2 border">{s.role}</td>
                     <td className="p-2 border">{s.reason}</td>

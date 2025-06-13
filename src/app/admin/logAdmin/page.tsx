@@ -1,13 +1,13 @@
-'use client';
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import { getSession } from 'lib/session';
-import { Role } from 'lib/type';
-import FilterBar from '@/app/components/admin/log/FilterBar';
-import Pagination from '@/app/components/admin/log/Pagination';
-import LogTable from '@/app/components/admin/log/LogTable';
-import LogSummaryBar from '@/app/components/admin/log/LogSummeryBar';
-import { HiClipboardList } from 'react-icons/hi';
+"use client";
+import React, { useEffect, useState } from "react";
+import axios from "axios";
+import { getSession } from "lib/session";
+import { Role } from "lib/type";
+import FilterBar from "@/app/components/admin/log/FilterBar";
+import Pagination from "@/app/components/admin/log/Pagination";
+import LogTable from "@/app/components/admin/log/LogTable";
+import LogSummaryBar from "@/app/components/admin/log/LogSummeryBar";
+import { HiClipboardList } from "react-icons/hi";
 
 export default function AdminLogPage() {
   const BASE = process.env.NEXT_PUBLIC_BACKEND_URL!;
@@ -15,17 +15,17 @@ export default function AdminLogPage() {
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState("");
   const [action, setAction] = useState<
-    'all' | 'create' | 'update' | 'delete' | 'import'
-  >('all');
-  const [sortBy, setSortBy] = useState('createdAt');
-  const [order, setOrder] = useState<'asc' | 'desc'>('desc');
+    "all" | "create" | "update" | "delete" | "import"
+  >("all");
+  const [sortBy, setSortBy] = useState("createdAt");
+  const [order, setOrder] = useState<"asc" | "desc">("desc");
 
   const fetchLogs = async () => {
     const sess = await getSession();
     if (!sess || sess.user.role !== Role.ADMIN) {
-      console.error('⛔ Session not found!');
+      console.error("⛔ Session not found!");
       return;
     }
     const res = await axios.get(`${BASE}/admin/logs`, {
@@ -34,7 +34,7 @@ export default function AdminLogPage() {
         page,
         limit,
         search,
-        action: action !== 'all' ? action : undefined,
+        action: action !== "all" ? action : undefined,
         sortBy,
         order,
       },
@@ -49,12 +49,12 @@ export default function AdminLogPage() {
 
   const latestUpdate =
     data.length > 0
-      ? new Date(data[0].createdAt).toLocaleString('th-TH', {
-          year: 'numeric',
-          month: '2-digit',
-          day: '2-digit',
-          hour: '2-digit',
-          minute: '2-digit',
+      ? new Date(data[0].createdAt).toLocaleString("th-TH", {
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit",
         })
       : undefined;
 
@@ -76,18 +76,18 @@ export default function AdminLogPage() {
       {/* Filter */}
       <FilterBar
         search={search}
-        setSearch={setSearch}
+        setSearchAction={setSearch}
         action={action}
         setAction={setAction}
         sortBy={sortBy}
         order={order}
-        setSort={(by, ord) => {
+        setSortAction={(by, ord) => {
           setSortBy(by);
           setOrder(ord);
           setPage(1);
         }}
         limit={limit}
-        setLimit={(n) => {
+        setLimitAction={(n) => {
           setLimit(n);
           setPage(1);
         }}
@@ -101,7 +101,7 @@ export default function AdminLogPage() {
       <Pagination
         page={page}
         totalPages={Math.ceil(total / limit)}
-        setPage={setPage}
+        setPageAction={setPage}
         totalItems={total}
         limit={limit}
       />

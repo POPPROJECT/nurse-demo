@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import React from 'react';
-import { FaSort, FaSortUp, FaSortDown, FaEye } from 'react-icons/fa';
+import React from "react";
+import { FaEye, FaSort, FaSortDown, FaSortUp } from "react-icons/fa";
 
 type Student = {
   id: number;
@@ -14,18 +14,23 @@ type Student = {
 
 type Props = {
   data: Student[];
-  sortBy: 'studentId' | 'name' | 'percent';
-  order: 'asc' | 'desc';
-  onSort: (col: 'studentId' | 'name' | 'percent') => void;
+  sortBy: "studentId" | "name" | "percent";
+  order: "asc" | "desc";
+  onSortAction: (col: "studentId" | "name" | "percent") => void;
 };
 
-const HEADERS: { key: Props['sortBy']; label: string }[] = [
-  { key: 'studentId', label: 'รหัสนิสิต' },
-  { key: 'name', label: 'ชื่อ-นามสกุล' },
-  { key: 'percent', label: 'ความคืบหน้าโดยรวม' },
+const HEADERS: { key: Props["sortBy"]; label: string }[] = [
+  { key: "studentId", label: "รหัสนิสิต" },
+  { key: "name", label: "ชื่อ-นามสกุล" },
+  { key: "percent", label: "ความคืบหน้าโดยรวม" },
 ];
 
-export default function StudentTable({ data, sortBy, order, onSort }: Props) {
+export default function StudentTable({
+  data,
+  sortBy,
+  order,
+  onSortAction,
+}: Props) {
   return (
     <div className="mt-6 overflow-x-auto">
       <table className="min-w-full bg-white shadow dark:bg-gray-500 whitespace-nowrap">
@@ -34,7 +39,7 @@ export default function StudentTable({ data, sortBy, order, onSort }: Props) {
             {HEADERS.map((h) => (
               <th
                 key={h.key}
-                onClick={() => onSort(h.key)}
+                onClick={() => onSortAction(h.key)}
                 className="px-6 py-3 text-base font-medium text-left text-gray-800 uppercase cursor-pointer select-none dark:text-gray-200"
               >
                 <div className="inline-flex items-center space-x-1">
@@ -43,10 +48,10 @@ export default function StudentTable({ data, sortBy, order, onSort }: Props) {
                     {sortBy !== h.key && (
                       <FaSort className="text-gray-400 dark:text-gray-500" />
                     )}
-                    {sortBy === h.key && order === 'asc' && (
+                    {sortBy === h.key && order === "asc" && (
                       <FaSortUp className="text-indigo-600" />
                     )}
-                    {sortBy === h.key && order === 'desc' && (
+                    {sortBy === h.key && order === "desc" && (
                       <FaSortDown className="text-indigo-600" />
                     )}
                   </span>

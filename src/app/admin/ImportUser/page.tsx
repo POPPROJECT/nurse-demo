@@ -1,14 +1,14 @@
-'use client';
-import React, { useEffect, useState } from 'react';
-import ExcelJS from 'exceljs';
-import Swal from 'sweetalert2';
-import axios from 'axios';
-import { RowData, SkippedEntry } from 'lib/type';
-import UploadPanel from '@/app/components/admin/ImportUser/UploadPanel';
-import SummarySection from '@/app/components/admin/ImportUser/SummarySection';
-import PreviewTable from '@/app/components/admin/ImportUser/PreviewTable';
-import ImportResult from '@/app/components/admin/ImportUser/ImportResult';
-import { useAuth } from '@/app/contexts/AuthContext';
+"use client";
+import React, { useEffect, useState } from "react";
+import ExcelJS from "exceljs";
+import Swal from "sweetalert2";
+import axios from "axios";
+import { RowData, SkippedEntry } from "lib/type";
+import UploadPanel from "@/app/components/admin/ImportUser/UploadPanel";
+import SummarySection from "@/app/components/admin/ImportUser/SummarySection";
+import PreviewTable from "@/app/components/admin/ImportUser/PreviewTable";
+import ImportResult from "@/app/components/admin/ImportUser/ImportResult";
+import { useAuth } from "@/app/contexts/AuthContext";
 
 export default function ImportUserPage() {
   const { accessToken, session: authUser } = useAuth();
@@ -17,10 +17,10 @@ export default function ImportUserPage() {
   const [skippedList, setSkippedList] = useState<SkippedEntry[]>([]);
   const [isValid, setIsValid] = useState(true);
   const [fileName, setFileName] = useState<string | null>(null);
-  const [filterStatus, setFilterStatus] = useState<'all' | 'valid' | 'invalid'>(
-    'all'
+  const [filterStatus, setFilterStatus] = useState<"all" | "valid" | "invalid">(
+    "all",
   );
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
   const [skippedMerged, setSkippedMerged] = useState<SkippedEntry[]>([]);
@@ -28,10 +28,10 @@ export default function ImportUserPage() {
   const [isPageLoading, setIsPageLoading] = useState(true);
 
   useEffect(() => {
-    if (typeof accessToken === 'string' || accessToken === null) {
+    if (typeof accessToken === "string" || accessToken === null) {
       setIsPageLoading(false);
       if (!accessToken && !authUser) {
-        setPageError('Session not available or expired. Please login again.');
+        setPageError("Session not available or expired. Please login again.");
       }
     }
   }, [accessToken, authUser]);
@@ -39,7 +39,7 @@ export default function ImportUserPage() {
   const validateRow = (row: RowData): boolean => {
     if (
       !row.name ||
-      (typeof row.name === 'object' &&
+      (typeof row.name === "object" &&
         (!row.name.firstName || !row.name.lastName)) ||
       !row.email ||
       !row.role ||
@@ -47,35 +47,35 @@ export default function ImportUserPage() {
     )
       return false;
     if (
-      ['APPROVER_OUT', 'EXPERIENCE_MANAGER'].includes(row.role) &&
+      ["APPROVER_OUT", "EXPERIENCE_MANAGER"].includes(row.role) &&
       !row.password
     )
       return false;
-    if (row.role === 'STUDENT') {
-      if (!/^\d{8}$/.test(row.studentId || '')) return false;
-      if (!row.email.endsWith('@nu.ac.th')) return false;
+    if (row.role === "STUDENT") {
+      if (!/^\d{8}$/.test(row.studentId || "")) return false;
+      if (!row.email.endsWith("@nu.ac.th")) return false;
     }
-    if (row.role === 'APPROVER_IN') {
-      if (!row.email.endsWith('@nu.ac.th')) return false;
+    if (row.role === "APPROVER_IN") {
+      if (!row.email.endsWith("@nu.ac.th")) return false;
     }
     return true;
   };
 
   const filteredRows = rows.filter((row) => {
     const isValidRow = validateRow(row);
-    if (filterStatus === 'valid' && !isValidRow) return false;
-    if (filterStatus === 'invalid' && isValidRow) return false;
+    if (filterStatus === "valid" && !isValidRow) return false;
+    if (filterStatus === "invalid" && isValidRow) return false;
 
     const searchTerm = search.toLowerCase();
     return (
-      (typeof row.name === 'string'
+      (typeof row.name === "string"
         ? row.name.toLowerCase()
-        : `${row.name?.prefix || ''}${row.name?.firstName || ''}${
-            row.name?.lastName || ''
+        : `${row.name?.prefix || ""}${row.name?.firstName || ""}${
+            row.name?.lastName || ""
           }`.toLowerCase()
       ).includes(searchTerm) ||
-      (row.email?.toLowerCase() || '').includes(searchTerm) ||
-      (row.studentId?.toLowerCase() || '').includes(searchTerm)
+      (row.email?.toLowerCase() || "").includes(searchTerm) ||
+      (row.studentId?.toLowerCase() || "").includes(searchTerm)
     );
   });
 
@@ -94,9 +94,9 @@ export default function ImportUserPage() {
       ? headerRow.values.slice(1)
       : [];
     const headers: string[] = headerValues.map((cell) =>
-      String(cell || '')
+      String(cell || "")
         .toLowerCase()
-        .trim()
+        .trim(),
     );
 
     const data: RowData[] = [];
@@ -109,16 +109,16 @@ export default function ImportUserPage() {
       headers.forEach((key: string, colIndex: number) => {
         const val = row.getCell(colIndex + 1).value;
 
-        if (['prefix', 'firstname', 'lastname'].includes(key)) {
+        if (["prefix", "firstname", "lastname"].includes(key)) {
           if (!rowData.name) rowData.name = {};
-          rowData.name[key === 'firstname' ? 'firstName' : key] = val
+          rowData.name[key === "firstname" ? "firstName" : key] = val
             ? String(val).trim()
-            : '';
-        } else if (key === 'role') {
-          rowData.role = String(val ?? '').toUpperCase();
-        } else if (key === 'provider') {
-          rowData.provider = String(val ?? '').toUpperCase();
-        } else if (key === 'studentid') {
+            : "";
+        } else if (key === "role") {
+          rowData.role = String(val ?? "").toUpperCase();
+        } else if (key === "provider") {
+          rowData.provider = String(val ?? "").toUpperCase();
+        } else if (key === "studentid") {
           rowData.studentId = val ? String(val).trim() : undefined;
         } else {
           rowData[key] = val ? String(val).trim() : undefined;
@@ -129,13 +129,13 @@ export default function ImportUserPage() {
     });
 
     const duplicates = data.filter(
-      (r, i, arr) => arr.findIndex((x) => x.email === r.email) !== i
+      (r, i, arr) => arr.findIndex((x) => x.email === r.email) !== i,
     );
     if (duplicates.length > 0) {
       Swal.fire({
-        icon: 'error',
-        title: 'พบอีเมลซ้ำในไฟล์',
-        html: duplicates.map((d) => `<div>${d.email}</div>`).join(''),
+        icon: "error",
+        title: "พบอีเมลซ้ำในไฟล์",
+        html: duplicates.map((d) => `<div>${d.email}</div>`).join(""),
       });
       return;
     }
@@ -145,7 +145,7 @@ export default function ImportUserPage() {
     setSuccessList([]);
     setSkippedList([]);
     setCurrentPage(1);
-    e.target.value = ''; // allow re-upload of same file
+    e.target.value = ""; // allow re-upload of same file
   };
 
   const handleRemoveFile = () => {
@@ -159,9 +159,9 @@ export default function ImportUserPage() {
   const handleImport = async () => {
     if (!accessToken) {
       Swal.fire(
-        'ข้อผิดพลาด',
-        'Session หมดอายุหรือไม่พบ Token กรุณาเข้าสู่ระบบใหม่อีกครั้ง',
-        'error'
+        "ข้อผิดพลาด",
+        "Session หมดอายุหรือไม่พบ Token กรุณาเข้าสู่ระบบใหม่อีกครั้ง",
+        "error",
       );
       return;
     }
@@ -172,9 +172,9 @@ export default function ImportUserPage() {
         {
           headers: {
             Authorization: `Bearer ${accessToken}`,
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
-        }
+        },
       );
 
       const skippedRaw: SkippedEntry[] = res.data?.skippedEmails ?? [];
@@ -183,10 +183,10 @@ export default function ImportUserPage() {
       const merged = skippedRaw.map((s) => {
         const full = rows.find((r) => r.email === s.email);
         const fullName =
-          typeof full?.name === 'string'
+          typeof full?.name === "string"
             ? full.name
-            : `${full?.name?.prefix || ''}${full?.name?.firstName || ''} ${
-                full?.name?.lastName || ''
+            : `${full?.name?.prefix || ""}${full?.name?.firstName || ""} ${
+                full?.name?.lastName || ""
               }`.trim();
 
         return {
@@ -200,25 +200,25 @@ export default function ImportUserPage() {
       });
 
       const successful = rows.filter(
-        (r) => !skippedRaw.some((s) => s.email === r.email)
+        (r) => !skippedRaw.some((s) => s.email === r.email),
       );
       setSuccessList(successful);
       setSkippedMerged(merged);
       setSkippedList(skippedRaw);
       Swal.fire(
-        'นำเข้าสำเร็จ',
+        "นำเข้าสำเร็จ",
         `สำเร็จ ${successful.length} / พลาด ${skippedRaw.length}`,
-        'success'
+        "success",
       );
       setRows([]);
       setFileName(null);
     } catch (err: any) {
-      console.error('Import error:', err);
+      console.error("Import error:", err);
       Swal.fire(
-        'ผิดพลาด',
+        "ผิดพลาด",
         err.response?.data?.message ||
-          'ไม่สามารถนำเข้าข้อมูลได้ กรุณาลองใหม่อีกครั้ง',
-        'error'
+          "ไม่สามารถนำเข้าข้อมูลได้ กรุณาลองใหม่อีกครั้ง",
+        "error",
       );
     }
   };
@@ -226,20 +226,20 @@ export default function ImportUserPage() {
   const handleUndo = async () => {
     if (!accessToken) {
       Swal.fire(
-        'ข้อผิดพลาด',
-        'Session หมดอายุหรือไม่พบ Token กรุณาเข้าสู่ระบบใหม่อีกครั้ง',
-        'error'
+        "ข้อผิดพลาด",
+        "Session หมดอายุหรือไม่พบ Token กรุณาเข้าสู่ระบบใหม่อีกครั้ง",
+        "error",
       );
       return;
     }
 
     const confirm = await Swal.fire({
-      title: 'ยกเลิกการนำเข้าล่าสุด?',
-      text: 'ระบบจะลบผู้ใช้ที่เพิ่งนำเข้า',
-      icon: 'warning',
+      title: "ยกเลิกการนำเข้าล่าสุด?",
+      text: "ระบบจะลบผู้ใช้ที่เพิ่งนำเข้า",
+      icon: "warning",
       showCancelButton: true,
-      confirmButtonText: 'ยืนยัน',
-      cancelButtonText: 'ยกเลิก',
+      confirmButtonText: "ยืนยัน",
+      cancelButtonText: "ยกเลิก",
     });
     if (!confirm.isConfirmed) return;
 
@@ -251,18 +251,18 @@ export default function ImportUserPage() {
           headers: {
             Authorization: `Bearer ${accessToken}`,
           },
-        }
+        },
       );
       setSuccessList([]);
       setSkippedList([]);
       setSkippedMerged([]);
-      Swal.fire('สำเร็จ', 'ลบข้อมูลที่นำเข้าเรียบร้อยแล้ว', 'success');
+      Swal.fire("สำเร็จ", "ลบข้อมูลที่นำเข้าเรียบร้อยแล้ว", "success");
     } catch (err: any) {
-      console.error('Undo error:', err);
+      console.error("Undo error:", err);
       Swal.fire(
-        'ผิดพลาด',
-        err.response?.data?.message || 'ไม่สามารถยกเลิกการนำเข้าได้',
-        'error'
+        "ผิดพลาด",
+        err.response?.data?.message || "ไม่สามารถยกเลิกการนำเข้าได้",
+        "error",
       );
     }
   };
@@ -270,7 +270,7 @@ export default function ImportUserPage() {
   const totalPages = Math.ceil(filteredRows.length / pageSize);
   const paginatedRows = filteredRows.slice(
     (currentPage - 1) * pageSize,
-    currentPage * pageSize
+    currentPage * pageSize,
   );
 
   if (isPageLoading)
@@ -282,7 +282,7 @@ export default function ImportUserPage() {
   if (!accessToken && !authUser) {
     return (
       <div>
-        Authentication required. Please{' '}
+        Authentication required. Please{" "}
         <a href="/" className="underline">
           Login
         </a>
@@ -297,12 +297,12 @@ export default function ImportUserPage() {
           rows.length > 0
             ? 2
             : successList.length > 0 || skippedList.length > 0
-            ? 3
-            : 1
+              ? 3
+              : 1
         }
         fileName={fileName}
-        onFileSelect={handleFileUpload}
-        onRemoveFile={handleRemoveFile}
+        onFileSelectAction={handleFileUpload}
+        onRemoveFileAction={handleRemoveFile}
       />
 
       {rows.length > 0 && (
@@ -312,13 +312,13 @@ export default function ImportUserPage() {
             valid={rows.filter(validateRow).length}
             invalid={rows.filter((r) => !validateRow(r)).length}
             userType={
-              rows[0].role === 'STUDENT'
-                ? 'นิสิต'
-                : rows[0].role === 'APPROVER_IN'
-                ? 'ผู้อนุมัติภายใน'
-                : rows[0].role === 'APPROVER_OUT'
-                ? 'ผู้อนุมัติภายนอก'
-                : 'ผู้จัดการเล่ม'
+              rows[0].role === "STUDENT"
+                ? "นิสิต"
+                : rows[0].role === "APPROVER_IN"
+                  ? "ผู้อนุมัติภายใน"
+                  : rows[0].role === "APPROVER_OUT"
+                    ? "ผู้อนุมัติภายนอก"
+                    : "ผู้จัดการเล่ม"
             }
             onSearch={setSearch}
             onFilterChange={setFilterStatus}
@@ -339,7 +339,7 @@ export default function ImportUserPage() {
         <ImportResult
           successList={successList}
           skipped={skippedMerged}
-          onUndo={handleUndo}
+          onUndoAction={handleUndo}
         />
       )}
     </div>

@@ -215,7 +215,6 @@ export default function CourseManager({
                     </>
                   ) : (
                     <>
-                      <span className="w-6 text-gray-500">{index + 1}.</span>
                       <span className="flex-1 font-medium text-gray-800">
                         {c.name}
                       </span>

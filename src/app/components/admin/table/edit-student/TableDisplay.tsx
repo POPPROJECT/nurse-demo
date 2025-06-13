@@ -1,9 +1,9 @@
 // components/admin/table/edit-student/TableDisplay.tsx (หรือ Path ที่ถูกต้องของคุณ)
-'use client';
-import React from 'react';
-import { FaEdit, FaEye, FaTrash } from 'react-icons/fa';
-import { useRouter } from 'next/navigation'; // ถ้ายังจำเป็นต้องใช้
-import Swal from 'sweetalert2';
+"use client";
+import React from "react";
+import { FaEdit, FaEye, FaTrash } from "react-icons/fa";
+import { useRouter } from "next/navigation"; // ถ้ายังจำเป็นต้องใช้
+import Swal from "sweetalert2";
 // ✅ ถ้าจะใช้ AuthContext โดยตรงใน Component นี้
 // import { useAuth } from '@/contexts/AuthContext';
 
@@ -12,21 +12,21 @@ interface User {
   studentId: string; // studentId ควรจะเป็น string ถ้ามาจาก DB โดยตรง หรือ number ถ้ามีการแปลง
   fullName: string;
   email: string;
-  status: 'ENABLE' | 'DISABLE';
+  status: "ENABLE" | "DISABLE";
 }
 
 interface Props {
   data: User[];
-  setData: React.Dispatch<React.SetStateAction<User[]>>;
-  deleteUser: (id: number) => Promise<void>; // ควรจะเป็น Promise<void> ถ้า deleteUser เป็น async
+  setDataAction: React.Dispatch<React.SetStateAction<User[]>>;
+  deleteUserAction: (id: number) => Promise<void>; // ควรจะเป็น Promise<void> ถ้า deleteUser เป็น async
   accessToken: string | null; // ✅ รับ accessToken เป็น Prop
   // handleEdit: (id: number) => void; // ถ้ามีฟังก์ชันนี้ส่งมาจาก EditStudentTable
 }
 
 export default function TableDisplay({
   data,
-  setData,
-  deleteUser,
+  setDataAction,
+  deleteUserAction,
   accessToken,
 }: Props) {
   const router = useRouter();
@@ -35,11 +35,11 @@ export default function TableDisplay({
 
   const handleStatusChange = async (
     id: number,
-    newStatus: 'ENABLE' | 'DISABLE'
+    newStatus: "ENABLE" | "DISABLE",
   ) => {
     if (!accessToken) {
       // ✅ ตรวจสอบว่ามี accessToken ก่อน
-      Swal.fire('ข้อผิดพลาด', 'Authentication Token ไม่พร้อมใช้งาน', 'error');
+      Swal.fire("ข้อผิดพลาด", "Authentication Token ไม่พร้อมใช้งาน", "error");
       return;
     }
 
@@ -47,18 +47,18 @@ export default function TableDisplay({
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/users/${id}/status`,
         {
-          method: 'PATCH',
+          method: "PATCH",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
             Authorization: `Bearer ${accessToken}`, // ✅ ใช้ Authorization header
           },
           // credentials: 'include', // ไม่จำเป็นแล้ว
           body: JSON.stringify({ status: newStatus }),
-        }
+        },
       );
 
       if (!res.ok) {
-        let errorMessage = 'ไม่สามารถเปลี่ยนสถานะได้';
+        let errorMessage = "ไม่สามารถเปลี่ยนสถานะได้";
         try {
           const errorData = await res.json();
           errorMessage = errorData.message || `เกิดข้อผิดพลาด: ${res.status}`;
@@ -69,27 +69,27 @@ export default function TableDisplay({
       }
 
       // ✅ อัปเดต state หลักให้แสดงผลทันที
-      setData((prev) =>
+      setDataAction((prev) =>
         prev.map((user) =>
-          user.id === id ? { ...user, status: newStatus } : user
-        )
+          user.id === id ? { ...user, status: newStatus } : user,
+        ),
       );
 
       Swal.fire({
-        icon: 'success',
-        title: 'อัปเดตสำเร็จ',
+        icon: "success",
+        title: "อัปเดตสำเร็จ",
         text: `สถานะบัญชีถูกเปลี่ยนเป็น ${
-          newStatus === 'ENABLE' ? 'เปิดใช้งาน' : 'ปิดใช้งาน'
+          newStatus === "ENABLE" ? "เปิดใช้งาน" : "ปิดใช้งาน"
         }`,
         timer: 1500,
         showConfirmButton: false,
       });
     } catch (err: any) {
-      console.error('Error changing status:', err);
+      console.error("Error changing status:", err);
       Swal.fire(
-        'เกิดข้อผิดพลาด',
-        err.message || 'ไม่สามารถเปลี่ยนสถานะได้',
-        'error'
+        "เกิดข้อผิดพลาด",
+        err.message || "ไม่สามารถเปลี่ยนสถานะได้",
+        "error",
       );
     }
   };
@@ -129,12 +129,12 @@ export default function TableDisplay({
                 key={u.id}
                 className={
                   i % 2 === 0
-                    ? 'bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-600'
-                    : 'bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-500'
+                    ? "bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-600"
+                    : "bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-500"
                 }
               >
                 <td className="px-6 py-4 text-sm text-gray-800 dark:text-gray-200">
-                  {u.studentId || '-'} {/* แสดง - ถ้าไม่มี studentId */}
+                  {u.studentId || "-"} {/* แสดง - ถ้าไม่มี studentId */}
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-800 dark:text-gray-200">
                   {u.fullName}
@@ -148,14 +148,14 @@ export default function TableDisplay({
                     onChange={(e) =>
                       handleStatusChange(
                         u.id,
-                        e.target.value as 'ENABLE' | 'DISABLE'
+                        e.target.value as "ENABLE" | "DISABLE",
                       )
                     }
                     className={`px-2 py-1 border rounded text-sm font-medium
                       ${
-                        u.status === 'ENABLE'
-                          ? 'bg-green-100 text-green-800 border-green-300 dark:bg-green-700 dark:text-green-100 dark:border-green-500'
-                          : 'bg-red-100 text-red-800 border-red-300 dark:bg-red-700 dark:text-red-100 dark:border-red-500'
+                        u.status === "ENABLE"
+                          ? "bg-green-100 text-green-800 border-green-300 dark:bg-green-700 dark:text-green-100 dark:border-green-500"
+                          : "bg-red-100 text-red-800 border-red-300 dark:bg-red-700 dark:text-red-100 dark:border-red-500"
                       }`}
                   >
                     <option value="ENABLE">เปิดใช้งาน</option>
@@ -167,8 +167,8 @@ export default function TableDisplay({
                     onClick={() =>
                       router.push(
                         `/admin/check-student/${u.id}?name=${encodeURIComponent(
-                          u.fullName
-                        )}`
+                          u.fullName,
+                        )}`,
                       )
                     }
                     className="px-3 py-1 text-sm text-white bg-blue-500 rounded hover:bg-blue-600"
@@ -185,7 +185,7 @@ export default function TableDisplay({
                     <FaEdit className="inline mr-1" /> แก้ไข
                   </button>
                   <button
-                    onClick={() => deleteUser(u.id)}
+                    onClick={() => deleteUserAction(u.id)}
                     className="px-3 py-1 text-sm text-white bg-red-500 rounded hover:bg-red-700"
                     title="ลบบัญชี"
                   >

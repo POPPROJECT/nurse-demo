@@ -1,24 +1,24 @@
-'use client';
-import React from 'react';
+"use client";
+import React from "react";
 
 type Props = {
   books: { id: number; title: string }[];
   selectedBook: number | string;
-  setSelectedBook: (v: number | string) => void;
+  setSelectedBookAction: (v: number | string) => void;
   search: string;
-  setSearch: (v: string) => void;
+  setSearchAction: (v: string) => void;
   limit: number;
-  setLimit: (v: number) => void;
+  setLimitAction: (v: number) => void;
 };
 
 export default function FilterBar({
   books,
   selectedBook,
-  setSelectedBook,
+  setSelectedBookAction,
   search,
-  setSearch,
+  setSearchAction,
   limit,
-  setLimit,
+  setLimitAction,
 }: Props) {
   return (
     <div className="bg-white p-4 rounded-xl shadow flex flex-col lg:flex-row gap-4 items-center dark:bg-[#1E293B] dark:text-white">
@@ -27,7 +27,9 @@ export default function FilterBar({
       <select
         className="w-full px-3 py-2 text-gray-800 bg-gray-100 border border-gray-300 rounded-lg lg:w-1/4"
         value={selectedBook}
-        onChange={(e) => setSelectedBook(e.target.value ? +e.target.value : '')}
+        onChange={(e) =>
+          setSelectedBookAction(e.target.value ? +e.target.value : "")
+        }
       >
         <option value="" className="dark:text-gray-800">
           -- เลือกสมุด --
@@ -46,7 +48,7 @@ export default function FilterBar({
           placeholder="ค้นหารหัสนิสิต หรือ ชื่อ-นามสกุล"
           className="w-full px-3 py-2 pl-10 pr-4 text-gray-800 bg-gray-100 border border-gray-300 rounded-lg"
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) => setSearchAction(e.target.value)}
         />
         <span className="absolute text-gray-400 -translate-y-1/2 left-3 top-1/2">
           <svg
@@ -72,7 +74,7 @@ export default function FilterBar({
         <select
           className="px-2 py-1 text-gray-800 bg-gray-100 border border-gray-300 rounded-lg"
           value={limit}
-          onChange={(e) => setLimit(+e.target.value)}
+          onChange={(e) => setLimitAction(+e.target.value)}
         >
           {[5, 10, 15, 20, 50].map((n) => (
             <option key={n} value={n} className="dark:text-gray-800">

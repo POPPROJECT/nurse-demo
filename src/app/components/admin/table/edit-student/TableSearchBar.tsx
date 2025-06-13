@@ -1,22 +1,22 @@
-'use client';
-import React from 'react';
+"use client";
+import React from "react";
 
 interface Props {
   search: string;
-  setSearch: (s: string) => void;
+  setSearchAction: (s: string) => void;
   perPage: number;
-  setPerPage: (n: number) => void;
-  setPage: (n: number) => void;
+  setPerPageAction: (n: number) => void;
+  setPageAction: (n: number) => void;
   totalCount: number;
   filteredCount: number;
 }
 
 export default function TableSearchBar({
   search,
-  setSearch,
+  setSearchAction,
   perPage,
-  setPerPage,
-  setPage,
+  setPerPageAction,
+  setPageAction,
   totalCount,
   filteredCount,
 }: Props) {
@@ -27,7 +27,7 @@ export default function TableSearchBar({
           type="text"
           placeholder="ค้นหารหัสนิสิต หรือ ชื่อ หรือ อีเมล..."
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) => setSearchAction(e.target.value)}
           className="w-full py-2 pl-10 pr-4 text-gray-800 bg-gray-100 border border-gray-300 rounded-lg"
         />
         <span className="absolute text-gray-500 -translate-y-1/2 left-3 top-1/2">
@@ -40,8 +40,8 @@ export default function TableSearchBar({
         <select
           value={perPage}
           onChange={(e) => {
-            setPerPage(Number(e.target.value));
-            setPage(1);
+            setPerPageAction(Number(e.target.value));
+            setPageAction(1);
           }}
           className="px-2 py-1 text-gray-800 bg-gray-100 border border-gray-300 rounded-lg"
         >

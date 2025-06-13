@@ -1,19 +1,19 @@
-'use client';
+"use client";
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import Swal from 'sweetalert2';
-import TableSearchBar from './TableSearchBar';
-import TableDisplay from './TableDisplay';
-import TablePagination from './TablePagination';
-import { useAuth } from '@/app/contexts/AuthContext';
-import axios from 'axios';
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import Swal from "sweetalert2";
+import TableSearchBar from "./TableSearchBar";
+import TableDisplay from "./TableDisplay";
+import TablePagination from "./TablePagination";
+import { useAuth } from "@/app/contexts/AuthContext";
+import axios from "axios";
 
 interface User {
   id: number;
   studentId: string;
   fullName: string;
   email: string;
-  status: 'ENABLE' | 'DISABLE';
+  status: "ENABLE" | "DISABLE";
 }
 
 // ✅ ไม่จำเป็นต้องรับ accessToken เป็น Prop แล้ว ถ้าจะใช้จาก Context โดยตรง
@@ -22,11 +22,11 @@ export default function EditStudentTable() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true); // ✅ เพิ่ม Loading state
   const [error, setError] = useState<string | null>(null); // ✅ เพิ่ม Error state
-  const [search, setSearch] = useState('');
-  const [sortBy, setSortBy] = useState<'fullName' | 'email' | 'studentId'>(
-    'studentId'
+  const [search, setSearch] = useState("");
+  const [sortBy, setSortBy] = useState<"fullName" | "email" | "studentId">(
+    "studentId",
   );
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const [pageIndex, setPageIndex] = useState(0);
   const [perPage, setPerPage] = useState(10);
   // const [page, setPage] = useState(1); // page state อาจจะไม่จำเป็น
@@ -38,7 +38,7 @@ export default function EditStudentTable() {
     return axios.create({
       baseURL: process.env.NEXT_PUBLIC_BACKEND_URL,
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
         Authorization: `Bearer ${accessToken}`,
       },
     });
@@ -48,31 +48,31 @@ export default function EditStudentTable() {
     // ✅ เปลี่ยนชื่อฟังก์ชันให้สื่อความหมาย
     if (!api) {
       // ✅ ถ้า api instance ยังไม่ได้ถูกสร้าง (เพราะไม่มี accessToken)
-      setError('Authentication token not available.');
+      setError("Authentication token not available.");
       setLoading(false);
       return;
     }
     setLoading(true);
     setError(null);
     try {
-      const res = await api.get('/users?role=STUDENT'); // ✅ ใช้ api instance
+      const res = await api.get("/users?role=STUDENT"); // ✅ ใช้ api instance
       setUsers(
         res.data.map((u: any) => ({
           id: u.id,
-          studentId: u.studentProfile?.studentId ?? '',
+          studentId: u.studentProfile?.studentId ?? "",
           fullName: u.name, // Backend ส่ง name
           email: u.email,
-          status: u.status ?? 'ENABLE',
-        }))
+          status: u.status ?? "ENABLE",
+        })),
       );
     } catch (err: any) {
-      console.error('Error fetching students:', err);
+      console.error("Error fetching students:", err);
       setError(
         err.response?.data?.message ||
           err.message ||
-          'Failed to load student data.'
+          "Failed to load student data.",
       );
-      Swal.fire('ผิดพลาด', 'โหลดข้อมูลนิสิตไม่สำเร็จ', 'error');
+      Swal.fire("ผิดพลาด", "โหลดข้อมูลนิสิตไม่สำเร็จ", "error");
       setUsers([]);
     } finally {
       setLoading(false);
@@ -87,22 +87,22 @@ export default function EditStudentTable() {
     if (!api) {
       // ตรวจสอบ api instance (ซึ่งสร้างจาก accessToken)
       Swal.fire(
-        'ข้อผิดพลาด',
-        'Session หมดอายุหรือไม่พบ Authentication Token',
-        'error'
+        "ข้อผิดพลาด",
+        "Session หมดอายุหรือไม่พบ Authentication Token",
+        "error",
       );
       return;
     }
 
     const confirmResult = await Swal.fire({
-      title: 'ยืนยันการลบ?',
-      text: 'คุณแน่ใจหรือไม่ว่าต้องการลบบัญชีผู้ใช้นี้?',
-      icon: 'warning',
+      title: "ยืนยันการลบ?",
+      text: "คุณแน่ใจหรือไม่ว่าต้องการลบบัญชีผู้ใช้นี้?",
+      icon: "warning",
       showCancelButton: true,
-      confirmButtonColor: '#d33',
-      cancelButtonColor: '#3085d6',
-      confirmButtonText: 'ลบบัญชี',
-      cancelButtonText: 'ยกเลิก',
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "ลบบัญชี",
+      cancelButtonText: "ยกเลิก",
     });
 
     if (confirmResult.isConfirmed) {
@@ -114,16 +114,16 @@ export default function EditStudentTable() {
         // axios จะโยน error โดยอัตโนมัติถ้า status code เป็น 4xx หรือ 5xx
 
         setUsers((currentUsers) =>
-          currentUsers.filter((user) => user.id !== id)
+          currentUsers.filter((user) => user.id !== id),
         );
-        Swal.fire('ลบสำเร็จ!', 'ผู้ใช้ถูกลบออกจากระบบเรียบร้อยแล้ว', 'success');
+        Swal.fire("ลบสำเร็จ!", "ผู้ใช้ถูกลบออกจากระบบเรียบร้อยแล้ว", "success");
       } catch (err: any) {
-        console.error('Error deleting user:', err);
+        console.error("Error deleting user:", err);
         Swal.fire(
-          'เกิดข้อผิดพลาด!',
+          "เกิดข้อผิดพลาด!",
           err.response?.data?.message ||
-            'ไม่สามารถลบผู้ใช้ได้ กรุณาลองใหม่อีกครั้ง',
-          'error'
+            "ไม่สามารถลบผู้ใช้ได้ กรุณาลองใหม่อีกครั้ง",
+          "error",
         );
       }
     }
@@ -134,7 +134,7 @@ export default function EditStudentTable() {
     return users.filter(
       (u) =>
         u.fullName.toLowerCase().includes(f) ||
-        u.email.toLowerCase().includes(f)
+        u.email.toLowerCase().includes(f),
     );
   }, [users, search]);
 
@@ -144,18 +144,18 @@ export default function EditStudentTable() {
       let va = a[sortBy];
       let vb = b[sortBy];
 
-      if (sortBy === 'studentId') {
+      if (sortBy === "studentId") {
         // ถ้า studentId เป็นตัวเลขใน string ให้แปลงเป็นตัวเลขก่อนเปรียบเทียบ
-        return sortOrder === 'asc'
+        return sortOrder === "asc"
           ? Number(va) - Number(vb)
           : Number(vb) - Number(va);
       }
 
       // fullName, email → ใช้ localeCompare
-      const cmp = va.toLowerCase().localeCompare(vb.toLowerCase(), 'th', {
+      const cmp = va.toLowerCase().localeCompare(vb.toLowerCase(), "th", {
         numeric: true,
       });
-      return sortOrder === 'asc' ? cmp : -cmp;
+      return sortOrder === "asc" ? cmp : -cmp;
     });
     return arr;
   }, [filtered, sortBy, sortOrder]);
@@ -166,31 +166,31 @@ export default function EditStudentTable() {
     return sorted.slice(start, start + perPage);
   }, [sorted, pageIndex, perPage]);
 
-  const toggleSort = (col: 'fullName' | 'email') => {
+  const toggleSort = (col: "fullName" | "email") => {
     if (sortBy === col) {
-      setSortOrder((o) => (o === 'asc' ? 'desc' : 'asc'));
+      setSortOrder((o) => (o === "asc" ? "desc" : "asc"));
     } else {
       setSortBy(col);
-      setSortOrder('asc');
+      setSortOrder("asc");
     }
     setPageIndex(0);
   };
 
   const getPageNumbers = () => {
-    const pages: (number | '...')[] = [];
+    const pages: (number | "...")[] = [];
     const cur = pageIndex + 1;
     if (totalPages <= 5) {
       for (let i = 1; i <= totalPages; i++) pages.push(i);
     } else {
       pages.push(1);
-      if (cur > 3) pages.push('...');
+      if (cur > 3) pages.push("...");
       for (
         let i = Math.max(2, cur - 1);
         i <= Math.min(totalPages - 1, cur + 1);
         i++
       )
         pages.push(i);
-      if (cur < totalPages - 2) pages.push('...');
+      if (cur < totalPages - 2) pages.push("...");
       pages.push(totalPages);
     }
     return pages;
@@ -211,36 +211,36 @@ export default function EditStudentTable() {
 
   return (
     <div className="space-y-6">
-      {' '}
+      {" "}
       {/* ลด p-4 ถ้าหน้าแม่มี p-6/p-8 แล้ว */}
       <TableSearchBar
         search={search}
-        setSearch={setSearch}
+        setSearchAction={setSearch}
         perPage={perPage}
-        setPerPage={(n) => {
+        setPerPageAction={(n) => {
           setPerPage(n);
           setPageIndex(0);
         }}
-        setPage={(n) => setPageIndex(n - 1)} // แก้ไข setPage ให้ใช้ setPageIndex
+        setPageAction={(n) => setPageIndex(n - 1)} // แก้ไข setPage ให้ใช้ setPageIndex
         totalCount={sorted.length} // ควรใช้ sorted.length หรือ users.length ถ้าไม่มี client-side filter มากนัก
         filteredCount={filtered.length}
       />
       {/* ✅ ส่ง accessToken ไปให้ TableDisplay ถ้า TableDisplay ยังต้องใช้ */}
       <TableDisplay
         data={paged}
-        setData={setUsers}
-        deleteUser={deleteUser}
+        setDataAction={setUsers}
+        deleteUserAction={deleteUser}
         accessToken={accessToken} // ส่ง accessToken ต่อไป
       />
       <div className="text-sm text-gray-600 dark:text-gray-300">
-        แสดง {paged.length} จาก {filtered.length} รายการ (ทั้งหมด {users.length}{' '}
+        แสดง {paged.length} จาก {filtered.length} รายการ (ทั้งหมด {users.length}{" "}
         รายการ)
       </div>
       <TablePagination
         pageIndex={pageIndex}
-        setPageIndex={setPageIndex}
+        setPageIndexAction={setPageIndex}
         totalPages={totalPages}
-        getPageNumbers={getPageNumbers}
+        getPageNumbersAction={getPageNumbers}
       />
     </div>
   );

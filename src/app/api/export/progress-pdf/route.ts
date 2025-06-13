@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import puppeteer from "puppeteer";
+import puppeteer from "puppeteer-core";
+import chromium from "@sparticuz/chromium";
 import fs from "fs";
 import path from "path";
 
@@ -128,23 +129,7 @@ function getHtmlContent(data: PdfData) {
       </tr>
     `;
 
-      let lastSubCourse: string | undefined | null = null; // ตัวแปรสำหรับจำ subCourse ก่อนหน้า
-
-      //   const subCourseRows = exps.map((exp: Experience & { caseNumber: number }) => `
-      //       <tr>
-      //         <td class="p-2 border border-slate-300 pl-6">${exp.subCourse || ''}</td>
-      //         <td class="p-2 text-center border border-slate-300">${exp.subject || ''}</td>
-      //         <td class="p-2 text-center border border-slate-300">${exp.alwaycourse || ''}</td>
-      //         <td class="p-2 text-center border border-slate-300">${exp.caseNumber}</td>
-      //         ${data.fields.map(f => {
-      //     const value = exp.fieldValues.find(fv => fv.fieldId === f.id)?.value || '';
-      //     return `<td class="p-2 text-center border border-slate-300">${value}</td>`;
-      //   }).join('')}
-      //         <td class="p-2 border border-slate-300">${exp.approverName}</td>
-      //       </tr>
-      //     `).join('');
-      //   return courseHeaderRow + subCourseRows;
-      // }).join('');
+      let lastSubCourse: string | undefined | null = null;
 
       const subCourseRows = exps
         .map((exp: Experience & { caseNumber: number }) => {
@@ -152,20 +137,14 @@ function getHtmlContent(data: PdfData) {
           let subjectCell = `<td class="p-2 text-center border border-slate-300">${exp.subject || ""}</td>`;
           let alwaycourseCell = `<td class="p-2 text-center border border-slate-300">${exp.alwaycourse || ""}</td>`;
 
-          // ตรวจสอบว่า subCourse ปัจจุบันเหมือนกับแถวก่อนหน้าหรือไม่
           if (exp.subCourse && exp.subCourse === lastSubCourse) {
-            // ถ้าเหมือนกัน ให้สร้าง cell ว่างๆ แทน
             experienceCell = `<td class="p-2 border border-slate-300 pl-6"></td>`;
             subjectCell = `<td class="p-2 text-center border border-slate-300"></td>`;
             alwaycourseCell = `<td class="p-2 text-center border border-slate-300"></td>`;
           }
-
-          // อัปเดตค่าล่าสุดสำหรับใช้ใน loop ถัดไป
           lastSubCourse = exp.subCourse;
-
-          // ประกอบร่าง HTML ของแถว
           return `
-        <tr>
+      <tr>
           ${experienceCell}
           ${subjectCell}
           ${alwaycourseCell}
@@ -197,38 +176,20 @@ function getHtmlContent(data: PdfData) {
         <script src="https://cdn.tailwindcss.com"></script>
         <style>
           @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap');
-          body { 
-            font-family: 'Sarabun', sans-serif; 
-            font-size: 12px; /* อาจจะลดขนาดฟอนต์เล็กน้อยเพื่อให้พอดีขึ้น */
-            -webkit-print-color-adjust: exact; 
-          }
-          table { 
-            width: 100%; 
-            border-collapse: collapse; 
-            table-layout: fixed; /* <-- บังคับให้ตารางใช้ความกว้างที่เรากำหนด */
-          }
-          th, td { 
-            vertical-align: top; 
-            padding: 4px 6px; 
-            text-align: left; 
-            word-break: break-all; /* <-- บังคับให้ตัดคำขึ้นบรรทัดใหม่ */
-          }
+          body { font-family: 'Sarabun', sans-serif; font-size: 12px; -webkit-print-color-adjust: exact; }
+          table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+          th, td { vertical-align: top; padding: 4px 6px; text-align: left; word-break: break-all; }
           th.center, td.center { text-align: center; }
           tr.group-header td { background-color: #f1f5f9; font-weight: bold; }
         </style>
       </head>
       <body>
-        <div class="text-center mb-4">
-
-<img src="${logoSrc}" alt="Logo" class="w-16 h-16 mx-auto" />
-</div>
- <div class="mt-4 mb-8 text-base">
-<p><strong>ชื่อ-นามสกุล:</strong> ${data.userName}</p>
-<p><strong>รหัสนิสิต:</strong> ${data.studentId}</p>
-<p><strong>สมุด:</strong> ${data.bookTitle}</p>
-
-</div>
-        
+        <div class="text-center mb-4"><img src="${logoSrc}" alt="Logo" class="w-16 h-16 mx-auto" /></div>
+        <div class="mt-4 mb-8 text-base">
+          <p><strong>ชื่อ-นามสกุล:</strong> ${data.userName}</p>
+          <p><strong>รหัสนิสิต:</strong> ${data.studentId}</p>
+          <p><strong>สมุด:</strong> ${data.bookTitle}</p>
+        </div>
         <table class="w-full text-sm">
           <thead>
             <tr class="bg-slate-200">
@@ -251,14 +212,15 @@ function getHtmlContent(data: PdfData) {
 // ▲▲▲ [สิ้นสุดส่วนที่แก้ไข] ▲▲▲
 
 export async function POST(req: NextRequest) {
+  let browser = null; // ประกาศ browser ไว้ข้างนอก try-finally
+
   try {
     const body = await req.json();
     const { bookId, accessToken } = body;
 
     if (!bookId || !accessToken) {
       return new NextResponse("Missing bookId or accessToken", { status: 400 });
-    }
-
+    } // ดึงข้อมูลและสร้าง HTML (เหมือนเดิม)
     const data = await getPdfData(bookId, accessToken);
     const htmlContent = getHtmlContent(data);
     const currentDate = new Date().toLocaleDateString("th-TH", {
@@ -267,12 +229,16 @@ export async function POST(req: NextRequest) {
       year: "numeric",
     });
 
-    const browser = await puppeteer.launch({
-      headless: true,
-      args: ["--no-sandbox", "--disable-setuid-sandbox"],
+    // ▼▼▼ [แก้ไข] ปรับการเรียกใช้ Puppeteer ให้เข้ากับ Serverless ▼▼▼
+    browser = await puppeteer.launch({
+      args: chromium.args,
+      defaultViewport: chromium.defaultViewport,
+      executablePath: await chromium.executablePath(),
+      headless: chromium.headless,
     });
-    const page = await browser.newPage();
+    // ▲▲▲ [สิ้นสุดส่วนที่แก้ไข] ▲▲▲
 
+    const page = await browser.newPage();
     await page.setContent(htmlContent, { waitUntil: "networkidle0" });
 
     // ▼▼▼ [แก้ไข] ปรับ Header/Footer Template ใหม่ทั้งหมด ▼▼▼
@@ -281,17 +247,20 @@ export async function POST(req: NextRequest) {
       printBackground: true,
       displayHeaderFooter: true,
       headerTemplate: `
-        <div style="font-family: 'THSarabunNew', sans-serif; font-size: 10px; color: #808080; padding: 0 30px; width: 100%; display: flex; justify-content: space-between;">
+        <div style="font-family: 'Sarabun', sans-serif; font-size: 10px; color: #808080; padding: 0 30px; width: 100%; display: flex; justify-content: space-between;">
             <span>ข้อมูลเมื่อวันที่: ${currentDate}</span>
             <span>หน้า <span class="pageNumber"></span> / <span class="totalPages"></span></span>
         </div>
       `,
       footerTemplate: "<div></div>",
-      margin: { top: "50px", right: "30px", bottom: "30px", left: "30px" },
+      margin: {
+        top: "50px",
+        right: "30px",
+        bottom: "30px",
+        left: "30px",
+      },
     });
     // ▲▲▲ [สิ้นสุดส่วนที่แก้ไข] ▲▲▲
-
-    await browser.close();
 
     return new NextResponse(pdfBuffer, {
       headers: {
@@ -302,5 +271,10 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     console.error("PDF Generation Error:", error);
     return new NextResponse("Failed to generate PDF", { status: 500 });
+  } finally {
+    // เพิ่มการตรวจสอบเพื่อให้แน่ใจว่า browser ถูกปิดเสมอ
+    if (browser) {
+      await browser.close();
+    }
   }
 }

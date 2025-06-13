@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { Session } from 'lib/session';
-import { Role } from 'lib/type';
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import { Session } from "lib/session";
+import { Role } from "lib/type";
+import React, { createContext, ReactNode, useContext, useState } from "react";
 
 export interface SessionUser {
   id: number;
@@ -20,7 +20,7 @@ interface AuthContextType {
   session: Session | null;
   accessToken: string | null;
   setSession: (session: Session | null) => void;
-  updateUserInSession: (updatedUser: SessionUser) => void;
+  updateUserInSession: (updatedUser: Partial<SessionUser>) => void;
   // คุณอาจจะมีฟังก์ชัน login, logout ที่นี่ก็ได้ แต่ตอนนี้เราเน้นการส่ง session
 }
 
@@ -37,7 +37,7 @@ export const AuthProvider = ({
 }) => {
   const [session, setSessionState] = useState<Session | null>(initialSession);
   const [accessToken, setAccessTokenState] = useState<string | null>(
-    initialAccessToken
+    initialAccessToken,
   );
 
   // ฟังก์ชันสำหรับอัปเดต Session ทั้งหมด
@@ -51,14 +51,19 @@ export const AuthProvider = ({
   };
 
   // ฟังก์ชันสำหรับอัปเดตเฉพาะข้อมูล user ใน session
-  const updateUserInSession = (updateUser: SessionUser) => {
+  const updateUserInSession = (updateUser: Partial<SessionUser>) => {
     setSessionState((prevSession) => {
       if (!prevSession) return null;
+
+      // เราต้องมั่นใจว่า prevSession.user มี Type ที่ถูกต้องก่อนทำการ Spread
+      // การใช้ as SessionUser ที่นี่จะช่วยแก้ปัญหา Type ที่ไม่ตรงกัน
+      const existingUser = prevSession.user as SessionUser;
+
       return {
         ...prevSession,
         user: {
-          ...prevSession.user,
-          ...updateUser,
+          ...existingUser, // <-- ใช้ user ที่แปลง Type แล้ว
+          ...updateUser, // <-- นำข้อมูลใหม่มาเขียนทับ
         },
       };
     });
@@ -79,7 +84,7 @@ export const AuthProvider = ({
 export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 };

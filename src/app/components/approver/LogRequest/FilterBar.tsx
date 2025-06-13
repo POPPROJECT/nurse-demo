@@ -1,35 +1,35 @@
-'use client';
+"use client";
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useEffect, useRef, useState } from "react";
 import {
-  FaSearch,
+  FaAngleDown,
   FaCalendarAlt,
   FaCheckCircle,
-  FaAngleDown,
-} from 'react-icons/fa';
+  FaSearch,
+} from "react-icons/fa";
 
 type Props = {
   search: string;
-  setSearch: (v: string) => void;
-  status: 'all' | 'confirmed' | 'cancel';
-  setStatus: (v: 'all' | 'confirmed' | 'cancel') => void;
+  setSearchAction: (v: string) => void;
+  status: "all" | "confirmed" | "cancel";
+  setStatusAction: (v: "all" | "confirmed" | "cancel") => void;
   sortBy: string;
-  order: 'asc' | 'desc';
-  setSort: (by: string, order: 'asc' | 'desc') => void;
+  order: "asc" | "desc";
+  setSortAction: (by: string, order: "asc" | "desc") => void;
   limit: number;
-  setLimit: (n: number) => void;
+  setLimitAction: (n: number) => void;
 };
 
 export default function FilterBar({
   search,
-  setSearch,
+  setSearchAction,
   status,
-  setStatus,
+  setStatusAction,
   sortBy,
   order,
-  setSort,
+  setSortAction,
   limit,
-  setLimit,
+  setLimitAction,
 }: Props) {
   const [showDateMenu, setShowDateMenu] = useState(false);
   const [showStatusMenu, setShowStatusMenu] = useState(false);
@@ -46,8 +46,8 @@ export default function FilterBar({
         setShowStatusMenu(false);
       }
     };
-    document.addEventListener('click', onClickOutside);
-    return () => document.removeEventListener('click', onClickOutside);
+    document.addEventListener("click", onClickOutside);
+    return () => document.removeEventListener("click", onClickOutside);
   }, []);
 
   return (
@@ -59,7 +59,7 @@ export default function FilterBar({
           <input
             type="text"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => setSearchAction(e.target.value)}
             placeholder="ค้นหารหัสนิสิต, ชื่อ-นามสกุล, หมวดหมู่..."
             className="w-full py-2 pl-12 pr-4 transition bg-gray-100 border border-gray-300 rounded-lg focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-400"
           />
@@ -80,24 +80,24 @@ export default function FilterBar({
           <div className="absolute right-0 z-10 w-48 mt-2 bg-white border border-gray-300 rounded-lg shadow-lg">
             <div
               onClick={() => {
-                setSort('createdAt', 'desc');
+                setSortAction("createdAt", "desc");
                 setShowDateMenu(false);
               }}
               className={`
             px-4 py-2 text-sm cursor-pointer hover:bg-gray-100
-            ${sortBy === 'createdAt' && order === 'desc' ? 'bg-gray-100' : ''}
+            ${sortBy === "createdAt" && order === "desc" ? "bg-gray-100" : ""}
           `}
             >
               ล่าสุด → เก่าสุด
             </div>
             <div
               onClick={() => {
-                setSort('createdAt', 'asc');
+                setSortAction("createdAt", "asc");
                 setShowDateMenu(false);
               }}
               className={`
             px-4 py-2 text-sm cursor-pointer hover:bg-gray-100
-            ${sortBy === 'createdAt' && order === 'asc' ? 'bg-gray-100' : ''}
+            ${sortBy === "createdAt" && order === "asc" ? "bg-gray-100" : ""}
           `}
             >
               เก่าสุด → ล่าสุด
@@ -120,33 +120,33 @@ export default function FilterBar({
           <div className="absolute right-0 z-10 w-40 mt-2 bg-white border border-gray-300 rounded-lg shadow-lg">
             <div
               onClick={() => {
-                setStatus('all');
+                setStatusAction("all");
                 setShowStatusMenu(false);
               }}
               className={`px-4 py-2 text-sm cursor-pointer hover:bg-gray-100 ${
-                status === 'all' ? 'bg-gray-100' : ''
+                status === "all" ? "bg-gray-100" : ""
               }`}
             >
               ทั้งหมด
             </div>
             <div
               onClick={() => {
-                setStatus('confirmed');
+                setStatusAction("confirmed");
                 setShowStatusMenu(false);
               }}
               className={`px-4 py-2 text-sm cursor-pointer hover:bg-gray-100 ${
-                status === 'confirmed' ? 'bg-gray-100' : ''
+                status === "confirmed" ? "bg-gray-100" : ""
               }`}
             >
               ยืนยัน
             </div>
             <div
               onClick={() => {
-                setStatus('cancel');
+                setStatusAction("cancel");
                 setShowStatusMenu(false);
               }}
               className={`px-4 py-2 text-sm cursor-pointer hover:bg-gray-100 ${
-                status === 'cancel' ? 'bg-gray-100' : ''
+                status === "cancel" ? "bg-gray-100" : ""
               }`}
             >
               ปฏิเสธ
@@ -160,7 +160,7 @@ export default function FilterBar({
         <span className="text-sm text-gray-600 dark:text-white">แสดง</span>
         <select
           value={limit}
-          onChange={(e) => setLimit(+e.target.value)}
+          onChange={(e) => setLimitAction(+e.target.value)}
           className="px-3 py-1 text-sm transition bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
         >
           <option value={5}>5</option>

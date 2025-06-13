@@ -1,19 +1,19 @@
-'use client';
+"use client";
 
-import { useParams, useRouter } from 'next/navigation';
-import { useCallback, useEffect, useState } from 'react';
-import axios from 'axios';
+import { useParams, useRouter } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
+import axios from "axios";
 import {
-  FaUser,
+  FaCheck,
+  FaEdit,
   FaEnvelope,
   FaLock,
-  FaEdit,
-  FaCheck,
   FaTimes,
-} from 'react-icons/fa';
-import Swal from 'sweetalert2';
-import { BACKEND_URL } from 'lib/constants';
-import { SessionUser, useAuth } from '@/app/contexts/AuthContext';
+  FaUser,
+} from "react-icons/fa";
+import Swal from "sweetalert2";
+import { BACKEND_URL } from "lib/constants";
+import { useAuth } from "@/app/contexts/AuthContext";
 
 interface ExperienceManagerData {
   id: number;
@@ -42,16 +42,16 @@ export default function AdminEditExperienceManagerPage() {
   const [error, setError] = useState<string | null>(null);
 
   const [form, setForm] = useState({
-    fullName: '',
-    email: '',
-    password: '',
-    avatarUrl: '',
+    fullName: "",
+    email: "",
+    password: "",
+    avatarUrl: "",
   });
 
   // ✅ ใช้ useCallback สำหรับ fetchData
   const fetchData = useCallback(async () => {
     if (!userId || !accessToken) {
-      if (!accessToken) setError('Authentication token not available.');
+      if (!accessToken) setError("Authentication token not available.");
       setLoading(false);
       return;
     }
@@ -63,18 +63,18 @@ export default function AdminEditExperienceManagerPage() {
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/users/admin/${userId}`,
         {
           headers: { Authorization: `Bearer ${accessToken}` }, // ✅ ส่ง Token
-        }
+        },
       );
       setForm({
         fullName: res.data.name,
         email: res.data.email,
-        password: '', // ไม่ set password เดิม
-        avatarUrl: res.data.avatarUrl || '',
+        password: "", // ไม่ set password เดิม
+        avatarUrl: res.data.avatarUrl || "",
       });
     } catch (err: any) {
-      console.error('❌ ดึงข้อมูลผู้จัดการเล่มล้มเหลว:', err);
+      console.error("❌ ดึงข้อมูลผู้จัดการเล่มล้มเหลว:", err);
       setError(
-        err.response?.data?.message || err.message || 'Failed to load data.'
+        err.response?.data?.message || err.message || "Failed to load data.",
       );
     } finally {
       setLoading(false);
@@ -92,15 +92,15 @@ export default function AdminEditExperienceManagerPage() {
 
   const handleSubmit = async () => {
     if (!accessToken) {
-      Swal.fire('ข้อผิดพลาด', 'Session หมดอายุ, กรุณา Login ใหม่', 'error');
+      Swal.fire("ข้อผิดพลาด", "Session หมดอายุ, กรุณา Login ใหม่", "error");
       return;
     }
     // ตรวจสอบ Password (ถ้ามีการกรอก)
     if (form.password && form.password.length < 6) {
       Swal.fire(
-        'ผิดพลาด',
-        'รหัสผ่านใหม่ต้องมีความยาวอย่างน้อย 6 ตัวอักษร',
-        'warning'
+        "ผิดพลาด",
+        "รหัสผ่านใหม่ต้องมีความยาวอย่างน้อย 6 ตัวอักษร",
+        "warning",
       );
       return;
     }
@@ -123,13 +123,13 @@ export default function AdminEditExperienceManagerPage() {
         {
           headers: {
             Authorization: `Bearer ${accessToken}`,
-            'Content-Type': 'application/json', // ✅ เนื้อหาเป็น JSON
+            "Content-Type": "application/json", // ✅ เนื้อหาเป็น JSON
           },
-        }
+        },
       );
 
       setEditing(false);
-      setForm((prev) => ({ ...prev, password: '' })); // เคลียร์ password field หลังบันทึก
+      setForm((prev) => ({ ...prev, password: "" })); // เคลียร์ password field หลังบันทึก
 
       // อัปเดต Context ถ้าข้อมูลที่แก้ไขคือ User ปัจจุบันที่ Login อยู่
       // (ซึ่งไม่น่าใช่กรณีนี้ เพราะนี่คือหน้าแก้ไข User อื่น)
@@ -139,8 +139,8 @@ export default function AdminEditExperienceManagerPage() {
         // อัปเดต form state ด้วยข้อมูลใหม่
         fullName: res.data.name,
         email: res.data.email,
-        password: '',
-        avatarUrl: res.data.avatarUrl || '',
+        password: "",
+        avatarUrl: res.data.avatarUrl || "",
       });
 
       // ถ้า User ที่ถูกแก้ไขคือ User ปัจจุบันที่ Login อยู่ (เช่น แก้ไข Profile ตัวเอง)
@@ -150,30 +150,29 @@ export default function AdminEditExperienceManagerPage() {
         updateUserInSession &&
         res.data.id === authSession.user.id
       ) {
-        const updatedContextUser: SessionUser = {
-          id: res.data.id,
+        // ✅ ตอนนี้เราสามารถส่งไปแค่ Field ที่ต้องการอัปเดตได้แล้ว!
+        // ไม่ต้องสร้าง Object ใหม่ที่ซับซ้อน หรือใช้ as อีกต่อไป
+        updateUserInSession({
           name: res.data.name,
-          email: res.data.email, // สมมติว่า email ไม่ได้เปลี่ยน หรือ backend ส่ง email ล่าสุดมา
-          role: authSession.user.role, // Role ไม่ควรเปลี่ยนจากการแก้ไข profile นี้
+          email: res.data.email,
           avatarUrl: res.data.avatarUrl,
-        };
-        updateUserInSession(updatedContextUser);
+        });
       }
 
       Swal.fire({
-        title: 'สำเร็จ!',
-        text: 'แก้ไขข้อมูลเรียบร้อยแล้ว',
-        icon: 'success',
-        confirmButtonText: 'ตกลง',
+        title: "สำเร็จ!",
+        text: "แก้ไขข้อมูลเรียบร้อยแล้ว",
+        icon: "success",
+        confirmButtonText: "ตกลง",
       }).then(() => {
         // fetchData(); // เรียก fetchData เพื่อดึงข้อมูลล่าสุดมาแสดง หรือปล่อยให้ UI อัปเดตจาก form state
       });
     } catch (err: any) {
-      console.error('❌ ไม่สามารถอัปเดตข้อมูลได้:', err);
+      console.error("❌ ไม่สามารถอัปเดตข้อมูลได้:", err);
       Swal.fire(
-        'ผิดพลาด',
-        err.response?.data?.message || 'ไม่สามารถอัปเดตข้อมูลได้',
-        'error'
+        "ผิดพลาด",
+        err.response?.data?.message || "ไม่สามารถอัปเดตข้อมูลได้",
+        "error",
       );
     } finally {
       setSaving(false);
@@ -182,7 +181,7 @@ export default function AdminEditExperienceManagerPage() {
 
   const handleCancelEdit = () => {
     setEditing(false);
-    setForm((prev) => ({ ...prev, password: '' }));
+    setForm((prev) => ({ ...prev, password: "" }));
     fetchData(); // Reset form โดยการโหลดข้อมูลล่าสุด
   };
 
@@ -190,7 +189,7 @@ export default function AdminEditExperienceManagerPage() {
   if (error)
     return <div className="p-10 text-center text-red-500">Error: {error}</div>;
   // AdminLayout ควรจะป้องกันแล้ว
-  if (!authSession?.user || authSession.user.role !== 'ADMIN') {
+  if (!authSession?.user || authSession.user.role !== "ADMIN") {
     return (
       <div className="p-10 text-center text-orange-500">
         Verifying session...
@@ -205,13 +204,13 @@ export default function AdminEditExperienceManagerPage() {
     <main className="flex-1 px-4 py-8 md:px-12">
       <div className="max-w-3xl mx-auto overflow-hidden bg-white shadow-xl rounded-2xl dark:bg-gray-800">
         <div className="p-8 bg-[#5A9ED1] flex items-center space-x-4">
-          {' '}
+          {" "}
           {/* เปลี่ยนสี Header */}
           <div className="flex items-center justify-center w-24 h-24 overflow-hidden bg-white rounded-full">
             {form.avatarUrl ? (
               <img
                 src={
-                  form.avatarUrl.startsWith('http')
+                  form.avatarUrl.startsWith("http")
                     ? form.avatarUrl
                     : `${BACKEND_URL}${form.avatarUrl}`
                 }
@@ -277,7 +276,7 @@ export default function AdminEditExperienceManagerPage() {
                   disabled={saving}
                 >
                   {saving ? (
-                    'กำลังบันทึก...'
+                    "กำลังบันทึก..."
                   ) : (
                     <>
                       <FaCheck /> บันทึก
@@ -310,7 +309,7 @@ function Field({
   readOnly = false,
   hideValue = false,
   onChange,
-  type = 'text',
+  type = "text",
 }: {
   icon: React.ReactNode;
   label: string;
@@ -342,7 +341,7 @@ function Field({
         />
       ) : (
         <p className="px-1 text-lg font-semibold text-gray-800 dark:text-gray-100">
-          {hideValue && value ? '●'.repeat(value.length || 8) : value || '-'}
+          {hideValue && value ? "●".repeat(value.length || 8) : value || "-"}
         </p>
       )}
     </div>

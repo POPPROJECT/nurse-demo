@@ -1,21 +1,21 @@
 // src/app/admin/edituser/approveOut/[id]/page.tsx
-'use client';
+"use client";
 
-import { useParams, useRouter } from 'next/navigation';
-import { useEffect, useState, useCallback } from 'react';
-import axios from 'axios';
+import { useParams, useRouter } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
+import axios from "axios";
 import {
-  FaUser,
+  FaCheck,
+  FaEdit,
   FaEnvelope,
   FaKey,
-  FaEdit,
-  FaCheck,
-  FaTimes,
   FaLock,
-} from 'react-icons/fa';
-import Swal from 'sweetalert2';
-import { BACKEND_URL } from 'lib/constants'; // ตรวจสอบ Path
-import { useAuth } from '@/app/contexts/AuthContext';
+  FaTimes,
+  FaUser,
+} from "react-icons/fa";
+import Swal from "sweetalert2";
+import { BACKEND_URL } from "lib/constants"; // ตรวจสอบ Path
+import { SessionUser, useAuth } from "@/app/contexts/AuthContext";
 
 // Interface สำหรับข้อมูล User ที่คาดหวังจาก API (อาจจะต้องปรับให้ตรงกับข้อมูล ApproverOut)
 interface ApproverOutData {
@@ -47,16 +47,16 @@ export default function AdminEditApproverOutPage() {
   const [error, setError] = useState<string | null>(null);
 
   const [form, setForm] = useState<ApproverOutFormState>({
-    fullName: '',
-    email: '',
-    pin: '',
-    password: '',
-    avatarUrl: '',
+    fullName: "",
+    email: "",
+    pin: "",
+    password: "",
+    avatarUrl: "",
   });
 
   const fetchData = useCallback(async () => {
     if (!userId || !accessToken) {
-      if (!accessToken) setError('Authentication token not available.');
+      if (!accessToken) setError("Authentication token not available.");
       setLoading(false);
       return;
     }
@@ -67,19 +67,19 @@ export default function AdminEditApproverOutPage() {
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/users/admin/${userId}`,
         {
           headers: { Authorization: `Bearer ${accessToken}` }, // ✅ ส่ง Token
-        }
+        },
       );
       setForm({
         fullName: res.data.name,
         email: res.data.email,
-        pin: res.data.approverProfile?.pin || '',
-        password: '', // ไม่ set password เดิม
-        avatarUrl: res.data.avatarUrl || '',
+        pin: res.data.approverProfile?.pin || "",
+        password: "", // ไม่ set password เดิม
+        avatarUrl: res.data.avatarUrl || "",
       });
     } catch (err: any) {
-      console.error('❌ ดึงข้อมูลผู้นิเทศภายนอกล้มเหลว:', err);
+      console.error("❌ ดึงข้อมูลผู้นิเทศภายนอกล้มเหลว:", err);
       setError(
-        err.response?.data?.message || err.message || 'Failed to load data.'
+        err.response?.data?.message || err.message || "Failed to load data.",
       );
     } finally {
       setLoading(false);
@@ -92,8 +92,8 @@ export default function AdminEditApproverOutPage() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
-    if (id === 'pin') {
-      const digitsOnly = value.replace(/\D/g, '').slice(0, 6);
+    if (id === "pin") {
+      const digitsOnly = value.replace(/\D/g, "").slice(0, 6);
       setForm((prev) => ({ ...prev, pin: digitsOnly }));
     } else {
       setForm((prev) => ({ ...prev, [id]: value }));
@@ -102,20 +102,20 @@ export default function AdminEditApproverOutPage() {
 
   const handleSubmit = async () => {
     if (!accessToken) {
-      Swal.fire('ข้อผิดพลาด', 'Session หมดอายุ, กรุณา Login ใหม่', 'error');
+      Swal.fire("ข้อผิดพลาด", "Session หมดอายุ, กรุณา Login ใหม่", "error");
       return;
     }
     // ตรวจสอบ PIN (ถ้ายังต้องการ PIN สำหรับ Approver Out และมีการกรอก)
     if (form.pin && !/^\d{6}$/.test(form.pin)) {
-      Swal.fire('ผิดพลาด', 'PIN ต้องเป็นตัวเลข 6 หลัก', 'warning');
+      Swal.fire("ผิดพลาด", "PIN ต้องเป็นตัวเลข 6 หลัก", "warning");
       return;
     }
     // ตรวจสอบ Password (ถ้ามีการกรอก)
     if (form.password && form.password.length < 6) {
       Swal.fire(
-        'ผิดพลาด',
-        'รหัสผ่านใหม่ต้องมีความยาวอย่างน้อย 6 ตัวอักษร',
-        'warning'
+        "ผิดพลาด",
+        "รหัสผ่านใหม่ต้องมีความยาวอย่างน้อย 6 ตัวอักษร",
+        "warning",
       );
       return;
     }
@@ -137,41 +137,48 @@ export default function AdminEditApproverOutPage() {
         {
           headers: {
             Authorization: `Bearer ${accessToken}`,
-            'Content-Type': 'application/json', // ✅ เนื้อหาเป็น JSON
+            "Content-Type": "application/json", // ✅ เนื้อหาเป็น JSON
           },
-        }
+        },
       );
 
       setEditing(false);
-      setForm((prev) => ({ ...prev, password: '' })); // เคลียร์ password field หลังบันทึก
+      setForm((prev) => ({ ...prev, password: "" })); // เคลียร์ password field หลังบันทึก
 
       // อัปเดต Context ถ้าข้อมูลที่แก้ไขคือ User ปัจจุบัน (ซึ่งไม่น่าใช่กรณีนี้ แต่ใส่ไว้เป็นแนวทาง)
       if (
         authSession?.user &&
         updateUserInSession &&
-        res.data.id === authSession.user.id
+        res.data.id === authSession.user.id &&
+        authSession.user.role === "STUDENT"
       ) {
-        updateUserInSession({
-          ...authSession.user,
-          name: res.data.name, // หรือ fullname ตามที่ Backend ส่งกลับ
-          // อัปเดต field อื่นๆ
-        });
+        // สร้าง object ใหม่โดยยึดโครงสร้างเดิมของ session.user เป็นหลัก
+        // แล้วค่อยอัปเดตเฉพาะ field ที่เปลี่ยนแปลงจาก res.data
+        const updatedSessionUser = {
+          ...authSession.user, // <-- คงค่าเดิมทั้งหมดไว้ก่อน (รวมถึง studentProfile)
+          name: res.data.name, // <-- อัปเดตทับเฉพาะชื่อ
+          email: res.data.email, // <-- อัปเดตทับเฉพาะอีเมล
+          avatarUrl: res.data.avatarUrl, // <-- อัปเดตทับเฉพาะ avatar
+          // สังเกตว่าเราไม่ได้นำ ...res.data มาใช้ตรงๆ เพื่อป้องกันการเขียนทับ field อื่นๆ ที่ไม่ต้องการ
+        };
+
+        updateUserInSession(updatedSessionUser as SessionUser); // ส่ง object ที่สมบูรณ์เข้าไป
       }
 
       Swal.fire({
-        title: 'สำเร็จ!',
-        text: 'แก้ไขข้อมูลเรียบร้อยแล้ว',
-        icon: 'success',
-        confirmButtonText: 'ตกลง',
+        title: "สำเร็จ!",
+        text: "แก้ไขข้อมูลเรียบร้อยแล้ว",
+        icon: "success",
+        confirmButtonText: "ตกลง",
       }).then(() => {
         fetchData(); // โหลดข้อมูลล่าสุดมาแสดง
       });
     } catch (err: any) {
-      console.error('❌ ไม่สามารถอัปเดตข้อมูลได้:', err);
+      console.error("❌ ไม่สามารถอัปเดตข้อมูลได้:", err);
       Swal.fire(
-        'ผิดพลาด',
-        err.response?.data?.message || 'ไม่สามารถอัปเดตข้อมูลได้',
-        'error'
+        "ผิดพลาด",
+        err.response?.data?.message || "ไม่สามารถอัปเดตข้อมูลได้",
+        "error",
       );
     } finally {
       setSaving(false);
@@ -180,7 +187,7 @@ export default function AdminEditApproverOutPage() {
 
   const handleCancelEdit = () => {
     setEditing(false);
-    setForm((prev) => ({ ...prev, password: '' }));
+    setForm((prev) => ({ ...prev, password: "" }));
     fetchData(); // Reset form โดยการโหลดข้อมูลล่าสุด
   };
 
@@ -188,7 +195,7 @@ export default function AdminEditApproverOutPage() {
     return <div className="p-10 text-center">Loading approver data...</div>;
   if (error)
     return <div className="p-10 text-center text-red-500">Error: {error}</div>;
-  if (!authSession?.user || authSession.user.role !== 'ADMIN') {
+  if (!authSession?.user || authSession.user.role !== "ADMIN") {
     return (
       <div className="p-10 text-center text-orange-500">
         Verifying session... Please wait or login again.
@@ -210,7 +217,7 @@ export default function AdminEditApproverOutPage() {
             {form.avatarUrl ? (
               <img
                 src={
-                  form.avatarUrl.startsWith('http')
+                  form.avatarUrl.startsWith("http")
                     ? form.avatarUrl
                     : `${BACKEND_URL}${form.avatarUrl}`
                 }
@@ -285,7 +292,7 @@ export default function AdminEditApproverOutPage() {
                   disabled={saving}
                 >
                   {saving ? (
-                    'กำลังบันทึก...'
+                    "กำลังบันทึก..."
                   ) : (
                     <>
                       <FaCheck /> บันทึก
@@ -319,7 +326,7 @@ function Field({
   hideValue = false,
   onChange,
   maxLength,
-  type = 'text',
+  type = "text",
 }: {
   icon: React.ReactNode;
   label: string;
@@ -348,12 +355,12 @@ function Field({
           value={value}
           onChange={onChange}
           maxLength={maxLength}
-          inputMode={id === 'pin' ? 'numeric' : undefined}
+          inputMode={id === "pin" ? "numeric" : undefined}
           className="px-4 py-2 text-gray-900 bg-white border border-gray-300 rounded-lg dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-orange-400"
         />
       ) : (
         <p className="px-1 text-lg font-semibold text-gray-800 dark:text-gray-100">
-          {hideValue && value ? '●'.repeat(value.length || 6) : value || '-'}
+          {hideValue && value ? "●".repeat(value.length || 6) : value || "-"}
         </p>
       )}
     </div>

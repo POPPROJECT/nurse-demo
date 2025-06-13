@@ -136,24 +136,24 @@ export default function CheckStudentPage() {
       <FilterBar
         books={books}
         selectedBook={bookId}
-        setSelectedBook={(b) => {
+        setSelectedBookAction={(b) => {
           setBookId(b);
           setPage(1);
         }}
         // ▼▼▼ [แก้ไข] ส่ง props ใหม่ไปให้ FilterBar ▼▼▼
         subjects={subjects}
         progressMode={progressMode}
-        setProgressMode={(m) => {
+        setProgressModeAction={(m) => {
           setProgressMode(m);
           setPage(1);
         }}
         search={search}
-        setSearch={(s) => {
+        setSearchAction={(s) => {
           setSearch(s);
           setPage(1);
         }}
         limit={limit}
-        setLimit={(n) => {
+        setLimitAction={(n) => {
           setLimit(n);
           setPage(1);
         }}
@@ -167,7 +167,7 @@ export default function CheckStudentPage() {
           data={data}
           sortBy={sortBy}
           order={order}
-          onSort={(col) => {
+          onSortAction={(col) => {
             if (sortBy === col) setOrder((o) => (o === "asc" ? "desc" : "asc"));
             else {
               setSortBy(col);
@@ -183,7 +183,7 @@ export default function CheckStudentPage() {
       <Pagination
         page={page}
         totalPages={Math.ceil(total / limit)}
-        setPage={setPage}
+        setPageAction={setPage}
       />
     </div>
   );

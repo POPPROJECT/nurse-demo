@@ -1,16 +1,15 @@
-'use client';
+"use client";
 
-import { useRouter } from 'next/navigation';
-import { useState, useEffect, FormEvent } from 'react';
-import axios from 'axios';
-import Select from 'react-select';
-import Swal from 'sweetalert2';
-import type { Props as ReactSelectProps } from 'react-select';
+import { useRouter } from "next/navigation";
+import { FormEvent, useEffect, useState } from "react";
+import axios from "axios";
+import Select from "react-select";
+import Swal from "sweetalert2";
 
 interface FieldConfig {
   id: number;
   label: string;
-  type: 'TEXT' | 'NUMBER' | 'DATE' | 'SELECT' | 'TEXTAREA';
+  type: "TEXT" | "NUMBER" | "DATE" | "SELECT" | "TEXTAREA";
   required: boolean;
   options?: string[];
 }
@@ -43,11 +42,11 @@ export default function ExperienceForm({
   const [selectedCourse, setSelectedCourse] = useState<Option | null>(null);
   const [subCourses, setSubCourses] = useState<Option[]>([]);
   const [selectedSubCourse, setSelectedSubCourse] = useState<Option | null>(
-    null
+    null,
   );
   const approverRoleOptions: Option[] = [
-    { value: 'APPROVER_IN', label: 'อาจารย์ภายใน' },
-    { value: 'APPROVER_OUT', label: 'อาจารย์ภายนอก' },
+    { value: "APPROVER_IN", label: "อาจารย์ภายใน" },
+    { value: "APPROVER_OUT", label: "อาจารย์ภายนอก" },
   ];
   const [selectedApproverRole, setSelectedApproverRole] =
     useState<Option | null>(null);
@@ -72,10 +71,10 @@ export default function ExperienceForm({
     axios
       .get<FieldConfig[]>(
         `${BASE}/experience-books/${bookId}/fields`,
-        authHeader
+        authHeader,
       )
       .then((r) => setFields(r.data))
-      .catch(() => Swal.fire('Error', 'ไม่สามารถโหลดฟิลด์ได้', 'error'));
+      .catch(() => Swal.fire("Error", "ไม่สามารถโหลดฟิลด์ได้", "error"));
   }, [BASE, bookId, accessToken]);
 
   // 2. Load courses
@@ -83,14 +82,16 @@ export default function ExperienceForm({
     axios
       .get<{ id: number; name: string }[]>(
         `${BASE}/experience-books/${bookId}/courses`,
-        authHeader
+        authHeader,
       )
       .then((r) =>
         setCourses(
-          r.data.map((c) => ({ value: c.id.toString(), label: c.name }))
-        )
+          r.data
+            .sort((a, b) => a.name.localeCompare(b.name, "th")) // <-- เพิ่มตรงนี้
+            .map((c) => ({ value: c.id.toString(), label: c.name })),
+        ),
       )
-      .catch(() => Swal.fire('Error', 'โหลดคอร์สไม่สำเร็จ', 'error'));
+      .catch(() => Swal.fire("Error", "โหลดคอร์สไม่สำเร็จ", "error"));
   }, [BASE, bookId, accessToken]);
 
   // 3. Load subCourses
@@ -103,14 +104,16 @@ export default function ExperienceForm({
     axios
       .get<{ id: number; name: string }[]>(
         `${BASE}/courses/${selectedCourse.value}/subcourses`,
-        authHeader
+        authHeader,
       )
       .then((r) =>
         setSubCourses(
-          r.data.map((s) => ({ value: s.id.toString(), label: s.name }))
-        )
+          r.data
+            .sort((a, b) => a.name.localeCompare(b.name, "th")) // <-- เพิ่มตรงนี้
+            .map((s) => ({ value: s.id.toString(), label: s.name })),
+        ),
       )
-      .catch(() => Swal.fire('Error', 'โหลดหัวข้อย่อยไม่สำเร็จ', 'error'));
+      .catch(() => Swal.fire("Error", "โหลดหัวข้อย่อยไม่สำเร็จ", "error"));
   }, [selectedCourse, BASE, accessToken]);
 
   // 4. Load approvers by role
@@ -123,21 +126,21 @@ export default function ExperienceForm({
     axios
       .get<{ id: string; approverName: string }[]>(
         `${BASE}/approvers/by-role/${selectedApproverRole.value}`,
-        authHeader
+        authHeader,
       )
       .then((r) => {
         setApproverOptions(
-          r.data.map((a) => ({ value: a.id, label: a.approverName }))
+          r.data.map((a) => ({ value: a.id, label: a.approverName })),
         );
       })
       .catch((err) => {
         Swal.fire(
-          'Error',
+          "Error",
           err.response?.status === 401
-            ? 'กรุณาเข้าสู่ระบบอีกครั้ง'
-            : 'โหลดรายชื่อไม่สำเร็จ',
-          'error'
-        ).then(() => err.response?.status === 401 && router.push('/'));
+            ? "กรุณาเข้าสู่ระบบอีกครั้ง"
+            : "โหลดรายชื่อไม่สำเร็จ",
+          "error",
+        ).then(() => err.response?.status === 401 && router.push("/"));
       });
   }, [selectedApproverRole, BASE, accessToken]);
 
@@ -151,22 +154,22 @@ export default function ExperienceForm({
     if (isSubmitting) return;
     // validations
     if (!selectedApproverRole)
-      return Swal.fire('Warning', 'กรุณาเลือกประเภทผู้อนุมัติก่อน', 'warning');
+      return Swal.fire("Warning", "กรุณาเลือกประเภทผู้อนุมัติก่อน", "warning");
     if (!selectedApproverName)
-      return Swal.fire('Warning', 'กรุณาเลือกชื่อผู้อนุมัติก่อน', 'warning');
+      return Swal.fire("Warning", "กรุณาเลือกชื่อผู้อนุมัติก่อน", "warning");
     if (!selectedCourse)
-      return Swal.fire('Warning', 'กรุณาเลือกคอร์สก่อน', 'warning');
+      return Swal.fire("Warning", "กรุณาเลือกคอร์สก่อน", "warning");
 
     // build summary
     const fieldValues = fields.map((f) => ({
       label: f.label,
-      value: values[f.id] || '-',
+      value: values[f.id] || "-",
     }));
     setSummary({
       approverRole: selectedApproverRole.label,
       approverName: selectedApproverName.label,
       course: selectedCourse.label,
-      subCourse: selectedSubCourse?.label || '-',
+      subCourse: selectedSubCourse?.label || "-",
       fieldValues,
     });
     setStep(2);
@@ -185,7 +188,7 @@ export default function ExperienceForm({
       subCourseId: Number(selectedSubCourse?.value), // ✅ เพิ่มตรงนี้
       fieldValues: fields.map((f) => ({
         fieldId: f.id,
-        value: values[f.id] || '',
+        value: values[f.id] || "",
       })),
     };
     await axios.post(`${BASE}/student-experiences`, payload, authHeader);
@@ -197,7 +200,7 @@ export default function ExperienceForm({
     setIsSubmitting(true);
     // แสดง Loader โดยไม่ await
     Swal.fire({
-      title: 'กำลังบันทึก...',
+      title: "กำลังบันทึก...",
       allowOutsideClick: false,
       showConfirmButton: false,
       didOpen: () => Swal.showLoading(),
@@ -205,11 +208,11 @@ export default function ExperienceForm({
     try {
       await postExperience();
       Swal.close();
-      await Swal.fire('สำเร็จ', 'บันทึกเรียบร้อย 🎉', 'success');
-      window.location.href = '/student/books';
+      await Swal.fire("สำเร็จ", "บันทึกเรียบร้อย 🎉", "success");
+      window.location.href = "/student/books";
     } catch {
       Swal.close();
-      Swal.fire('Error', 'เกิดข้อผิดพลาด ไม่สามารถบันทึกได้', 'error');
+      Swal.fire("Error", "เกิดข้อผิดพลาด ไม่สามารถบันทึกได้", "error");
     } finally {
       setIsSubmitting(false);
     }
@@ -219,15 +222,15 @@ export default function ExperienceForm({
   const cancelAll = () => {
     if (isSubmitting) return;
     Swal.fire({
-      title: 'ยืนยันยกเลิก?',
-      text: 'ข้อมูลที่กรอกจะไม่ถูกบันทึก',
-      icon: 'warning',
+      title: "ยืนยันยกเลิก?",
+      text: "ข้อมูลที่กรอกจะไม่ถูกบันทึก",
+      icon: "warning",
       showCancelButton: true,
-      confirmButtonText: 'ใช่ ยกเลิก',
-      cancelButtonText: 'ไม่ใช่',
+      confirmButtonText: "ใช่ ยกเลิก",
+      cancelButtonText: "ไม่ใช่",
     }).then((res) => {
       if (res.isConfirmed) {
-        window.location.href = '/student/books';
+        window.location.href = "/student/books";
       }
     });
   };
@@ -237,7 +240,7 @@ export default function ExperienceForm({
     if (isSubmitting) return;
     setIsSubmitting(true);
     Swal.fire({
-      title: 'กำลังบันทึกรายการใหม่...',
+      title: "กำลังบันทึกรายการใหม่...",
       allowOutsideClick: false,
       showConfirmButton: false,
       didOpen: () => Swal.showLoading(),
@@ -245,7 +248,7 @@ export default function ExperienceForm({
     try {
       await postExperience();
       Swal.close();
-      await Swal.fire('สำเร็จ', 'บันทึกรายการเรียบร้อย 🎉', 'success');
+      await Swal.fire("สำเร็จ", "บันทึกรายการเรียบร้อย 🎉", "success");
       // รีเซ็ตทุก state กลับค่าเริ่มต้น
       setValues({});
       setSelectedApproverRole(null);
@@ -257,9 +260,9 @@ export default function ExperienceForm({
     } catch {
       Swal.close();
       Swal.fire(
-        'Error',
-        'เกิดข้อผิดพลาด ไม่สามารถบันทึกรายการใหม่ได้',
-        'error'
+        "Error",
+        "เกิดข้อผิดพลาด ไม่สามารถบันทึกรายการใหม่ได้",
+        "error",
       );
     } finally {
       setIsSubmitting(false);
@@ -305,42 +308,42 @@ export default function ExperienceForm({
             {f.label}
             {f.required && <span className="text-red-500">*</span>}
           </label>
-          {f.type === 'TEXT' && (
+          {f.type === "TEXT" && (
             <input
               type="text"
               required={f.required}
-              value={values[f.id] || ''}
+              value={values[f.id] || ""}
               onChange={(e) => handleChange(f.id, e.target.value)}
               className="px-3 py-2 border border-gray-300 rounded hover:border-gray-400 dark:bg-white dark:text-gray-800"
             />
           )}
-          {f.type === 'NUMBER' && (
+          {f.type === "NUMBER" && (
             <input
               type="number"
               required={f.required}
-              value={values[f.id] || ''}
+              value={values[f.id] || ""}
               onChange={(e) => handleChange(f.id, e.target.value)}
               className="px-3 py-2 border border-gray-300 rounded hover:border-gray-400 dark:bg-white dark:text-gray-800"
             />
           )}
-          {f.type === 'DATE' && (
+          {f.type === "DATE" && (
             <input
               type="date"
               required={f.required}
-              value={values[f.id] || ''}
+              value={values[f.id] || ""}
               onChange={(e) => handleChange(f.id, e.target.value)}
               className="px-3 py-2 border border-gray-300 rounded hover:border-gray-400 dark:bg-white dark:text-gray-800 "
             />
           )}
-          {f.type === 'TEXTAREA' && (
+          {f.type === "TEXTAREA" && (
             <textarea
               required={f.required}
-              value={values[f.id] || ''}
+              value={values[f.id] || ""}
               onChange={(e) => handleChange(f.id, e.target.value)}
               className="px-3 py-2 border border-gray-300 rounded hover:border-gray-400 dark:bg-white dark:text-gray-800"
             />
           )}
-          {f.type === 'SELECT' && (
+          {f.type === "SELECT" && (
             <Select
               // ให้แต่ละฟิลด์มี instanceId เพื่อ accessibility
               instanceId={`field-${f.id}`}
@@ -352,8 +355,8 @@ export default function ExperienceForm({
               value={
                 f.options
                   ? {
-                      value: values[f.id] || '',
-                      label: values[f.id] || '-- เลือก --',
+                      value: values[f.id] || "",
+                      label: values[f.id] || "-- เลือก --",
                     }
                   : null
               }
@@ -363,7 +366,7 @@ export default function ExperienceForm({
               isDisabled={false}
               onChange={(opt) => {
                 // opt อาจจะ null ได้ถ้า clearable
-                const v = opt ? (opt as { value: string }).value : '';
+                const v = opt ? (opt as { value: string }).value : "";
                 handleChange(f.id, v);
               }}
               placeholder="-- เลือก --"
@@ -406,7 +409,7 @@ export default function ExperienceForm({
         disabled={isSubmitting}
         className="w-full py-2 text-white transition-colors bg-blue-600 rounded disabled:opacity-50 hover:bg-blue-700"
       >
-        {isSubmitting ? 'กำลังประมวลผล...' : 'บันทึกประสบการณ์'}
+        {isSubmitting ? "กำลังประมวลผล..." : "บันทึกประสบการณ์"}
       </button>
     </form>
   ) : (
@@ -439,7 +442,7 @@ export default function ExperienceForm({
           disabled={isSubmitting}
           className="py-2 text-white bg-green-600 rounded disabled:opacity-50 hover:bg-green-700"
         >
-          {isSubmitting ? 'กำลังบันทึก...' : 'เสร็จสิ้น'}
+          {isSubmitting ? "กำลังบันทึก..." : "เสร็จสิ้น"}
         </button>
         <button
           onClick={() => setStep(1)}
@@ -453,7 +456,7 @@ export default function ExperienceForm({
           disabled={isSubmitting}
           className="py-2 text-white bg-blue-500 rounded disabled:opacity-50 hover:bg-blue-600"
         >
-          {isSubmitting ? 'กำลังบันทึกรายการ...' : 'เพิ่มรายการบันทึก'}
+          {isSubmitting ? "กำลังบันทึกรายการ..." : "เพิ่มรายการบันทึก"}
         </button>
         <button
           onClick={cancelAll}
