@@ -16,21 +16,25 @@ type Props = {
   data: Student[];
   sortBy: "studentId" | "name" | "percent";
   order: "asc" | "desc";
+  progressMode: string;
   onSortAction: (col: "studentId" | "name" | "percent") => void;
 };
-
-const HEADERS: { key: Props["sortBy"]; label: string }[] = [
-  { key: "studentId", label: "รหัสนิสิต" },
-  { key: "name", label: "ชื่อ-นามสกุล" },
-  { key: "percent", label: "ความคืบหน้าโดยรวม" },
-];
 
 export default function StudentTable({
   data,
   sortBy,
   order,
+  progressMode,
   onSortAction,
 }: Props) {
+  const progressLabel = progressMode === "all";
+
+  const HEADERS: { key: Props["sortBy"]; label: string }[] = [
+    { key: "studentId", label: "รหัสนิสิต" },
+    { key: "name", label: "ชื่อ-นามสกุล" },
+    { key: "percent", label: "ความคืบหน้าโดยรวม" },
+  ];
+
   return (
     <div className="mt-6 overflow-x-auto">
       <table className="min-w-full bg-white shadow dark:bg-gray-500 whitespace-nowrap">
@@ -105,7 +109,8 @@ export default function StudentTable({
                       "
                       onClick={() => {
                         const nameParam = encodeURIComponent(s.name);
-                        window.location.href = `/approver/check-student/${s.id}?name=${nameParam}`;
+                        const studentIdParam = encodeURIComponent(s.studentId);
+                        window.location.href = `/approver/check-student/${s.id}?name=${nameParam}&studentId=${studentIdParam}`;
                       }}
                     >
                       <FaEye className="w-4 h-4" />

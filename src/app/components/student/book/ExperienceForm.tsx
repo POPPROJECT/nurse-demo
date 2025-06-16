@@ -14,6 +14,22 @@ interface FieldConfig {
   options?: string[];
 }
 
+interface SubCourseOption {
+  value: string;
+  label: string;
+  isSubjectFreeform?: boolean; // <-- เพิ่ม Flag
+}
+
+// สร้าง Interface สำหรับ state 'summary' เพื่อความชัดเจน
+interface SummaryData {
+  approverRole: string;
+  approverName: string;
+  course: string;
+  subCourse: string;
+  subject?: string; // <-- เพิ่ม subject เป็น optional property
+  fieldValues: { label: string; value: string }[];
+}
+
 type Option = {
   value: string;
   label: string;
@@ -40,10 +56,13 @@ export default function ExperienceForm({
   const [values, setValues] = useState<Record<number, string>>({});
   const [courses, setCourses] = useState<Option[]>([]);
   const [selectedCourse, setSelectedCourse] = useState<Option | null>(null);
-  const [subCourses, setSubCourses] = useState<Option[]>([]);
-  const [selectedSubCourse, setSelectedSubCourse] = useState<Option | null>(
-    null,
-  );
+  const [subCourses, setSubCourses] = useState<SubCourseOption[]>([]);
+  const [selectedSubCourse, setSelectedSubCourse] =
+    useState<SubCourseOption | null>(null);
+
+  // [เพิ่ม] State สำหรับเก็บค่า subject ที่นิสิตกรอก
+  const [freeformSubject, setFreeformSubject] = useState("");
+
   const approverRoleOptions: Option[] = [
     { value: "APPROVER_IN", label: "อาจารย์ภายใน" },
     { value: "APPROVER_OUT", label: "อาจารย์ภายนอก" },
@@ -55,13 +74,7 @@ export default function ExperienceForm({
     useState<Option | null>(null);
 
   // --- Summary data (Step2) ---
-  const [summary, setSummary] = useState<{
-    approverRole: string;
-    approverName: string;
-    course: string;
-    subCourse: string;
-    fieldValues: { label: string; value: string }[];
-  } | null>(null);
+  const [summary, setSummary] = useState<SummaryData | null>(null);
 
   // --- Prevent double submit ---
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -99,12 +112,13 @@ export default function ExperienceForm({
   // 3. Load subCourses
   useEffect(() => {
     setSelectedSubCourse(null);
+    setFreeformSubject(""); // <-- รีเซ็ตค่าที่กรอก
     if (!selectedCourse) {
       setSubCourses([]);
       return;
     }
     axios
-      .get<{ id: number; name: string }[]>(
+      .get<{ id: number; name: string; isSubjectFreeform: boolean }[]>(
         `${BASE}/courses/${selectedCourse.value}/subcourses`,
         authHeader,
       )
@@ -112,7 +126,11 @@ export default function ExperienceForm({
         setSubCourses(
           r.data
             .sort((a, b) => a.name.localeCompare(b.name, "th")) // <-- เพิ่มตรงนี้
-            .map((s) => ({ value: s.id.toString(), label: s.name })),
+            .map((s) => ({
+              value: s.id.toString(),
+              label: s.name,
+              isSubjectFreeform: s.isSubjectFreeform,
+            })),
         ),
       )
       .catch(() => Swal.fire("Error", "โหลดหัวข้อย่อยไม่สำเร็จ", "error"));
@@ -160,20 +178,28 @@ export default function ExperienceForm({
     if (!selectedApproverName)
       return Swal.fire("Warning", "กรุณาเลือกชื่อผู้อนุมัติก่อน", "warning");
     if (!selectedCourse)
-      return Swal.fire("Warning", "กรุณาเลือกคอร์สก่อน", "warning");
+      return Swal.fire("Warning", "กรุณาเลือกหมวดหมู่ก่อน", "warning");
 
     // build summary
     const fieldValues = fields.map((f) => ({
       label: f.label,
       value: values[f.id] || "-",
     }));
-    setSummary({
-      approverRole: selectedApproverRole.label,
-      approverName: selectedApproverName.label,
-      course: selectedCourse.label,
+
+    const summaryData: SummaryData = {
+      approverRole: selectedApproverRole!.label,
+      approverName: selectedApproverName!.label,
+      course: selectedCourse!.label,
       subCourse: selectedSubCourse?.label || "-",
       fieldValues,
-    });
+    };
+
+    // ตรวจสอบว่าถ้าเป็น subcourse แบบกรอกเอง ให้เพิ่มข้อมูล subject เข้าไปด้วย
+    if (selectedSubCourse?.isSubjectFreeform) {
+      summaryData.subject = freeformSubject.trim() || "";
+    }
+
+    setSummary(summaryData);
     setStep(2);
   };
 
@@ -188,6 +214,10 @@ export default function ExperienceForm({
       course: summary.course,
       subCourse: summary.subCourse,
       subCourseId: Number(selectedSubCourse?.value), // ✅ เพิ่มตรงนี้
+      // ส่งค่า subject ที่กรอกเองไปด้วย ถ้ามี
+      subject: selectedSubCourse?.isSubjectFreeform
+        ? freeformSubject.trim() || null
+        : null,
       fieldValues: fields.map((f) => ({
         fieldId: f.id,
         value: values[f.id] || "",
@@ -278,7 +308,7 @@ export default function ExperienceForm({
     >
       {/* Course */}
       <div>
-        <label className="block mb-1 font-medium ">หมวดหมู่</label>
+        <label className="block mb-1 font-medium">หมวดหมู่</label>
         <Select
           instanceId="course-select"
           options={courses}
@@ -296,12 +326,27 @@ export default function ExperienceForm({
           instanceId="subcourse-select"
           options={subCourses}
           value={selectedSubCourse}
-          onChange={(opt) => setSelectedSubCourse(opt as Option)}
+          onChange={(opt) => setSelectedSubCourse(opt as SubCourseOption)}
           isDisabled={!selectedCourse}
           placeholder="เลือกหมวดหมู่ย่อย..."
           className="dark:text-gray-800 "
         />
       </div>
+
+      {/* แสดงช่องกรอก Subject แบบมีเงื่อนไข */}
+      {selectedSubCourse && selectedSubCourse.isSubjectFreeform && (
+        <div className="flex flex-col">
+          <label className="block mb-1 font-medium">
+            ในวิชา (กรอกหรือไม่กรอกก็ได้)
+          </label>
+          <input
+            type="text"
+            value={freeformSubject}
+            onChange={(e) => setFreeformSubject(e.target.value)}
+            className="px-3 py-2 border border-gray-300 rounded hover:border-gray-400 dark:bg-white dark:text-gray-800"
+          />
+        </div>
+      )}
 
       {/* Dynamic Fields */}
       {fields.map((f) => (
@@ -426,6 +471,11 @@ export default function ExperienceForm({
         <li>
           <strong>หมวดหมู่ย่อย:</strong> {summary?.subCourse}
         </li>
+        {summary?.subject !== undefined && (
+          <li>
+            <strong>ในวิชา:</strong> {summary.subject || ""}
+          </li>
+        )}
         {summary?.fieldValues.map((fv, i) => (
           <li key={i}>
             <strong>{fv.label}:</strong> {fv.value}
@@ -438,7 +488,7 @@ export default function ExperienceForm({
           <strong>ชื่อผู้อนุมัติ:</strong> {summary?.approverName}
         </li>
       </ul>
-      <div className="grid grid-cols-1 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <button
           onClick={finalize}
           disabled={isSubmitting}

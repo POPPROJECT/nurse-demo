@@ -1,10 +1,10 @@
-'use client';
-import { useState, useEffect } from 'react';
-import Chart from 'chart.js/auto';
-import { FaUsers, FaCheckCircle } from 'react-icons/fa';
-import { BACKEND_URL } from 'lib/constants';
-import { useAuth } from '@/app/contexts/AuthContext';
-import Select from 'react-select';
+"use client";
+import { useEffect, useState } from "react";
+import Chart from "chart.js/auto";
+import { FaCheckCircle, FaUsers } from "react-icons/fa";
+import { BACKEND_URL } from "lib/constants";
+import { useAuth } from "@/app/contexts/AuthContext";
+import Select from "react-select";
 
 type Book = { id: number; title: string };
 
@@ -29,8 +29,8 @@ function FilterBar({
   setSelectedBook,
 }: {
   books: Book[];
-  selectedBook: number | '';
-  setSelectedBook: (v: number | '') => void;
+  selectedBook: number | "";
+  setSelectedBook: (v: number | "") => void;
 }) {
   // สร้างตัวเลือกสำหรับ react-select
   const bookOptions = books.map((b) => ({
@@ -54,7 +54,7 @@ function FilterBar({
             options={bookOptions}
             value={selectedOption}
             onChange={(opt) =>
-              setSelectedBook(opt ? (opt as { value: number }).value : '')
+              setSelectedBook(opt ? (opt as { value: number }).value : "")
             }
             placeholder="-- เลือกสมุด --"
             isClearable
@@ -70,7 +70,7 @@ function FilterBar({
 export default function Page() {
   const { accessToken, session: authUser } = useAuth();
   const [books, setBooks] = useState<Book[]>([]);
-  const [bookId, setBookId] = useState<number | ''>('');
+  const [bookId, setBookId] = useState<number | "">("");
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(false);
   const [loadingBooks, setLoadingBooks] = useState(true);
@@ -82,7 +82,7 @@ export default function Page() {
       // ✅ รอให้ accessToken พร้อมใช้งานก่อน
       if (authUser === null) {
         // ถ้า AuthProvider โหลดเสร็จแล้วแต่ไม่มี user/token
-        setPageError('Session not available. Please login again.');
+        setPageError("Session not available. Please login again.");
       }
       setLoadingBooks(false);
       return;
@@ -104,16 +104,16 @@ export default function Page() {
         setBooks(list);
       })
       .catch((err) => {
-        console.error('Error loading books:', err);
+        console.error("Error loading books:", err);
         setBooks([]);
-        setPageError(err.message || 'Could not load books.');
+        setPageError(err.message || "Could not load books.");
       })
       .finally(() => setLoadingBooks(false));
   }, [accessToken, authUser]);
 
   // Load dashboard data
   useEffect(() => {
-    if (bookId === '' || !accessToken) {
+    if (bookId === "" || !accessToken) {
       // ✅ รอให้ accessToken พร้อมใช้งานก่อน
       setData(null);
       return;
@@ -134,9 +134,9 @@ export default function Page() {
       })
       .then((d: DashboardData) => setData(d))
       .catch((err) => {
-        console.error('Error loading dashboard data:', err);
+        console.error("Error loading dashboard data:", err);
         setData(null);
-        setPageError(err.message || 'Could not load dashboard data.');
+        setPageError(err.message || "Could not load dashboard data.");
         // Swal.fire('ผิดพลาด', 'โหลดข้อมูล Dashboard ไม่สำเร็จ', 'error');
       })
       .finally(() => setLoading(false));
@@ -146,15 +146,15 @@ export default function Page() {
   useEffect(() => {
     if (!data) return;
     const ctx = document.getElementById(
-      'overall-progress-chart'
+      "overall-progress-chart",
     ) as HTMLCanvasElement;
     new Chart(ctx, {
-      type: 'doughnut',
+      type: "doughnut",
       data: {
         datasets: [
           {
             data: [data.overallProgress, 100 - data.overallProgress],
-            backgroundColor: [getColor(data.overallProgress), '#e5e7eb'],
+            backgroundColor: [getColor(data.overallProgress), "#e5e7eb"],
             borderWidth: 0,
           },
         ],
@@ -162,7 +162,7 @@ export default function Page() {
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        cutout: '75%',
+        cutout: "75%",
         plugins: { tooltip: { enabled: false } },
       },
     });
@@ -173,16 +173,16 @@ export default function Page() {
     if (!data) return;
     data.courseProgress.forEach((c) => {
       const canvas = document.getElementById(
-        `chart-course-${c.id}`
+        `chart-course-${c.id}`,
       ) as HTMLCanvasElement;
       if (!canvas) return;
       new Chart(canvas, {
-        type: 'doughnut',
+        type: "doughnut",
         data: {
           datasets: [
             {
               data: [c.percent, 100 - c.percent],
-              backgroundColor: [getColor(c.percent), '#e5e7eb'],
+              backgroundColor: [getColor(c.percent), "#e5e7eb"],
               borderWidth: 0,
             },
           ],
@@ -190,7 +190,7 @@ export default function Page() {
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          cutout: '75%',
+          cutout: "75%",
           plugins: { tooltip: { enabled: false } },
         },
       });
@@ -198,12 +198,12 @@ export default function Page() {
   }, [data]);
 
   const getColor = (p: number) => {
-    if (p >= 100) return '#22c55e';
-    if (p >= 80) return '#3b82f6';
-    if (p >= 60) return '#8b5cf6';
-    if (p >= 40) return '#f59e0b';
-    if (p >= 20) return '#f97316';
-    return '#ef4444';
+    if (p >= 100) return "#22c55e";
+    if (p >= 80) return "#3b82f6";
+    if (p >= 60) return "#8b5cf6";
+    if (p >= 40) return "#f59e0b";
+    if (p >= 20) return "#f97316";
+    return "#ef4444";
   };
 
   if (loadingBooks)
@@ -213,13 +213,13 @@ export default function Page() {
       <div className="p-10 text-center text-red-500">Error: {pageError}</div>
     );
   // ถ้ายังไม่มี user จาก context (อาจจะกำลังโหลดจาก AuthProvider)
-  if (!authUser && typeof accessToken !== 'string')
+  if (!authUser && typeof accessToken !== "string")
     return <div className="p-10 text-center">Initializing session...</div>;
   // ถ้า AuthProvider บอกว่าไม่มี session จริงๆ (AdminLayout ควรจะ redirect ไปแล้ว)
   if (!authUser && accessToken === null) {
     return (
       <div className="p-10 text-center text-red-500">
-        Session not found. Please{' '}
+        Session not found. Please{" "}
         <a href="/" className="underline">
           login
         </a>
@@ -233,7 +233,7 @@ export default function Page() {
       {/* Header */}
       <div className="p-6 mb-6 text-white bg-[linear-gradient(to_right,#f46b45_0%,#eea849_100%)] dark:bg-[#1E293B] rounded-xl shadow-md hover:shadow-lg transition-all duration-300 ease-in-out hover:-translate-y-1 ">
         <h1 className="text-xl font-semibold sm:text-2xl">
-          ภาพรวมความคืบหน้าของนิสิต
+          ภาพรวมความคืบหน้าตลอดหลักสูตร
         </h1>
       </div>
 
@@ -250,7 +250,7 @@ export default function Page() {
           กำลังโหลดข้อมูล...
         </p>
       )}
-      {!loading && bookId === '' && (
+      {!loading && bookId === "" && (
         <p className="text-center text-gray-600 dark:text-gray-300">
           กรุณาเลือกสมุดเพื่อแสดงข้อมูล
         </p>
@@ -317,12 +317,12 @@ export default function Page() {
             </h3>
             <div className="flex flex-wrap gap-4">
               {[
-                ['100%', '#22c55e'],
-                ['80-99%', '#3b82f6'],
-                ['60-79%', '#8b5cf6'],
-                ['40-59%', '#f59e0b'],
-                ['20-39%', '#f97316'],
-                ['0-19%', '#ef4444'],
+                ["100%", "#22c55e"],
+                ["80-99%", "#3b82f6"],
+                ["60-79%", "#8b5cf6"],
+                ["40-59%", "#f59e0b"],
+                ["20-39%", "#f97316"],
+                ["0-19%", "#ef4444"],
               ].map(([label, color]) => (
                 <div key={label} className="flex items-center gap-2">
                   <div

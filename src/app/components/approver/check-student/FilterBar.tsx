@@ -9,7 +9,6 @@ type Props = {
   books: { id: number; title: string }[];
   selectedBook: number | string;
   setSelectedBookAction: (v: number | string) => void;
-  subjects: string[]; // <-- แก้ไขตรงนี้
   progressMode: string;
   setProgressModeAction: (v: string) => void;
   search: string;
@@ -19,21 +18,10 @@ type Props = {
 };
 // ▲▲▲ [สิ้นสุดส่วนที่แก้ไข] ▲▲▲
 
-// type Props = {
-//   books: { id: number; title: string }[];
-//   selectedBook: number | string;
-//   setSelectedBook: (v: number | string) => void;
-//   search: string;
-//   setSearch: (v: string) => void;
-//   limit: number;
-//   setLimit: (v: number) => void;
-// };
-
 export default function FilterBar({
   books,
   selectedBook,
   setSelectedBookAction,
-  subjects,
   progressMode,
   setProgressModeAction,
   search,
@@ -54,11 +42,11 @@ export default function FilterBar({
   // ▼▼▼ [แก้ไข] สร้าง Options จาก subjects ที่เป็น number[] ▼▼▼
   const progressModeOptions = [
     { value: "all", label: "ตลอดหลักสูตร" },
-    ...subjects.map((s) => ({ value: s.toString(), label: `รายวิชา ${s}` })),
+    { value: "inSubject", label: "ในวิชา" },
   ];
+
   const selectedProgressModeOption =
-    progressModeOptions.find((opt) => opt.value === progressMode) || null;
-  // ▲▲▲ [สิ้นสุดส่วนที่แก้ไข] ▲▲▲
+    progressModeOptions.find((opt) => opt.value === progressMode) || null; // ▲▲▲ [สิ้นสุดส่วนที่แก้ไข] ▲▲▲
 
   return (
     <div className="bg-white p-4 rounded-xl shadow flex flex-col lg:flex-row gap-4 items-center dark:bg-[#1E293B] dark:text-white justify-between">

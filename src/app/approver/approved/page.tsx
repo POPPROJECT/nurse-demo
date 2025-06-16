@@ -19,6 +19,7 @@ export interface ExperienceRequest {
   id: number;
   course: string;
   subCourse: string;
+  subject?: string | null;
   student: {
     // ✅ Backend ส่ง "student" object
     studentId: string; // และใน student object มี studentId (จาก studentProfile table)

@@ -14,8 +14,9 @@ const MySwal = withReactContent(Swal);
 type SubCourseOption = {
   value: string; // id ของ subCourse (เป็น string)
   label: string; // ชื่อ subCourse
-  subject: number; // ค่า subject
+  subject: string | null; // ค่า subject
   alwaycourse: number; // ค่า alwaycourse
+  isSubjectFreeform: boolean; // <-- เพิ่ม
 };
 
 interface Book {
@@ -42,6 +43,7 @@ interface Experience {
   bookId: number;
   course: string;
   subCourse: string;
+  subject?: string | null;
   approverRole: "APPROVER_IN" | "APPROVER_OUT";
   approverName: string;
   status: "PENDING" | "CONFIRMED" | "CANCEL";
@@ -115,6 +117,7 @@ export default function RecordTable({ accessToken }: { accessToken: string }) {
   const [editSubCourse, setEditSubCourse] = useState<SubCourseOption | null>(
     null,
   );
+  const [editFreeformSubject, setEditFreeformSubject] = useState("");
   const [editApproverType, setEditApproverType] = useState<Option | null>(null);
   const [editApproverName, setEditApproverName] = useState<Option | null>(null);
   const [editFieldValues, setEditFieldValues] = useState<FieldValue[]>([]);
@@ -181,7 +184,7 @@ export default function RecordTable({ accessToken }: { accessToken: string }) {
   // bulk confirm
   const handleBulkConfirm = async () => {
     if (selectedIds.length === 0) return;
-    // must all same approverName
+    // must all the same approverName
     const names = new Set(
       records
         .filter((r) => selectedIds.includes(r.id))
@@ -344,16 +347,18 @@ export default function RecordTable({ accessToken }: { accessToken: string }) {
         {
           id: number;
           name: string;
-          subject: number | null;
+          subject: string | null;
           alwaycourse: number | null;
+          isSubjectFreeform: boolean | null;
         }[]
       >(`${BASE}/courses/${editCourse.value}/subcourses`, authHeader)
       .then((r) => {
         const scOpts: SubCourseOption[] = r.data.map((s) => ({
           value: s.id.toString(),
           label: s.name,
-          subject: s.subject ?? 0,
+          subject: s.subject ?? null,
           alwaycourse: s.alwaycourse ?? 0,
+          isSubjectFreeform: s.isSubjectFreeform ?? false, // <-- เก็บค่าใหม่
         }));
         setSubCourses(scOpts);
       })
@@ -395,7 +400,13 @@ export default function RecordTable({ accessToken }: { accessToken: string }) {
     setTimeout(() => {
       const foundSub = subCourses.find((s) => s.label === rec.subCourse);
       setEditSubCourse(foundSub || null);
-    }, 0);
+      if (foundSub?.isSubjectFreeform) {
+        setEditFreeformSubject(rec.subject ?? "");
+      } else {
+        setEditFreeformSubject("");
+      }
+    }, 100);
+
     // approverType + approverName
     const aproTypeOption = approverTypeOptions.find(
       (o) => o.value === rec.approverRole,
@@ -446,7 +457,10 @@ export default function RecordTable({ accessToken }: { accessToken: string }) {
     const payload = {
       course: editCourse?.label || "",
       subCourse: editSubCourse?.label || "",
-      subject: editSubCourse.subject,
+      // ถ้าเป็น freeform ให้ส่งค่าที่กรอก, ถ้าไม่ให้ส่งค่าเดิมจาก SubCourse (ซึ่งมักจะเป็น null)
+      subject: editSubCourse.isSubjectFreeform
+        ? editFreeformSubject
+        : editSubCourse.subject,
       alwaycourse: editSubCourse.alwaycourse,
       approverRole: editApproverType?.value || "",
       approverName: editApproverName?.label || "",
@@ -597,13 +611,29 @@ export default function RecordTable({ accessToken }: { accessToken: string }) {
                 id="editSubCourse"
                 options={subCourses}
                 value={editSubCourse}
-                onChange={(opt) =>
-                  setEditSubCourse(opt as SubCourseOption | null)
-                }
+                onChange={(opt) => setEditSubCourse(opt as SubCourseOption)}
                 placeholder="เลือกหมวดหมู่ย่อย..."
                 isDisabled={!editCourse}
               />
             </div>
+            {/* แสดงช่องกรอก Subject ถ้า isSubjectFreeform เป็น true  */}
+            {editSubCourse && editSubCourse.isSubjectFreeform && (
+              <div className="mb-4">
+                <label
+                  htmlFor="editFreeformSubject"
+                  className="block mb-1 text-sm font-medium"
+                >
+                  ในวิชา
+                </label>
+                <input
+                  id="editFreeformSubject"
+                  type="text"
+                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded"
+                  value={editFreeformSubject}
+                  onChange={(e) => setEditFreeformSubject(e.target.value)}
+                />
+              </div>
+            )}
             {/* เลือก ApproverType */}
             <div className="mb-4">
               <label
@@ -997,6 +1027,13 @@ export default function RecordTable({ accessToken }: { accessToken: string }) {
                       <div className="mb-2 font-medium text-blue-600">
                         {rec.subCourse}
                       </div>
+                      {/* ถ้ามี subject ให้แสดงบรรทัดนี้ */}
+                      {rec.subject && (
+                        <div className="mb-2  text-gray-700 dark:text-gray-300">
+                          <span className="font-medium">ในวิชา:</span>{" "}
+                          {rec.subject}
+                        </div>
+                      )}
                       <div className="grid grid-cols-1 mb-4 text-gray-800 sm:grid-cols-2 lg:grid-cols-3 gap-y-2 gap-x-6 dark:text-white">
                         {(rec.fieldValues ?? []).map((fv, i) => {
                           const label =

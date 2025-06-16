@@ -11,6 +11,8 @@ interface SubCourse {
   name: string;
   subject?: string | null; // <-- แก้จาก number เป็น string | null
   alwaycourse?: number;
+  inSubjectCount?: number | null;
+  isSubjectFreeform?: boolean;
 }
 
 interface SubCourseManagerProps {
@@ -29,10 +31,16 @@ export default function SubCourseManager({
   const [subjectValue, setSubjectValue] = useState(""); // <-- แก้จาก 0 เป็น ''
   const [alwaycourseValue, setAlwaycourseValue] = useState(0);
 
+  const [inSubjectCountValue, setInSubjectCountValue] = useState(0);
+  const [isFreeformValue, setIsFreeformValue] = useState(false);
+
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editName, setEditName] = useState("");
   const [editSubject, setEditSubject] = useState(""); // <-- แก้จาก 0 เป็น ''
   const [editAlwaycourse, setEditAlwaycourse] = useState(0);
+
+  const [editInSubjectCount, setEditInSubjectCount] = useState(0);
+  const [editIsFreeform, setEditIsFreeform] = useState(false);
 
   const [loading, setLoading] = useState(false);
   const [adding, setAdding] = useState(false);
@@ -71,13 +79,17 @@ export default function SubCourseManager({
           name: name.trim(),
           subject: subjectValue.trim() || null, // ส่งเป็น string หรือ null ถ้าเป็นค่าว่าง
           alwaycourse: alwaycourseValue,
+          inSubjectCount: inSubjectCountValue,
+          isSubjectFreeform: isFreeformValue,
         },
         authHeader,
       );
       Swal.fire("สำเร็จ", "เพิ่มหมวดหมู่ย่อยเรียบร้อยแล้ว", "success");
       setName("");
-      setSubjectValue(""); // <-- แก้จาก 0 เป็น ''
+      setSubjectValue("");
       setAlwaycourseValue(0);
+      setInSubjectCountValue(0);
+      setIsFreeformValue(false);
       await fetchList();
     } catch {
       Swal.fire("Error", "ไม่สามารถเพิ่มได้", "error");
@@ -91,6 +103,8 @@ export default function SubCourseManager({
     setEditName(sub.name);
     setEditSubject(sub.subject ?? ""); // <-- แก้จาก ?? 0 เป็น ?? ''
     setEditAlwaycourse(sub.alwaycourse ?? 0);
+    setEditInSubjectCount(sub.inSubjectCount ?? 0);
+    setEditIsFreeform(sub.isSubjectFreeform ?? false);
   };
 
   const cancelEdit = () => {
@@ -110,19 +124,39 @@ export default function SubCourseManager({
           name: editName.trim(),
           subject: editSubject.trim() || null, // ส่งเป็น string หรือ null
           alwaycourse: editAlwaycourse,
+          inSubjectCount: editInSubjectCount,
+          isSubjectFreeform: editIsFreeform,
         },
         authHeader,
       );
-      Swal.fire("สำเร็จ", "แก้ไขเรียบร้อยแล้ว", "success");
+      await Swal.fire("สำเร็จ", "แก้ไขเรียบร้อยแล้ว", "success");
       cancelEdit();
       await fetchList();
     } catch {
-      Swal.fire("Error", "ไม่สามารถแก้ไขได้", "error");
+      await Swal.fire("Error", "ไม่สามารถแก้ไขได้", "error");
     }
   };
 
   const deleteSub = (id: number) => {
-    /* ... ฟังก์ชันนี้ไม่ต้องแก้ไข ... */
+    Swal.fire({
+      title: "ยืนยันการลบ",
+      text: "ต้องการลบหมวดหมู่ย่อยนี้ใช่หรือไม่?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "ลบ",
+      cancelButtonText: "ยกเลิก",
+      confirmButtonColor: "#dc2626",
+    }).then((res) => {
+      if (res.isConfirmed) {
+        axios
+          .delete(`${BASE}/courses/${courseId}/subcourses/${id}`, authHeader)
+          .then(() => {
+            Swal.fire("สำเร็จ", "ลบเรียบร้อยแล้ว", "success");
+            setList((prev) => prev.filter((s) => s.id !== id));
+          })
+          .catch(() => Swal.fire("Error", "ไม่สามารถลบได้", "error"));
+      }
+    });
   };
 
   return (
@@ -141,12 +175,12 @@ export default function SubCourseManager({
           />
         </div>
         <div className="w-32">
-          <label className="block mb-1">รายวิชา</label>
-          {/* [แก้ไข] 3. เปลี่ยน Input เป็น type="text" */}
+          <label className="block mb-1 text-sm">ในวิชา</label>
           <input
-            type="text"
-            value={subjectValue}
-            onChange={(e) => setSubjectValue(e.target.value)}
+            type="number"
+            min={0}
+            value={inSubjectCountValue}
+            onChange={(e) => setInSubjectCountValue(Number(e.target.value))}
             className="w-full px-3 py-2 border rounded"
           />
         </div>
@@ -159,6 +193,18 @@ export default function SubCourseManager({
             onChange={(e) => setAlwaycourseValue(Number(e.target.value))}
             className="w-full px-3 py-2 border rounded"
           />
+        </div>
+        <div className="flex items-center">
+          <input
+            type="checkbox"
+            id="isFreeform"
+            checked={isFreeformValue}
+            onChange={(e) => setIsFreeformValue(e.target.checked)}
+            className="w-4 h-4"
+          />
+          <label htmlFor="isFreeform" className="ml-2 text-sm">
+            ให้นิสิตกรอกชื่อวิชาเอง
+          </label>
         </div>
         <button
           type="submit"
@@ -227,7 +273,7 @@ export default function SubCourseManager({
                     <div className="flex-1 space-x-4">
                       <span className="font-medium">{sub.name}</span>
                       <span className="text-gray-500">
-                        | รายวิชา: {sub.subject || "-"}
+                        | ในวิชา: {sub.inSubjectCount || "-"}
                       </span>{" "}
                       {/* แสดงชื่อ subject */}
                       <span className="text-gray-500">

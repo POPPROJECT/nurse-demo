@@ -12,6 +12,7 @@ type SubCourse = {
   id: number;
   name: string;
   alwaycourse: number;
+  inSubjectCount: number; // เพิ่ม field นี้
   subject: string | null;
 };
 type Stat = {
@@ -38,7 +39,6 @@ export default function ApproverProgressClient({
   // --- STATES ---
   const [books, setBooks] = useState<Book[]>([]);
   const [selectedBook, setSelectedBook] = useState<number | "">("");
-  const [subjects, setSubjects] = useState<string[]>([]);
   const [progressMode, setProgressMode] = useState<string>("all");
   const [courses, setCourses] = useState<Course[]>([]);
   const [subcoursesByCourse, setSubcoursesByCourse] = useState<
@@ -66,7 +66,6 @@ export default function ApproverProgressClient({
       setSubcoursesByCourse({});
       setStatsMap({});
       setOpenCourses(new Set());
-      setSubjects([]);
       setProgressMode("all");
     };
 
@@ -79,7 +78,7 @@ export default function ApproverProgressClient({
       setLoading(true);
       resetState();
       try {
-        const [coursesRes, statsRes, subjectsRes] = await Promise.all([
+        const [coursesRes, statsRes] = await Promise.all([
           axios.get<Course[]>(
             `${BASE}/experience-books/${selectedBook}/courses`,
             authHeader,
@@ -88,14 +87,9 @@ export default function ApproverProgressClient({
             `${BASE}/experience-books/${selectedBook}/subcourses/stats/student/${studentId}`,
             authHeader,
           ),
-          axios.get<string[]>(
-            `${BASE}/experience-books/${selectedBook}/subjects`,
-            authHeader,
-          ),
         ]);
 
         setCourses(coursesRes.data);
-        setSubjects(subjectsRes.data);
 
         const m: Record<number, Stat> = {};
         statsRes.data.forEach((s) => (m[s.id] = s));
@@ -125,77 +119,38 @@ export default function ApproverProgressClient({
     // ▼▼▼ [แก้ไข] เปลี่ยน Logic การเปรียบเทียบทั้งหมดตรงนี้ ▼▼▼
 
     // 1. เช็คว่าเป็นโหมดรายวิชาหรือไม่ (ไม่ใช่ 'all')
-    const isSubjectMode = progressMode !== "all";
+    const isSubjectMode = progressMode === "inSubject";
+    const requirementKey = isSubjectMode ? "inSubjectCount" : "alwaycourse";
+    const label = isSubjectMode
+      ? "ความคืบหน้าในวิชา"
+      : "ความคืบหน้าตลอดหลักสูตร";
+    let totalDone = 0;
+    let totalRequired = 0;
 
     const allSubCourses = Object.values(subcoursesByCourse).flat();
-
-    // 2. กรอง Subcourse โดยเปรียบเทียบ string กับ string ได้เลย
-    const relevantSubCourses = isSubjectMode
-      ? allSubCourses.filter((sc) => sc.subject === progressMode) // <-- เปรียบเทียบ string ตรงๆ
-      : allSubCourses;
-
-    let cappedDone = 0;
-    let total = 0;
-    relevantSubCourses.forEach((sc) => {
-      const rawDone = statsMap[sc.id]?._count?.experiences ?? 0;
-      cappedDone += Math.min(rawDone, sc.alwaycourse);
-      total += sc.alwaycourse;
+    allSubCourses.forEach((sc) => {
+      const required = sc[requirementKey] ?? 0;
+      if (required > 0) {
+        const done = statsMap[sc.id]?._count?.experiences ?? 0;
+        totalDone += Math.min(done, required);
+        totalRequired += required;
+      }
     });
 
-    const percent = total
-      ? Math.min(100, Math.round((cappedDone / total) * 100))
-      : 0;
+    const percent =
+      totalRequired === 0 ? 100 : Math.round((totalDone / totalRequired) * 100);
 
-    // 3. ปรับการแสดงผล label ให้ถูกต้อง
-    const label = isSubjectMode
-      ? `ความคืบหน้ารายวิชา ${progressMode}`
-      : "ความคืบหน้าตลอดหลักสูตร";
+    const overallResult = {
+      done: totalDone,
+      total: totalRequired,
+      percent,
+      label,
+    };
 
-    const overallResult = { done: cappedDone, total, percent, label };
-
-    // 4. แก้ไขการกรอง Course ที่จะแสดงผล
-    const filteredCoursesResult = isSubjectMode
-      ? courses.filter(
-          (course) =>
-            (subcoursesByCourse[course.id] || []).some(
-              (sub) => sub.subject === progressMode,
-            ), // <-- เปรียบเทียบ string ตรงๆ
-        )
-      : courses;
-
-    // ▲▲▲ [สิ้นสุดส่วนที่แก้ไข] ▲▲▲
+    const filteredCoursesResult = courses;
 
     return { overall: overallResult, filteredCourses: filteredCoursesResult };
   }, [subcoursesByCourse, statsMap, progressMode, courses]);
-
-  // const { overall, filteredCourses } = useMemo(() => {
-  //   const subjectId = parseInt(progressMode, 10);
-  //   const isSubjectMode = !isNaN(subjectId);
-
-  //   const allSubCourses = Object.values(subcoursesByCourse).flat();
-  //   const relevantSubCourses = isSubjectMode
-  //     ? allSubCourses.filter(sc => sc.subject === subjectId)
-  //     : allSubCourses;
-
-  //   let cappedDone = 0;
-  //   let total = 0;
-  //   relevantSubCourses.forEach((sc) => {
-  //     const rawDone = statsMap[sc.id]?._count?.experiences ?? 0;
-  //     cappedDone += Math.min(rawDone, sc.alwaycourse);
-  //     total += sc.alwaycourse;
-  //   });
-
-  //   const percent = total ? Math.min(100, Math.round((cappedDone / total) * 100)) : 0;
-  //   const label = isSubjectMode ? `ความคืบหน้ารายวิชา ${subjectId}` : 'ความคืบหน้าตลอดหลักสูตร';
-
-  //   const overallResult = { done: cappedDone, total, percent, label };
-
-  //   const filteredCoursesResult = isSubjectMode
-  //     ? courses.filter(course => (subcoursesByCourse[course.id] || []).some(sub => sub.subject === subjectId))
-  //     : courses;
-
-  //   return { overall: overallResult, filteredCourses: filteredCoursesResult };
-  // }, [subcoursesByCourse, statsMap, progressMode, courses]);
 
   // --- RENDER LOGIC ---
   const toggleCourse = (id: number) => {
@@ -206,18 +161,14 @@ export default function ApproverProgressClient({
     });
   };
 
-  // const subjectOptions = [
-  //   { value: 'all', label: 'ตลอดหลักสูตร' },
-  //   ...subjects.map(s => ({ value: s, label: `รายวิชา ${s}` }))
-  // ];
   // ▼▼▼ [แก้ไข] ปรับการสร้าง Options ให้ถูกต้อง 100% ▼▼▼
-  const subjectOptions = [
+  const progressOptions = [
     { value: "all", label: "ตลอดหลักสูตร" },
-    ...subjects.map((s) => ({ value: s, label: `รายวิชา ${s}` })),
+    { value: "inSubject", label: "ในวิชา" },
   ];
   // ▲▲▲ [สิ้นสุดส่วนที่แก้ไข] ▲▲▲
   const selectedProgressModeOption =
-    subjectOptions.find((opt) => opt.value === progressMode) || null;
+    progressOptions.find((opt) => opt.value === progressMode) || null;
 
   return (
     <div className="container max-w-6xl px-4 py-8 mx-auto mt-2 space-y-6 sm:mt-0">
@@ -248,10 +199,10 @@ export default function ApproverProgressClient({
             </label>
             <Select
               instanceId="progress-mode-approver-check"
-              options={subjectOptions}
+              options={progressOptions}
               value={selectedProgressModeOption}
               onChange={(opt) => setProgressMode(opt ? opt.value : "all")}
-              isDisabled={!selectedBook || subjects.length === 0}
+              isDisabled={!selectedBook}
               className="text-gray-800 react-select-container"
               classNamePrefix="react-select"
             />
@@ -309,33 +260,38 @@ export default function ApproverProgressClient({
             {/* ▼▼▼ [แก้ไข] คืนค่า UI การแสดงผลแบบ Accordion เหมือนเดิม ▼▼▼ */}
             {!loading &&
               filteredCourses.map((course) => {
-                const allSubs = subcoursesByCourse[course.id] || [];
-                const relevantSubcs =
-                  progressMode === "all"
-                    ? allSubs
-                    : allSubs.filter((sc) => sc.subject === progressMode);
+                const requirementKey =
+                  progressMode === "inSubject"
+                    ? "inSubjectCount"
+                    : "alwaycourse";
 
-                if (relevantSubcs.length === 0) return null;
+                const allSubsInCourse = subcoursesByCourse[course.id] || [];
 
-                const totals = relevantSubcs.reduce(
+                const totals = allSubsInCourse.reduce(
                   (acc, sc) => {
-                    const doneCount = statsMap[sc.id]?._count?.experiences ?? 0;
-                    acc.done += Math.min(doneCount, sc.alwaycourse);
-                    acc.total += sc.alwaycourse;
+                    const required = sc[requirementKey] ?? 0;
+                    // คำนวณเฉพาะรายการที่มี required > 0 เพื่อความแม่นยำของ %
+                    if (required > 0) {
+                      const done = statsMap[sc.id]?._count?.experiences ?? 0;
+                      acc.done += Math.min(done, required);
+                      acc.total += required;
+                    }
                     return acc;
                   },
                   { done: 0, total: 0 },
                 );
 
-                const pct = totals.total
-                  ? Math.round((totals.done / totals.total) * 100)
-                  : 0;
+                const pct =
+                  totals.total === 0
+                    ? 100
+                    : Math.round((totals.done / totals.total) * 100);
+
                 const barColor =
-                  pct < 50
-                    ? "bg-red-500"
-                    : pct < 100
-                      ? "bg-yellow-500"
-                      : "bg-green-500";
+                  pct === 100
+                    ? "bg-green-400"
+                    : pct >= 50
+                      ? "bg-yellow-400"
+                      : "bg-red-400";
                 const isOpen = openCourses.has(course.id);
 
                 return (
@@ -380,22 +336,26 @@ export default function ApproverProgressClient({
                     </div>
                     {isOpen && (
                       <div className="p-5 space-y-4 bg-gray-100 border-t border-gray-200 dark:bg-gray-700 dark:border-gray-600">
-                        {relevantSubcs.length > 0 ? (
-                          relevantSubcs.map((sc) => {
+                        {/* 1. เช็คว่ามีรายการย่อยในหมวดนี้หรือไม่ */}
+                        {allSubsInCourse.length > 0 ? (
+                          // 2. ถ้ามี ให้ map แสดงผลทุกรายการโดย "ไม่ใช้ .filter"
+                          allSubsInCourse.map((sc) => {
                             const doneCount =
                               statsMap[sc.id]?._count?.experiences ?? 0;
-                            const total = sc.alwaycourse;
-                            const subPct = total
-                              ? Math.round(
-                                  (Math.min(doneCount, total) / total) * 100,
-                                )
-                              : 0;
+                            // เรายังคงใช้ requirementKey เพื่อดึงค่า total ที่ถูกต้องสำหรับแต่ละโหมด
+                            const total = sc[requirementKey] ?? 0;
+                            const subPct =
+                              total === 0
+                                ? 100
+                                : Math.round(
+                                    (Math.min(doneCount, total) / total) * 100,
+                                  );
                             const subBarColor =
-                              subPct < 50
-                                ? "bg-red-500"
-                                : subPct < 100
-                                  ? "bg-yellow-500"
-                                  : "bg-green-500";
+                              subPct === 100
+                                ? "bg-green-400"
+                                : subPct >= 50
+                                  ? "bg-yellow-400"
+                                  : "bg-red-400";
                             return (
                               <div
                                 key={sc.id}

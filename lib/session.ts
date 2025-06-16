@@ -1,7 +1,7 @@
-'use server';
+"use server";
 
-import { cookies } from 'next/headers';
-import { Role } from './type';
+import { cookies } from "next/headers";
+import { Role } from "./type";
 
 export type Session = {
   user: {
@@ -19,46 +19,32 @@ export type Session = {
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL!;
 
 export async function getSession(): Promise<Session | null> {
-  console.log('--- [getSession] Starting session check on the server... ---');
-
   const cookieStore = await cookies();
-  const accessToken = cookieStore.get('access_token')?.value;
-
-  console.log('[getSession] access_token cookie object:', accessToken);
+  const accessToken = cookieStore.get("access_token")?.value;
 
   // 1. ตรวจสอบแค่ access_token ก็เพียงพอแล้ว
   if (!accessToken) {
-    console.log('[getSession] No accessToken found. Returning null.');
-
     return null;
   }
 
   try {
-    console.log('[getSession] AccessToken found. Fetching /auth/me...');
-
     // 2. ส่ง Token ไปใน Header โดยตรงเพื่อความแน่นอน
     const res = await fetch(`${BACKEND_URL}/auth/me`, {
-      method: 'GET',
+      method: "GET",
       headers: {
         Authorization: `Bearer ${accessToken}`,
       },
-      cache: 'no-store',
+      cache: "no-store",
     });
 
-    console.log(`[getSession] Fetch response status: ${res.status}`);
-
     if (!res.ok) {
-      console.error(
-        '⚠️ getSession(): Failed to fetch /auth/me',
-        await res.text()
-      );
+      console.error(await res.text());
       return null;
     }
 
     const user = await res.json();
-    console.log('[getSession] Successfully fetched user:', user.role);
 
-    const refreshToken = cookieStore.get('refresh_token')?.value;
+    const refreshToken = cookieStore.get("refresh_token")?.value;
 
     return {
       user: {
@@ -66,14 +52,14 @@ export async function getSession(): Promise<Session | null> {
         name: user.name,
         email: user.email,
         role: user.role as Role,
-        studentId: user.studentId ?? '',
-        avatarUrl: user.avatarUrl || '',
+        studentId: user.studentId ?? "",
+        avatarUrl: user.avatarUrl || "",
       },
       accessToken,
-      refreshToken: refreshToken || '', // อาจจะไม่มีก็ได้ถ้ายังไม่ได้ไป path ของมัน
+      refreshToken: refreshToken || "", // อาจจะไม่มีก็ได้ถ้ายังไม่ได้ไป path ของมัน
     };
   } catch (err) {
-    console.error('❌ getSession(): Exception occurred', err);
+    console.error("❌ getSession(): Exception occurred", err);
     return null;
   }
 }
@@ -89,19 +75,19 @@ export async function updateTokens({
   const cookieStore = await cookies();
   const expires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 วัน
 
-  cookieStore.set('access_token', accessToken, {
+  cookieStore.set("access_token", accessToken, {
     httpOnly: true,
     secure: true,
-    sameSite: 'none',
+    sameSite: "none",
     expires,
-    path: '/',
+    path: "/",
   });
 
-  cookieStore.set('refresh_token', refreshToken, {
+  cookieStore.set("refresh_token", refreshToken, {
     httpOnly: true,
     secure: true,
-    sameSite: 'none',
+    sameSite: "none",
     expires,
-    path: '/',
+    path: "/",
   });
 }

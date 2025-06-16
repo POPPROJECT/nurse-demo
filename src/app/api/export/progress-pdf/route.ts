@@ -13,6 +13,7 @@ interface Experience {
   course: string;
   subCourse?: string;
   subject?: string | null;
+  inSubjectCount?: number;
   alwaycourse?: number;
   fieldValues: FieldValue[];
   approverName: string;
@@ -64,12 +65,12 @@ async function getPdfData(
 // ▼▼▼ [แก้ไข] ปรับปรุงการสร้าง HTML ทั้งหมดตามโครงสร้างที่ถูกต้อง ▼▼▼
 function getHtmlContent(data: PdfData) {
   // 1. อ่านไฟล์ Logo และแปลงเป็น Base64 Data URI
-  const imagePath = path.resolve("./public", "NULOGO.png");
+  const imagePath = path.join(process.cwd(), "public", "NULOGO.png");
   const imageBuffer = fs.readFileSync(imagePath);
   const logoSrc = `data:image/png;base64,${imageBuffer.toString("base64")}`;
 
   // ▼▼▼ [แก้ไข] อ่านไฟล์ฟอนต์ THSarabunNew.ttf ▼▼▼
-  const fontPath = path.resolve("./public/fonts", "THSarabunNew.ttf");
+  const fontPath = path.join(process.cwd(), "public/fonts", "THSarabunNew.ttf");
   const fontBuffer = fs.readFileSync(fontPath);
   const fontSrc = `data:font/truetype;charset=utf-8;base64,${fontBuffer.toString("base64")}`;
   // ▲▲▲ [สิ้นสุดส่วนที่แก้ไข] ▲▲▲
@@ -77,7 +78,6 @@ function getHtmlContent(data: PdfData) {
   // ▼▼▼ [แก้ไข] ปรับปรุง Logic การเรียงข้อมูลให้สมบูรณ์ ▼▼▼
   const parseVersionString = (str: string | undefined): number[] => {
     if (!str) return [0, 0];
-    // แยกตัวเลขออกจากข้อความก่อน แล้วค่อย split ด้วยจุด
     const numbersOnly = str.match(/[\d.]+/g)?.[0] || "";
     return numbersOnly.split(".").map((num) => parseInt(num, 10) || 0);
   };
@@ -134,19 +134,26 @@ function getHtmlContent(data: PdfData) {
       const subCourseRows = exps
         .map((exp: Experience & { caseNumber: number }) => {
           let experienceCell = `<td class="p-2 border border-slate-300 pl-6">${exp.subCourse || ""}</td>`;
-          let subjectCell = `<td class="p-2 text-center border border-slate-300">${exp.subject || ""}</td>`;
+          let inSubjectDisplayValue = "";
+          const subjectValue = exp.subject ?? "";
+          const inSubjectCountValue = exp.inSubjectCount ?? "";
+
+          if (subjectValue !== "" || inSubjectCountValue !== "") {
+            inSubjectDisplayValue = `${subjectValue} / ${inSubjectCountValue}`;
+          }
+          let inSubjectCell = `<td class="p-2 text-center border border-slate-300">${inSubjectDisplayValue}</td>`;
           let alwaycourseCell = `<td class="p-2 text-center border border-slate-300">${exp.alwaycourse || ""}</td>`;
 
           if (exp.subCourse && exp.subCourse === lastSubCourse) {
             experienceCell = `<td class="p-2 border border-slate-300 pl-6"></td>`;
-            subjectCell = `<td class="p-2 text-center border border-slate-300"></td>`;
+            inSubjectCell = `<td class="p-2 text-center border border-slate-300"></td>`;
             alwaycourseCell = `<td class="p-2 text-center border border-slate-300"></td>`;
           }
           lastSubCourse = exp.subCourse;
           return `
       <tr>
           ${experienceCell}
-          ${subjectCell}
+          ${inSubjectCell}
           ${alwaycourseCell}
           <td class="p-2 text-center border border-slate-300">${exp.caseNumber}</td>
           ${data.fields
@@ -175,7 +182,19 @@ function getHtmlContent(data: PdfData) {
         <title>${data.bookTitle}</title>
         <script src="https://cdn.tailwindcss.com"></script>
         <style>
-          @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap');
+          @font-face {
+            font-family: 'Sarabun';
+            src: url(${fontSrc}) format('truetype');
+            font-weight: normal;
+            font-style: normal;
+          }
+          
+          @font-face {
+            font-family: 'Sarabun';
+            src: url(${fontSrc}) format('truetype');
+            font-weight: bold;
+            font-style: normal;
+          }          
           body { font-family: 'Sarabun', sans-serif; font-size: 12px; -webkit-print-color-adjust: exact; }
           table { width: 100%; border-collapse: collapse; table-layout: fixed; }
           th, td { vertical-align: top; padding: 4px 6px; text-align: left; word-break: break-all; }
@@ -229,14 +248,13 @@ export async function POST(req: NextRequest) {
       year: "numeric",
     });
 
-    // ▼▼▼ [แก้ไข] ปรับการเรียกใช้ Puppeteer ให้เข้ากับ Serverless ▼▼▼
+    // ปรับการเรียกใช้ Puppeteer ให้เข้ากับ Serverless
     browser = await puppeteer.launch({
       args: chromium.args,
       defaultViewport: chromium.defaultViewport,
       executablePath: await chromium.executablePath(),
       headless: chromium.headless,
     });
-    // ▲▲▲ [สิ้นสุดส่วนที่แก้ไข] ▲▲▲
 
     const page = await browser.newPage();
     await page.setContent(htmlContent, { waitUntil: "networkidle0" });

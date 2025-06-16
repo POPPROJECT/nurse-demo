@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import Swal from "sweetalert2";
 import Select from "react-select";
@@ -11,23 +11,14 @@ type Course = { id: number; name: string };
 type SubCourse = {
   id: number;
   name: string;
-  alwaycourse: number;
   subject: string | null;
+  alwaycourse: number | null;
+  inSubjectCount: number | null;
+  isSubjectFreeform: boolean;
 };
 type Stat = {
   id: number;
-  alwaycourse: number;
   _count?: { experiences: number };
-};
-type FieldConfig = { id: number; label: string };
-type FieldValue = { fieldId: number; value: string };
-type Experience = {
-  course: string;
-  subCourse: string;
-  subject?: string;
-  alwaycourse?: number;
-  fieldValues: FieldValue[];
-  approverName: string;
 };
 
 // --- MAIN COMPONENT ---
@@ -37,39 +28,40 @@ export default function ProgressClient({
   accessToken: string;
 }) {
   const BASE = process.env.NEXT_PUBLIC_BACKEND_URL!;
-  const authHeader = { headers: { Authorization: `Bearer ${accessToken}` } };
+  const authHeader = useMemo(
+    () => ({ headers: { Authorization: `Bearer ${accessToken}` } }),
+    [accessToken],
+  );
 
   // --- STATES ---
   const [books, setBooks] = useState<Book[]>([]);
   const [selectedBook, setSelectedBook] = useState<number | "">("");
-  const [subjects, setSubjects] = useState<string[]>([]);
-  const [progressMode, setProgressMode] = useState<string>("all");
+  const [progressMode, setProgressMode] = useState<"all" | "subject">("all");
   const [courses, setCourses] = useState<Course[]>([]);
   const [subcoursesByCourse, setSubcoursesByCourse] = useState<
     Record<number, SubCourse[]>
   >({});
-  const [statsMap, setStatsMap] = useState<Record<number, Stat>>({});
+  const [statsMap, setStatsMap] = useState<
+    Record<number, Pick<Stat, "_count">>
+  >({});
   const [openCourses, setOpenCourses] = useState<Set<number>>(new Set());
   const [loading, setLoading] = useState(false);
 
   // --- DATA FETCHING ---
-  // 1. Load authorized books
   useEffect(() => {
     if (!accessToken) return;
     axios
       .get<Book[]>(`${BASE}/experience-books/authorized`, authHeader)
       .then((res) => setBooks(res.data))
       .catch(() => Swal.fire("Error", "ไม่สามารถโหลดรายการสมุดได้", "error"));
-  }, [BASE, accessToken]);
+  }, [BASE, accessToken, authHeader]);
 
-  // 2. Load all related data when a book is selected
   useEffect(() => {
     const resetState = () => {
       setCourses([]);
       setSubcoursesByCourse({});
       setStatsMap({});
       setOpenCourses(new Set());
-      setSubjects([]);
       setProgressMode("all");
     };
 
@@ -82,11 +74,7 @@ export default function ProgressClient({
       setLoading(true);
       resetState();
       try {
-        const [subjectsRes, coursesRes, statsRes] = await Promise.all([
-          axios.get<string[]>(
-            `${BASE}/experience-books/${selectedBook}/subjects`,
-            authHeader,
-          ),
+        const [coursesRes, statsRes] = await Promise.all([
           axios.get<Course[]>(
             `${BASE}/experience-books/${selectedBook}/courses`,
             authHeader,
@@ -95,30 +83,13 @@ export default function ProgressClient({
             `${BASE}/experience-books/${selectedBook}/subcourses/stats`,
             authHeader,
           ),
-          axios.get<FieldConfig[]>(
-            `${BASE}/experience-books/${selectedBook}/fields`,
-            authHeader,
-          ),
-          axios.get<{ data: Experience[] }>(`${BASE}/student-experiences`, {
-            ...authHeader,
-            params: { bookId: selectedBook, status: "CONFIRMED", limit: 9999 },
-          }),
-          axios.get<{ title: string }>(
-            `${BASE}/experience-books/${selectedBook}`,
-            authHeader,
-          ),
-          axios.get<{ studentId: string; user: { name: string } }>(
-            `${BASE}/users/me/profile`,
-            authHeader,
-          ),
         ]);
 
-        setSubjects(subjectsRes.data);
         setCourses(coursesRes.data);
 
-        const newStatsMap: Record<number, Stat> = {};
+        const newStatsMap: Record<number, Pick<Stat, "_count">> = {};
         statsRes.data.forEach((s) => {
-          newStatsMap[s.id] = s;
+          newStatsMap[s.id] = { _count: s._count };
         });
         setStatsMap(newStatsMap);
 
@@ -141,74 +112,31 @@ export default function ProgressClient({
       }
     };
     loadAll();
-  }, [selectedBook, BASE, accessToken]);
+  }, [selectedBook, BASE, authHeader]);
 
   // --- CALCULATIONS ---
-  const { overall, filteredCourses } = React.useMemo(() => {
-    // [แก้ไข] เปลี่ยน Logic การเปรียบเทียบเป็น string
-    const isSubjectMode = progressMode !== "all";
-
+  const overall = useMemo(() => {
     const allSubCourses = Object.values(subcoursesByCourse).flat();
-    const relevantSubCourses = isSubjectMode
-      ? allSubCourses.filter((sc) => sc.subject === progressMode)
-      : allSubCourses;
-
     let cappedDone = 0;
     let total = 0;
-    relevantSubCourses.forEach((sc) => {
-      const rawDone = statsMap[sc.id]?._count?.experiences ?? 0;
-      cappedDone += Math.min(rawDone, sc.alwaycourse);
-      total += sc.alwaycourse;
+
+    allSubCourses.forEach((sc) => {
+      const required =
+        progressMode === "subject" ? sc.inSubjectCount : sc.alwaycourse;
+      if (required && required > 0) {
+        const rawDone = statsMap[sc.id]?._count?.experiences ?? 0;
+        cappedDone += Math.min(rawDone, required);
+        total += required;
+      }
     });
 
-    const percent = total
-      ? Math.min(100, Math.round((cappedDone / total) * 100))
-      : 0;
-    const label = isSubjectMode
-      ? `ความคืบหน้ารายวิชา ${progressMode}`
-      : "ความคืบหน้าตลอดหลักสูตร";
-
-    const overallResult = { done: cappedDone, total, percent, label };
-
-    const filteredCoursesResult = isSubjectMode
-      ? courses.filter((course) =>
-          (subcoursesByCourse[course.id] || []).some(
-            (sub) => sub.subject === progressMode,
-          ),
-        )
-      : courses;
-
-    return { overall: overallResult, filteredCourses: filteredCoursesResult };
-  }, [subcoursesByCourse, statsMap, progressMode, courses]);
-
-  // const { overall, filteredCourses } = React.useMemo(() => {
-  //   const subjectId = parseInt(progressMode, 10);
-  //   const isSubjectMode = !isNaN(subjectId);
-
-  //   const allSubCourses = Object.values(subcoursesByCourse).flat();
-  //   const relevantSubCourses = isSubjectMode
-  //     ? allSubCourses.filter(sc => sc.subject === subjectId)
-  //     : allSubCourses;
-
-  //   let cappedDone = 0;
-  //   let total = 0;
-  //   relevantSubCourses.forEach((sc) => {
-  //     const rawDone = statsMap[sc.id]?._count?.experiences ?? 0;
-  //     cappedDone += Math.min(rawDone, sc.alwaycourse);
-  //     total += sc.alwaycourse;
-  //   });
-
-  //   const percent = total ? Math.min(100, Math.round((cappedDone / total) * 100)) : 0;
-  //   const label = isSubjectMode ? `ความคืบหน้ารายวิชา ${subjectId}` : 'ความคืบหน้าตลอดหลักสูตร';
-
-  //   const overallResult = { done: cappedDone, total, percent, label };
-
-  //   const filteredCoursesResult = isSubjectMode
-  //     ? courses.filter(course => (subcoursesByCourse[course.id] || []).some(sub => sub.subject === subjectId))
-  //     : courses;
-
-  //   return { overall: overallResult, filteredCourses: filteredCoursesResult };
-  // }, [subcoursesByCourse, statsMap, progressMode, courses]);
+    const percent = total ? Math.round((cappedDone / total) * 100) : 0;
+    const label =
+      progressMode === "subject"
+        ? "ความคืบหน้าในวิชา"
+        : "ความคืบหน้าตลอดหลักสูตร";
+    return { done: cappedDone, total, percent, label };
+  }, [subcoursesByCourse, statsMap, progressMode]);
 
   // --- RENDER LOGIC ---
   const toggleCourse = (courseId: number) => {
@@ -219,13 +147,18 @@ export default function ProgressClient({
     });
   };
 
-  // [แก้ไข] สร้าง options จาก string[]
-  const subjectOptions = [
+  const progressModeOptions = [
     { value: "all", label: "ตลอดหลักสูตร" },
-    ...subjects.map((s) => ({ value: s, label: `รายวิชา ${s}` })),
+    { value: "subject", label: "ในวิชา" },
   ];
   const selectedProgressModeOption =
-    subjectOptions.find((opt) => opt.value === progressMode) || null;
+    progressModeOptions.find((opt) => opt.value === progressMode) || null;
+
+  const getBarColor = (pct: number) => {
+    if (pct >= 100) return "bg-green-400"; // ถ้า 100 หรือมากกว่า เป็นสีเขียว
+    if (pct >= 50) return "bg-yellow-400"; // [แก้ไข] ถ้า 50 หรือมากกว่า (แต่ไม่ถึง 100) เป็นสีเหลือง
+    return "bg-red-400"; // ที่เหลือน้อยกว่า 50 เป็นสีแดง
+  };
 
   return (
     <div className="container max-w-6xl px-4 py-8 mx-auto mt-10 sm:mt-0">
@@ -262,10 +195,12 @@ export default function ProgressClient({
             </label>
             <Select
               instanceId="progress-mode-select-student"
-              options={subjectOptions}
+              options={progressModeOptions}
               value={selectedProgressModeOption}
-              onChange={(opt) => setProgressMode(opt ? opt.value : "all")}
-              isDisabled={!selectedBook || subjects.length === 0}
+              onChange={(opt) =>
+                setProgressMode(opt ? (opt.value as "all" | "subject") : "all")
+              }
+              isDisabled={!selectedBook}
               className="text-gray-800 react-select-container"
               classNamePrefix="react-select"
             />
@@ -307,32 +242,27 @@ export default function ProgressClient({
         {!loading && !selectedBook && (
           <div className="py-20 text-center">กรุณาเลือกสมุดเพื่อดูข้อมูล</div>
         )}
-        {!loading && selectedBook && filteredCourses.length === 0 && (
-          <div className="py-20 text-center">
-            ไม่พบข้อมูลใน{" "}
-            {progressMode === "all" ? "สมุดนี้" : `รายวิชา ${progressMode}`}
-          </div>
+        {!loading && selectedBook && courses.length === 0 && (
+          <div className="py-20 text-center">ไม่พบข้อมูลในสมุดนี้</div>
         )}
 
-        {!loading && filteredCourses.length > 0 && (
+        {!loading && courses.length > 0 && (
           <div className="space-y-4" id="courseList">
-            {filteredCourses.map((course) => {
-              const allSubcoursesInThisCourse =
-                subcoursesByCourse[course.id] || [];
-              const relevantSubcs =
-                progressMode === "all"
-                  ? allSubcoursesInThisCourse
-                  : allSubcoursesInThisCourse.filter(
-                      (sc) => sc.subject === progressMode,
-                    );
+            {courses.map((course) => {
+              const subcs = subcoursesByCourse[course.id] || [];
+              if (subcs.length === 0) return null;
 
-              if (relevantSubcs.length === 0) return null;
-
-              const courseTotals = relevantSubcs.reduce(
+              const courseTotals = subcs.reduce(
                 (acc, sc) => {
-                  const raw = statsMap[sc.id]?._count?.experiences ?? 0;
-                  acc.done += Math.min(raw, sc.alwaycourse);
-                  acc.total += sc.alwaycourse;
+                  const required =
+                    progressMode === "subject"
+                      ? sc.inSubjectCount
+                      : sc.alwaycourse;
+                  if (required && required > 0) {
+                    const raw = statsMap[sc.id]?._count?.experiences ?? 0;
+                    acc.done += Math.min(raw, required);
+                    acc.total += required;
+                  }
                   return acc;
                 },
                 { done: 0, total: 0 },
@@ -341,12 +271,7 @@ export default function ProgressClient({
               const coursePct = courseTotals.total
                 ? Math.round((courseTotals.done / courseTotals.total) * 100)
                 : 0;
-              const barColor =
-                coursePct < 50
-                  ? "bg-red-500"
-                  : coursePct < 100
-                    ? "bg-yellow-500"
-                    : "bg-green-500";
+              const barColor = getBarColor(coursePct);
               const isOpen = openCourses.has(course.id);
 
               return (
@@ -394,18 +319,23 @@ export default function ProgressClient({
 
                   {isOpen && (
                     <div className="p-5 space-y-4 bg-gray-100 border-t border-gray-200 dark:bg-gray-700 dark:border-gray-600">
-                      {relevantSubcs.map((sc) => {
+                      {subcs.map((sc) => {
+                        const required =
+                          progressMode === "subject"
+                            ? sc.inSubjectCount
+                            : sc.alwaycourse;
                         const done = statsMap[sc.id]?._count?.experiences ?? 0;
-                        const total = sc.alwaycourse;
-                        const pct = total
-                          ? Math.min(100, Math.round((done / total) * 100))
-                          : 0;
-                        const subBarColor =
-                          pct < 50
-                            ? "bg-red-500"
-                            : pct < 100
-                              ? "bg-yellow-500"
-                              : "bg-green-500";
+                        const pct =
+                          required === null ||
+                          required === undefined ||
+                          required <= 0
+                            ? 100
+                            : Math.min(
+                                100,
+                                Math.round((done / required) * 100),
+                              );
+                        const subBarColor = getBarColor(pct);
+
                         return (
                           <div
                             key={sc.id}
@@ -424,13 +354,13 @@ export default function ProgressClient({
                             </div>
                             <div className="text-sm text-right text-gray-700 dark:text-gray-300">
                               <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                                {pct}% ({done}/{total})
+                                {pct}% ({done}/{required ?? 0})
                               </span>
                             </div>
                           </div>
                         );
                       })}
-                      {relevantSubcs.length === 0 && (
+                      {subcs.length === 0 && (
                         <p className="text-center text-gray-500">
                           ไม่มีหัวข้อย่อย
                         </p>

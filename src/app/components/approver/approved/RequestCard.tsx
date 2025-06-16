@@ -64,6 +64,14 @@ export default function RequestCard({
               {req.subCourse || "-"}
             </span>
           </div>
+          {req.subject && (
+            <div className="flex items-start">
+              <span className="text-sm text-gray-600 dark:text-gray-400">
+                ในวิชา:
+              </span>
+              <span className="ml-1 text-sm font-medium">{req.subject}</span>
+            </div>
+          )}
           {req.fieldValues &&
             req.fieldValues.map(
               (

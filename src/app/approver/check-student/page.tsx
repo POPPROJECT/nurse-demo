@@ -11,14 +11,9 @@ import Pagination from "@/app/components/approver/check-student/Pagination";
 export default function CheckStudentPage() {
   const BASE = process.env.NEXT_PUBLIC_BACKEND_URL!;
 
-  // const [books, setBooks] = useState<{ id: number; title: string }[]>([]);
-  // const [bookId, setBookId] = useState<number | string>('');
-  // ▼▼▼ [แก้ไข] เปลี่ยน state จาก courses เป็น subjects ▼▼▼
   const [books, setBooks] = useState<{ id: number; title: string }[]>([]);
-  const [subjects, setSubjects] = useState<string[]>([]); // <--- แก้ไข
   const [bookId, setBookId] = useState<number | string>("");
-  const [progressMode, setProgressMode] = useState("all");
-  // ▲▲▲ [สิ้นสุดส่วนที่แก้ไข] ▲▲▲
+  const [progressMode, setProgressMode] = useState("all"); // 'all' หรือ 'inSubject'
 
   const [search, setSearch] = useState("");
   const [limit, setLimit] = useState(10);
@@ -44,26 +39,7 @@ export default function CheckStudentPage() {
     });
   }, []);
 
-  // ▼▼▼ [แก้ไข] 2. โหลด "Subjects" เมื่อเลือกสมุดใหม่ ▼▼▼
-  useEffect(() => {
-    setSubjects([]);
-    setProgressMode("all");
-
-    if (!bookId) return;
-
-    getSession().then((sess) => {
-      if (!sess) return;
-      // เรียก Endpoint ใหม่ /subjects
-      axios
-        .get<string[]>(`${BASE}/experience-books/${bookId}/subjects`, {
-          headers: { Authorization: `Bearer ${sess.accessToken}` },
-        })
-        .then((r) => setSubjects(r.data));
-    });
-  }, [bookId, BASE]);
-  // ▲▲▲ [สิ้นสุดส่วนที่แก้ไข] ▲▲▲
-
-  // ▼▼▼ [แก้ไข] 3. โหลด "ข้อมูลนิสิต" ทุกครั้งที่ filter/sort/page หรือ progressMode เปลี่ยน ▼▼▼
+  // โหลด "ข้อมูลนิสิต" ทุกครั้งที่ filter/sort/page หรือ progressMode เปลี่ยน
   useEffect(() => {
     if (!bookId) {
       setData([]);
@@ -81,7 +57,6 @@ export default function CheckStudentPage() {
           `${BASE}/approver/check-students`,
           {
             headers: { Authorization: `Bearer ${sess.accessToken}` },
-            // เพิ่ม progressMode เข้าไปใน params
             params: {
               bookId,
               page,
@@ -101,31 +76,7 @@ export default function CheckStudentPage() {
           setLoading(false);
         });
     });
-  }, [bookId, page, limit, search, sortBy, order, progressMode, BASE]); // เพิ่ม progressMode ใน dependency array
-  // ▲▲▲ [สิ้นสุดส่วนที่แก้ไข] ▲▲▲
-
-  // // โหลดนิสิต ทุกครั้งที่ filter/sort/page เปลี่ยน
-  // useEffect(() => {
-  //   if (!bookId) {
-  //     setData([]);
-  //     return;
-  //   }
-  //   getSession().then((sess) => {
-  //     if (!sess) return;
-  //     axios
-  //       .get<{ total: number; data: any[] }>(
-  //         `${BASE}/approver/check-students`,
-  //         {
-  //           headers: { Authorization: `Bearer ${sess.accessToken}` },
-  //           params: { bookId, page, limit, search, sortBy, order },
-  //         }
-  //       )
-  //       .then((r) => {
-  //         setData(r.data.data);
-  //         setTotal(r.data.total);
-  //       });
-  //   });
-  // }, [bookId, page, limit, search, sortBy, order]);
+  }, [bookId, page, limit, search, sortBy, order, progressMode, BASE]);
 
   return (
     <div className="container max-w-6xl px-4 py-8 mx-auto mt-10 sm:mt-0">
@@ -139,9 +90,9 @@ export default function CheckStudentPage() {
         setSelectedBookAction={(b) => {
           setBookId(b);
           setPage(1);
+          setProgressMode("all"); // กลับไปโหมด default เมื่อเปลี่ยนสมุด
         }}
         // ▼▼▼ [แก้ไข] ส่ง props ใหม่ไปให้ FilterBar ▼▼▼
-        subjects={subjects}
         progressMode={progressMode}
         setProgressModeAction={(m) => {
           setProgressMode(m);
@@ -167,6 +118,7 @@ export default function CheckStudentPage() {
           data={data}
           sortBy={sortBy}
           order={order}
+          progressMode={progressMode}
           onSortAction={(col) => {
             if (sortBy === col) setOrder((o) => (o === "asc" ? "desc" : "asc"));
             else {

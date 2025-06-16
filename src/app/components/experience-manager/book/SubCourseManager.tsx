@@ -53,7 +53,7 @@ export default function SubCourseManager({
       );
       setList(res.data);
     } catch {
-      Swal.fire("Error", "โหลดหมวดหมู่ย่อยไม่สำเร็จ", "error");
+      await Swal.fire("Error", "โหลดหมวดหมู่ย่อยไม่สำเร็จ", "error");
     } finally {
       setLoading(false);
     }
@@ -74,13 +74,13 @@ export default function SubCourseManager({
         },
         authHeader,
       );
-      Swal.fire("สำเร็จ", "เพิ่มหมวดหมู่ย่อยเรียบร้อยแล้ว", "success");
+      await Swal.fire("สำเร็จ", "เพิ่มหมวดหมู่ย่อยเรียบร้อยแล้ว", "success");
       setName("");
       setSubjectValue(""); // <-- รีเซ็ตเป็นค่าว่าง
       setAlwaycourseValue(0);
       await fetchList();
     } catch {
-      Swal.fire("Error", "ไม่สามารถเพิ่มได้", "error");
+      await Swal.fire("Error", "ไม่สามารถเพิ่มได้", "error");
     } finally {
       setAdding(false);
     }
@@ -112,16 +112,34 @@ export default function SubCourseManager({
         },
         authHeader,
       );
-      Swal.fire("สำเร็จ", "แก้ไขเรียบร้อยแล้ว", "success");
+      await Swal.fire("สำเร็จ", "แก้ไขเรียบร้อยแล้ว", "success");
       cancelEdit();
       await fetchList();
     } catch {
-      Swal.fire("Error", "ไม่สามารถแก้ไขได้", "error");
+      await Swal.fire("Error", "ไม่สามารถแก้ไขได้", "error");
     }
   };
 
   const deleteSub = (id: number) => {
-    /* ... ฟังก์ชันนี้ไม่ต้องแก้ไข ... */
+    Swal.fire({
+      title: "ยืนยันการลบ",
+      text: "ต้องการลบหมวดหมู่ย่อยนี้ใช่หรือไม่?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "ลบ",
+      cancelButtonText: "ยกเลิก",
+      confirmButtonColor: "#dc2626",
+    }).then((res) => {
+      if (res.isConfirmed) {
+        axios
+          .delete(`${BASE}/courses/${courseId}/subcourses/${id}`, authHeader)
+          .then(() => {
+            Swal.fire("สำเร็จ", "ลบเรียบร้อยแล้ว", "success");
+            setList((prev) => prev.filter((s) => s.id !== id));
+          })
+          .catch(() => Swal.fire("Error", "ไม่สามารถลบได้", "error"));
+      }
+    });
   };
 
   return (

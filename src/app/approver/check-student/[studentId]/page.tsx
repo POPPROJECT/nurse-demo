@@ -1,26 +1,25 @@
-'use client';
-import React, { useEffect, useState } from 'react';
-import { useParams, useSearchParams } from 'next/navigation';
-import Link from 'next/link';
-import ApproverProgressClient from '@/app/components/approver/check-student/ApproverProgressClient';
-import { getSession } from 'lib/session';
+"use client";
+import React, { useEffect, useState } from "react";
+import { useParams, useSearchParams } from "next/navigation";
+import Link from "next/link";
+import ApproverProgressClient from "@/app/components/approver/check-student/ApproverProgressClient";
+import { getSession } from "lib/session";
 
 export default function StudentProgressPage() {
   const { studentId } = useParams();
   const searchParams = useSearchParams();
-  const studentNameParam = searchParams.get('name') || '';
-  const [token, setToken] = useState<string>('');
+  const studentNameParam = searchParams.get("name") || "";
+  const studentIdStringParam = searchParams.get("studentId") || ""; // <-- อ่านค่ารหัสนิสิต
+  const [token, setToken] = useState<string>("");
 
   useEffect(() => {
     getSession().then((sess) => {
-      if (!sess) return (window.location.href = '/');
+      if (!sess) return (window.location.href = "/");
       setToken(sess.accessToken);
     });
   }, []);
 
   if (!token || !studentId) return <div>Loading...</div>;
-
-  const displayName = studentNameParam || studentId;
 
   return (
     <div className="container max-w-6xl px-4 py-8 mx-auto mt-10 sm:mt-0">
@@ -51,8 +50,13 @@ export default function StudentProgressPage() {
         <h1 className="text-2xl font-semibold">ตรวจสอบความคืบหน้า</h1>
       </div>
 
-      <div className="p-3 mb-6 mt-3 dark:text-white bg-white dark:bg-[#1E293B] text-gray-800 rounded-xl shadow-md transition-shadow duration-300 min-w-auto">
-        <h2 className="text-lg font-semibold sm:text-xl ">🔍 {displayName}</h2>
+      <div className="p-3 mb-2 mt-3 dark:text-white bg-white dark:bg-[#1E293B] text-gray-800 rounded-xl shadow-md transition-shadow duration-300 min-w-auto">
+        <h2 className="text-lg sm:text-xl ml-4">
+          <span>{studentNameParam}</span>
+          <span style={{ marginLeft: "1.5rem" }}>
+            รหัสนิสิต: {studentIdStringParam}
+          </span>
+        </h2>
       </div>
 
       <ApproverProgressClient
