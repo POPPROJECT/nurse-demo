@@ -133,6 +133,11 @@ function getHtmlContent(data: PdfData) {
 
       const subCourseRows = exps
         .map((exp: Experience & { caseNumber: number }) => {
+          console.log(
+            "Experience Data for PDF Row:",
+            JSON.stringify(exp, null, 2),
+          );
+
           let experienceCell = `<td class="p-2 border border-slate-300 pl-6">${exp.subCourse || ""}</td>`;
           let alwaycourseCell = `<td class="p-2 text-center border border-slate-300">${exp.alwaycourse || ""}</td>`;
 
@@ -274,7 +279,7 @@ export async function POST(req: NextRequest) {
       printBackground: true,
       displayHeaderFooter: true,
       headerTemplate: `
-        <div style="font-family: sans-serif; font-size: 10px; color: #555; padding: 0 30px; width: 100%; display: flex; justify-content: space-between;">
+        <div style="font-family: Arial, sans-serif; font-size: 10px; color: #555; padding: 0 30px; width: 100%; display: flex; justify-content: space-between;">
             <span>ข้อมูลเมื่อวันที่: ${currentDate}</span>
             <span>หน้า <span class="pageNumber"></span> / <span class="totalPages"></span></span>
         </div>
