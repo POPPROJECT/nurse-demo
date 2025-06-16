@@ -1,20 +1,18 @@
-'use client';
+"use client";
 
-import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import React, { useEffect, useState } from "react";
+import axios from "axios";
 import {
-  FaUser,
+  FaCamera,
+  FaCheck,
+  FaEdit,
   FaEnvelope,
   FaIdBadge,
-  FaEdit,
-  FaCheck,
   FaTimes,
-  FaCamera,
-} from 'react-icons/fa';
-import { BACKEND_URL } from '../../../../lib/constants';
-import { getSession } from 'lib/session';
-import { redirect } from 'next/navigation';
-import { useAuth } from '@/app/contexts/AuthContext';
+  FaUser,
+} from "react-icons/fa";
+import { BACKEND_URL } from "../../../../lib/constants";
+import { useAuth } from "@/app/contexts/AuthContext";
 
 interface UserProfile {
   id: number;
@@ -28,10 +26,10 @@ export default function StyledStudentProfile() {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({
-    studentId: '',
-    fullname: '',
-    email: '',
-    avatarUrl: '',
+    studentId: "",
+    fullname: "",
+    email: "",
+    avatarUrl: "",
   });
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -43,7 +41,7 @@ export default function StyledStudentProfile() {
         // ✅ ตรวจสอบ session โดยเรียก users/me
         const res = await axios.get(
           `${process.env.NEXT_PUBLIC_BACKEND_URL}/users/me`,
-          { headers: { Authorization: `Bearer ${accessToken}` } }
+          { headers: { Authorization: `Bearer ${accessToken}` } },
         );
 
         // ✅ หากสำเร็จ → บันทึกข้อมูล user
@@ -52,11 +50,11 @@ export default function StyledStudentProfile() {
           email: res.data.email,
           fullname: res.data.fullname,
           studentId: res.data.studentId,
-          avatarUrl: res.data.avatarUrl || '',
+          avatarUrl: res.data.avatarUrl || "",
         });
       } catch (err) {
         // ❌ ถ้าไม่มี session → redirect ไปหน้า login
-        window.location.href = '/';
+        window.location.href = "/";
       }
     };
 
@@ -67,9 +65,9 @@ export default function StyledStudentProfile() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
 
-    if (id === 'studentId') {
+    if (id === "studentId") {
       // ✅ กรองเฉพาะตัวเลข และจำกัดความยาว 8 ตัว
-      const numericOnly = value.replace(/\D/g, '').slice(0, 8);
+      const numericOnly = value.replace(/\D/g, "").slice(0, 8);
       setForm((prev) => ({ ...prev, studentId: numericOnly }));
     } else {
       setForm((prev) => ({ ...prev, [id]: value }));
@@ -88,9 +86,9 @@ export default function StyledStudentProfile() {
   // ✅ ฟังก์ชันบันทึกข้อมูล
   const save = async () => {
     const formData = new FormData();
-    formData.append('studentId', form.studentId);
-    formData.append('fullname', form.fullname);
-    if (file) formData.append('avatar', file);
+    formData.append("studentId", form.studentId);
+    formData.append("fullname", form.fullname);
+    if (file) formData.append("avatar", file);
 
     await axios.patch(
       `${process.env.NEXT_PUBLIC_BACKEND_URL}/users/me`,
@@ -98,9 +96,9 @@ export default function StyledStudentProfile() {
       {
         headers: {
           Authorization: `Bearer ${accessToken}`,
-          'Content-Type': 'multipart/form-data',
+          "Content-Type": "multipart/form-data",
         },
-      }
+      },
     );
     setEditing(false);
     window.location.reload(); // 🔄 reload เพื่ออัปเดต avatar ที่ preview
@@ -109,7 +107,7 @@ export default function StyledStudentProfile() {
   if (!user) return <div className="p-10">Loading...</div>;
 
   return (
-    <main className="flex-1 px-4 py-8 md:px-12">
+    <main className="flex-1 px-4 py-8 md:px-12 mt-10 sm:mt-0">
       <div className="max-w-3xl mx-auto overflow-hidden bg-white shadow-xl rounded-2xl">
         <div className="p-8 bg-[#F1A661] dark:bg-[#5A9ED1]">
           <div className="flex flex-col items-center md:flex-row">
@@ -120,7 +118,7 @@ export default function StyledStudentProfile() {
                   <img
                     src={
                       previewUrl ||
-                      (form.avatarUrl.startsWith('http')
+                      (form.avatarUrl.startsWith("http")
                         ? form.avatarUrl
                         : `${BACKEND_URL}${form.avatarUrl}`)
                     }
@@ -137,7 +135,7 @@ export default function StyledStudentProfile() {
                   <button
                     type="button"
                     onClick={() =>
-                      document.getElementById('avatarInput')?.click()
+                      document.getElementById("avatarInput")?.click()
                     }
                     className="absolute bottom-0 right-0 p-2 bg-blue-600 rounded-full shadow-lg hover:bg-blue-700"
                     title="เปลี่ยนรูปโปรไฟล์"
@@ -151,7 +149,7 @@ export default function StyledStudentProfile() {
               {editing && (
                 <button
                   onClick={() =>
-                    document.getElementById('avatarInput')?.click()
+                    document.getElementById("avatarInput")?.click()
                   }
                   className="px-4 py-1 text-sm font-bold text-white bg-gray-700 rounded-full shadow hover:bg-gray-800"
                 >
@@ -172,11 +170,11 @@ export default function StyledStudentProfile() {
             <div className="mt-4 text-center md:ml-6 md:text-left md:mt-0">
               <h1 className="text-3xl font-bold text-white">{user.fullname}</h1>
               <p className="text-sm text-white opacity-90">ข้อมูลส่วนตัว</p>
-              <div className="mt-2 space-x-2">
-                <span className="px-3 py-1 text-sm text-black bg-white rounded-full bg-opacity-80">
+              <div className="mt-2 space-x-2 grid grid-cols-1 md:grid-cols-2 gap-1">
+                <span className="px-3 py-1 text-sm text-black bg-white rounded-full bg-opacity-80 text-center">
                   นิสิตปริญญาตรี
                 </span>
-                <span className="px-3 py-1 text-sm text-black bg-white rounded-full bg-opacity-80">
+                <span className="px-3 py-1 text-sm text-black bg-white rounded-full bg-opacity-80 text-center">
                   คณะพยาบาลศาสตร์
                 </span>
               </div>
@@ -236,7 +234,7 @@ export default function StyledStudentProfile() {
                       email: user.email,
                       fullname: user.fullname,
                       studentId: user.studentId,
-                      avatarUrl: user.avatarUrl || '',
+                      avatarUrl: user.avatarUrl || "",
                     });
                     setFile(null);
                   }}

@@ -44,7 +44,7 @@ export default function RequestCard({
         {/* อาจจะลด mt-4 ถ้า checkbox ไม่ทับ */}
         <h3 className="text-base sm:text-lg font-semibold text-[#f46b45] dark:text-orange-400">
           {/* ✅ ตรวจสอบ Optional Chaining ให้ดี */}
-          {req.student?.user?.name || "ไม่พบชื่อนิสิต"} (รหัสนิสิต{" "}
+          {req.student?.user?.name || "ไม่พบชื่อนิสิต"} (รหัสนิสิต
           {req.student?.studentId || "N/A"})
         </h3>
         <div className="grid grid-cols-1 mt-2 mb-4 sm:grid-cols-2 lg:grid-cols-3 gap-y-2 gap-x-6">
@@ -52,7 +52,7 @@ export default function RequestCard({
             <span className="text-sm text-gray-600 dark:text-gray-400">
               หมวดหมู่:
             </span>
-            <span className="ml-1 text-sm font-medium ">
+            <span className="ml-1 text-sm font-medium text-black dark:text-white">
               {req.course || "-"}
             </span>
           </div>
@@ -60,7 +60,7 @@ export default function RequestCard({
             <span className="text-sm text-gray-600 dark:text-gray-400">
               หมวดหมู่ย่อย:
             </span>
-            <span className="ml-1 text-sm font-medium ">
+            <span className="ml-1 text-sm font-medium text-black dark:text-white">
               {req.subCourse || "-"}
             </span>
           </div>
@@ -69,7 +69,9 @@ export default function RequestCard({
               <span className="text-sm text-gray-600 dark:text-gray-400">
                 ในวิชา:
               </span>
-              <span className="ml-1 text-sm font-medium">{req.subject}</span>
+              <span className="ml-1 text-sm font-medium text-black dark:text-white">
+                {req.subject}
+              </span>
             </div>
           )}
           {req.fieldValues &&
@@ -89,11 +91,11 @@ export default function RequestCard({
               ),
             )}
         </div>
-        <div className="mt-1 mb-1 text-xs text-gray-400 dark:text-gray-500">
+        <div className="mt-1 mb-1 text-xs text-gray-600 dark:text-gray-400">
           {" "}
           {/* ปรับขนาด Font */}
           <span className="">วันที่ส่งข้อมูล:</span>
-          <span className="ml-1">
+          <span className="ml-1 text-black dark:text-white">
             {new Date(req.createdAt).toLocaleDateString("th-TH", {
               // ✅ เพิ่ม Options ให้ toLocaleDateString
               year: "numeric",

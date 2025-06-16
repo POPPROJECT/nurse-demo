@@ -134,15 +134,22 @@ function getHtmlContent(data: PdfData) {
       const subCourseRows = exps
         .map((exp: Experience & { caseNumber: number }) => {
           let experienceCell = `<td class="p-2 border border-slate-300 pl-6">${exp.subCourse || ""}</td>`;
-          let inSubjectDisplayValue = "";
-          const subjectValue = exp.subject ?? "";
-          const inSubjectCountValue = exp.inSubjectCount ?? "";
-
-          if (subjectValue !== "" || inSubjectCountValue !== "") {
-            inSubjectDisplayValue = `${subjectValue} / ${inSubjectCountValue}`;
-          }
-          let inSubjectCell = `<td class="p-2 text-center border border-slate-300">${inSubjectDisplayValue}</td>`;
           let alwaycourseCell = `<td class="p-2 text-center border border-slate-300">${exp.alwaycourse || ""}</td>`;
+
+          // --- เริ่ม Logic ใหม่สำหรับช่อง "ในวิชา" ---
+          const parts = [];
+          if (exp.subject) {
+            parts.push(exp.subject);
+          }
+          // ใช้ != null เพื่อดักทั้ง null และ undefined
+          if (exp.inSubjectCount != null) {
+            parts.push(exp.inSubjectCount);
+          }
+          // เข้าร่วมเฉพาะส่วนที่มีข้อมูล และถ้าไม่มีเลยให้เป็นค่าว่าง
+          const inSubjectDisplayValue =
+            parts.length > 0 ? parts.join(" / ") : "";
+          let inSubjectCell = `<td class="p-2 text-center border border-slate-300">${inSubjectDisplayValue}</td>`;
+          // --- จบ Logic ใหม่ ---
 
           if (exp.subCourse && exp.subCourse === lastSubCourse) {
             experienceCell = `<td class="p-2 border border-slate-300 pl-6"></td>`;
@@ -150,22 +157,24 @@ function getHtmlContent(data: PdfData) {
             alwaycourseCell = `<td class="p-2 text-center border border-slate-300"></td>`;
           }
           lastSubCourse = exp.subCourse;
+
           return `
-      <tr>
-          ${experienceCell}
-          ${inSubjectCell}
-          ${alwaycourseCell}
-          <td class="p-2 text-center border border-slate-300">${exp.caseNumber}</td>
-          ${data.fields
-            .map((f) => {
-              const value =
-                exp.fieldValues.find((fv) => fv.fieldId === f.id)?.value || "";
-              return `<td class="p-2 text-center border border-slate-300">${value}</td>`;
-            })
-            .join("")}
-          <td class="p-2 border border-slate-300">${exp.approverName}</td>
-        </tr>
-      `;
+            <tr>
+              ${experienceCell}
+              ${inSubjectCell}
+              ${alwaycourseCell}
+              <td class="p-2 text-center border border-slate-300">${exp.caseNumber}</td>
+              ${data.fields
+                .map((f) => {
+                  const value =
+                    exp.fieldValues.find((fv) => fv.fieldId === f.id)?.value ||
+                    "";
+                  return `<td class="p-2 text-center border border-slate-300">${value}</td>`;
+                })
+                .join("")}
+              <td class="p-2 border border-slate-300">${exp.approverName}</td>
+            </tr>
+          `;
         })
         .join("");
 
@@ -265,7 +274,7 @@ export async function POST(req: NextRequest) {
       printBackground: true,
       displayHeaderFooter: true,
       headerTemplate: `
-        <div style="font-family: 'Sarabun', sans-serif; font-size: 10px; color: #808080; padding: 0 30px; width: 100%; display: flex; justify-content: space-between;">
+        <div style="font-family: sans-serif; font-size: 10px; color: #555; padding: 0 30px; width: 100%; display: flex; justify-content: space-between;">
             <span>ข้อมูลเมื่อวันที่: ${currentDate}</span>
             <span>หน้า <span class="pageNumber"></span> / <span class="totalPages"></span></span>
         </div>

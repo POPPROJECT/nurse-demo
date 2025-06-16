@@ -296,7 +296,7 @@ export default function ApprovedPage() {
   }
 
   return (
-    <div className="container max-w-6xl px-4 py-8 mx-auto mt-10 sm:mt-0">
+    <div className="container max-w-6xl px-4 py-8 mx-auto">
       <div className="p-6 mb-6 text-white bg-[linear-gradient(to_right,#f46b45_0%,#eea849_100%)] dark:bg-[#1E293B] rounded-xl shadow-md hover:shadow-lg transition-all duration-300 ease-in-out hover:-translate-y-1 ">
         <h1 className="text-xl font-semibold sm:text-2xl">รออนุมัติรายการ</h1>
       </div>
@@ -316,7 +316,7 @@ export default function ApprovedPage() {
             <div className="flex items-center px-4">
               <label
                 htmlFor="limit"
-                className="mr-2 text-sm font-medium dark:text-white"
+                className="mr-2 text-sm font-medium dark:text-white text-gray-700"
               >
                 แสดง:
               </label>

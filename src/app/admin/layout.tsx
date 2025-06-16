@@ -34,7 +34,7 @@ export default async function AdminLayout({
         <NavbarAdmin />
         <div className="flex flex-1">
           <SidenavAdmin />
-          <main className="flex-1 w-full bg-background text-foreground">
+          <main className="flex-1 w-full bg-background text-foreground mt-20 sm:mt-0 p-6">
             {children}
           </main>
         </div>

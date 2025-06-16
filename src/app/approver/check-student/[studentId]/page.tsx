@@ -22,7 +22,7 @@ export default function StudentProgressPage() {
   if (!token || !studentId) return <div>Loading...</div>;
 
   return (
-    <div className="container max-w-6xl px-4 py-8 mx-auto mt-10 sm:mt-0">
+    <div className="container max-w-6xl px-4 py-8 mx-auto">
       {/* ปุ่มย้อนกลับ */}
       <Link
         href="/approver/check-student"

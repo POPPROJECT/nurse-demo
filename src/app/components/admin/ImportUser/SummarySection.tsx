@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 
 interface Props {
   total: number;
@@ -8,7 +8,7 @@ interface Props {
   onSearch: (val: string) => void;
   onConfirm: () => void;
   isValid: boolean;
-  onFilterChange: (val: 'all' | 'valid' | 'invalid') => void;
+  onFilterChange: (val: "all" | "valid" | "invalid") => void;
 }
 
 export default function SummarySection({
@@ -47,12 +47,12 @@ export default function SummarySection({
             type="text"
             onChange={(e) => onSearch(e.target.value)}
             placeholder="🔍 ค้นหา..."
-            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg sm:w-64 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg sm:w-64 focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-500 dark:text-gray-500"
           />
           <select
-            className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black dark:text-black"
             onChange={(e) =>
-              onFilterChange(e.target.value as 'all' | 'valid' | 'invalid')
+              onFilterChange(e.target.value as "all" | "valid" | "invalid")
             }
           >
             <option value="all">ทั้งหมด</option>
@@ -64,8 +64,8 @@ export default function SummarySection({
             disabled={!isValid}
             className={`px-4 py-2 text-sm rounded-lg font-medium ${
               isValid
-                ? 'bg-green-600 text-white hover:bg-green-700'
-                : 'bg-gray-300 text-gray-600 cursor-not-allowed'
+                ? "bg-green-600 text-white hover:bg-green-700"
+                : "bg-gray-300 text-gray-600 cursor-not-allowed"
             }`}
           >
             ✅ นำเข้ารายการทั้งหมด

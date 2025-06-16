@@ -122,7 +122,7 @@ export default function TableDisplay({
               {/* Data for mobile view (using labels) */}
               <div className="col-span-2 md:col-span-2 text-sm">
                 <span className="font-semibold md:hidden text-gray-800 dark:text-gray-200">
-                  รหัสนิสิต:{" "}
+                  รหัสนิสิต:
                 </span>
                 <span className="text-gray-800 dark:text-gray-200">
                   {u.studentId || "-"}
@@ -130,7 +130,7 @@ export default function TableDisplay({
               </div>
               <div className="col-span-2 md:col-span-3 text-sm">
                 <span className="font-semibold md:hidden text-gray-800 dark:text-gray-200">
-                  ชื่อ:{" "}
+                  ชื่อ:
                 </span>
                 <span className="text-gray-800 dark:text-gray-200">
                   {u.fullName}
@@ -138,7 +138,7 @@ export default function TableDisplay({
               </div>
               <div className="col-span-2 md:col-span-3 text-sm">
                 <span className="font-semibold md:hidden text-gray-800 dark:text-gray-200">
-                  อีเมล:{" "}
+                  อีเมล:
                 </span>
                 <span className="text-gray-800 dark:text-gray-200 break-all">
                   {u.email}
@@ -165,11 +165,10 @@ export default function TableDisplay({
               {/* Action buttons */}
               <div className="col-span-1 md:col-span-2 flex justify-end md:justify-center items-center gap-1">
                 <button
-                  onClick={() =>
-                    router.push(
-                      `/admin/check-student/${u.id}?name=${encodeURIComponent(u.fullName)}`,
-                    )
-                  }
+                  onClick={() => {
+                    const studentIdParam = encodeURIComponent(u.studentId);
+                    window.location.href = `/admin/check-student/${u.id}?name=${encodeURIComponent(u.fullName)}&studentId=${studentIdParam}`;
+                  }}
                   className="p-2 text-white bg-blue-500 rounded-full hover:bg-blue-600"
                   title="ตรวจสอบความคืบหน้า"
                 >

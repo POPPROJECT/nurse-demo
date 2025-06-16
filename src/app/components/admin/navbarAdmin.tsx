@@ -153,32 +153,13 @@ export default function NavbarAdmin() {
               </div>
             )}
 
-            {/* Dropdown สำหรับความคืบหน้า */}
-            <button
-              className="flex items-center w-full py-2 space-x-2 text-left rounded-md hover:bg-gray-200"
-              onClick={() =>
-                setIsDashboardDropdownOpen(!isDashboardDropdownOpen)
-              }
+            <Link
+              href="/admin/dashboard"
+              className="flex items-center py-2 space-x-2 rounded-md hover:bg-gray-200 "
             >
               <TbReport />
               <span>ภาพรวมความคืบหน้า</span>
-            </button>
-            {isDashboardDropdownOpen && (
-              <div className="pl-6">
-                <Link
-                  href="/admin/dashboard-subject"
-                  className="block px-4 py-2 rounded-md hover:bg-gray-200"
-                >
-                  ภาพรวมความคืบหน้ารายวิชา
-                </Link>
-                <Link
-                  href="/admin/dashboard-student" // แก้ไข Path นี้ให้ถูกต้องตามที่คุณต้องการ
-                  className="block px-4 py-2 rounded-md hover:bg-gray-200"
-                >
-                  ภาพรวมความคืบหน้าตลอดหลักสูตร
-                </Link>
-              </div>
-            )}
+            </Link>
 
             <Link
               href="/admin/logAdmin"

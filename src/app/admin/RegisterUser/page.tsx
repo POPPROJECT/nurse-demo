@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import React, { useEffect, useState } from 'react';
-import axios from 'axios';
-import Swal from 'sweetalert2';
-import { FaCheck } from 'react-icons/fa';
-import router from 'next/router';
-import { useAuth } from '@/app/contexts/AuthContext';
+import React, { useEffect, useState } from "react";
+import axios from "axios";
+import Swal from "sweetalert2";
+import { FaCheck } from "react-icons/fa";
+import router from "next/router";
+import { useAuth } from "@/app/contexts/AuthContext";
 
 export default function RegisterUser() {
   const { accessToken } = useAuth();
@@ -19,23 +19,23 @@ export default function RegisterUser() {
           },
         });
       } catch (err) {
-        router.push('/');
+        router.push("/");
       }
     };
     checkSession();
   }, []);
 
   const [role, setRole] = useState<
-    'student' | 'approverIn' | 'approverOut' | 'experienceManager'
-  >('student');
+    "student" | "approverIn" | "approverOut" | "experienceManager"
+  >("student");
 
   const [form, setForm] = useState({
-    name: '',
-    email: '',
-    password: '',
-    studentId: '',
-    hospital: '',
-    ward: '',
+    name: "",
+    email: "",
+    password: "",
+    studentId: "",
+    hospital: "",
+    ward: "",
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -49,9 +49,9 @@ export default function RegisterUser() {
 
     let fullName = name;
 
-    if (role === 'approverOut') {
+    if (role === "approverOut") {
       if (!hospital || !ward) {
-        Swal.fire('กรุณากรอกโรงพยาบาลและหอผู้ป่วย', '', 'error');
+        Swal.fire("กรุณากรอกโรงพยาบาลและหอผู้ป่วย", "", "error");
         return;
       }
       fullName = `${hospital}-${ward}`;
@@ -60,23 +60,23 @@ export default function RegisterUser() {
     if (
       !fullName ||
       !email ||
-      ((role === 'approverOut' || role === 'experienceManager') && !password)
+      ((role === "approverOut" || role === "experienceManager") && !password)
     ) {
-      Swal.fire('กรุณากรอกข้อมูลให้ครบถ้วน', '', 'error');
+      Swal.fire("กรุณากรอกข้อมูลให้ครบถ้วน", "", "error");
       return;
     }
 
     if (
-      (role === 'student' || role === 'approverIn') &&
-      !email.endsWith('@nu.ac.th')
+      (role === "student" || role === "approverIn") &&
+      !email.endsWith("@nu.ac.th")
     ) {
-      Swal.fire('กรุณาใช้อีเมลที่ลงท้ายด้วย @nu.ac.th', '', 'error');
+      Swal.fire("กรุณาใช้อีเมลที่ลงท้ายด้วย @nu.ac.th", "", "error");
       return;
     }
 
-    if (role === 'student') {
+    if (role === "student") {
       if (!/^\d{8}$/.test(studentId)) {
-        Swal.fire('กรุณากรอกรหัสนิสิตให้ถูกต้อง (8 หลัก)', '', 'error');
+        Swal.fire("กรุณากรอกรหัสนิสิตให้ถูกต้อง (8 หลัก)", "", "error");
         return;
       }
     }
@@ -85,22 +85,22 @@ export default function RegisterUser() {
       name: fullName,
       email,
       role:
-        role === 'student'
-          ? 'STUDENT'
-          : role === 'approverIn'
-          ? 'APPROVER_IN'
-          : role === 'approverOut'
-          ? 'APPROVER_OUT'
-          : 'EXPERIENCE_MANAGER',
+        role === "student"
+          ? "STUDENT"
+          : role === "approverIn"
+            ? "APPROVER_IN"
+            : role === "approverOut"
+              ? "APPROVER_OUT"
+              : "EXPERIENCE_MANAGER",
       provider:
-        role === 'student' || role === 'approverIn' ? 'GOOGLE' : 'LOCAL',
+        role === "student" || role === "approverIn" ? "GOOGLE" : "LOCAL",
     };
 
-    if (dto.provider === 'LOCAL') {
+    if (dto.provider === "LOCAL") {
       dto.password = password;
     }
 
-    if (role === 'student') {
+    if (role === "student") {
       dto.studentId = studentId;
     }
 
@@ -113,31 +113,31 @@ export default function RegisterUser() {
           headers: {
             Authorization: `Bearer ${accessToken}`, // Token ของ Admin ผู้สร้างบัญชี
           },
-        }
+        },
       );
-      Swal.fire('เพิ่มบัญชีผู้ใช้สำเร็จ', '', 'success');
+      Swal.fire("เพิ่มบัญชีผู้ใช้สำเร็จ", "", "success");
 
       setForm({
-        name: '',
-        email: '',
-        password: '',
-        studentId: '',
-        hospital: '',
-        ward: '',
+        name: "",
+        email: "",
+        password: "",
+        studentId: "",
+        hospital: "",
+        ward: "",
       });
     } catch (err: any) {
       Swal.fire(
-        'เกิดข้อผิดพลาด',
+        "เกิดข้อผิดพลาด",
         Array.isArray(err?.response?.data?.message)
-          ? err.response.data.message.join(', ')
-          : err?.response?.data?.message || 'ไม่สามารถสมัครสมาชิกได้',
-        'error'
+          ? err.response.data.message.join(", ")
+          : err?.response?.data?.message || "ไม่สามารถสมัครสมาชิกได้",
+        "error",
       );
     }
   };
 
   return (
-    <div className="container max-w-6xl px-4 py-8 mx-auto mt-10 sm:mt-0">
+    <div className="container max-w-6xl px-4 py-8 mx-auto">
       <div className="p-6 mb-6 text-white bg-[linear-gradient(to_right,#f46b45_0%,#eea849_100%)] dark:bg-[#1E293B] rounded-xl shadow-md hover:shadow-lg transition-all duration-300 ease-in-out hover:-translate-y-1 ">
         <h1 className="text-xl font-semibold sm:text-2xl">เพิ่มบัญชีผู้ใช้</h1>
       </div>
@@ -170,7 +170,7 @@ export default function RegisterUser() {
             </div>
 
             <div className="space-y-4">
-              {role === 'approverOut' && (
+              {role === "approverOut" && (
                 <>
                   <div>
                     <label
@@ -203,7 +203,7 @@ export default function RegisterUser() {
                 </>
               )}
 
-              {role !== 'approverOut' && (
+              {role !== "approverOut" && (
                 <div>
                   <label
                     htmlFor="name"
@@ -225,29 +225,29 @@ export default function RegisterUser() {
                   htmlFor="email"
                   className="block mb-1 text-gray-700 dark:text-white"
                 >
-                  {role === 'student' || role === 'approverIn'
-                    ? 'อีเมล'
-                    : 'ไอดีผู้ใช้งาน'}
+                  {role === "student" || role === "approverIn"
+                    ? "อีเมล"
+                    : "ไอดีผู้ใช้งาน"}
                 </label>
                 <input
                   type={
-                    role === 'student' || role === 'approverIn'
-                      ? 'email'
-                      : 'text'
+                    role === "student" || role === "approverIn"
+                      ? "email"
+                      : "text"
                   }
                   id="email"
                   value={form.email}
                   onChange={handleChange}
                   placeholder={
-                    role === 'student' || role === 'approverIn'
-                      ? 'yourname@nu.ac.th'
-                      : 'username'
+                    role === "student" || role === "approverIn"
+                      ? "yourname@nu.ac.th"
+                      : "username"
                   }
                   className="w-full px-4 py-2 text-black border border-gray-300 rounded-lg bg-gray-50 "
                 />
               </div>
 
-              {role === 'student' && (
+              {role === "student" && (
                 <div>
                   <label
                     htmlFor="studentId"
@@ -261,7 +261,7 @@ export default function RegisterUser() {
                     inputMode="numeric"
                     value={form.studentId}
                     onChange={(e) => {
-                      const val = e.target.value.replace(/\D/g, '');
+                      const val = e.target.value.replace(/\D/g, "");
                       if (val.length <= 8) {
                         setForm((prev) => ({ ...prev, studentId: val }));
                       }
@@ -271,7 +271,7 @@ export default function RegisterUser() {
                 </div>
               )}
 
-              {(role === 'approverOut' || role === 'experienceManager') && (
+              {(role === "approverOut" || role === "experienceManager") && (
                 <div>
                   <label
                     htmlFor="password"

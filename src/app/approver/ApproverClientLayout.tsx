@@ -1,12 +1,13 @@
-'use client';
-import React from 'react';
-import NavbarApprover from '@/app/components/approver/NavbarApprover';
-import SidebarApprover from '@/app/components/approver/SidebarApprover';
-// import Footer from '@/app/components/Footer';
+// app/approver/ApproverClientLayout.tsx
+"use client";
+import React from "react";
+import NavbarApprover from "@/app/components/approver/NavbarApprover";
+import SidebarApprover from "@/app/components/approver/SidebarApprover";
+import Footer from "@/app/components/Footer"; // ✅ 1. Import Footer ของคุณ
 
 interface ApproverClientLayoutProps {
   children: React.ReactNode;
-  role: 'APPROVER_IN' | 'APPROVER_OUT';
+  role: "APPROVER_IN" | "APPROVER_OUT";
 }
 
 export default function ApproverClientLayout({
@@ -14,13 +15,20 @@ export default function ApproverClientLayout({
   role,
 }: ApproverClientLayoutProps) {
   return (
-    <div className="min-h-screen bg-gray-100 dark:bg-[#0F172A] mt-10 sm:mt-0">
+    // ✅ 2. ทำให้ div หลักเป็น flex container แนวตั้ง และสูงเต็มหน้าจอ
+    <div className="flex flex-col min-h-screen bg-gray-100 dark:bg-[#0F172A]">
       <NavbarApprover role={role} />
-      <div className="flex flex-col sm:flex-row">
+
+      {/* ✅ 3. สร้าง container กลางให้ยืดขยายเต็มพื้นที่ที่เหลือในแนวสูง */}
+      <div className="flex flex-1">
         <SidebarApprover role={role} />
-        <main className="flex-1 p-6">{children}</main>
+
+        {/* ✅ 4. ให้ main ยืดขยายในแนวนอนและจัดการ margin ให้ถูกต้อง */}
+        <main className="flex-1 p-6 mt-10 sm:mt-0">{children}</main>
       </div>
-      {/* <Footer /> */}
+
+      {/* ✅ 5. นำ Footer กลับมาใช้งานและวางไว้นอกสุด เพื่อให้ถูกดันลงไปอยู่ข้างล่าง */}
+      <Footer />
     </div>
   );
 }

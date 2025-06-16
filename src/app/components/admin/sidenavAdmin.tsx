@@ -135,32 +135,13 @@ function SidenavAdmin() {
         </div>
 
         <div>
-          <MenuItem
-            isCollapsed={isCollapsed}
-            icon={<TbReport />}
-            label="ภาพรวมความคืบหน้า"
-            onClick={() => setIsDashboardDropdownOpen(!isDashboardDropdownOpen)}
-          />
-          {!isCollapsed && isDashboardDropdownOpen && (
-            <ul className="flex flex-col gap-2 pl-8 mt-2">
-              <li>
-                <Link
-                  href="/admin/dashboard-subject"
-                  className="block px-4 py-2 rounded-lg bg-[#555555] text-white hover:bg-[#da935a] hover:text-black transition"
-                >
-                  ภาพรวมความคืบหน้ารายวิชา
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/admin/dashboard-student"
-                  className="block px-4 py-2 rounded-lg bg-[#555555] text-white hover:bg-[#da935a] hover:text-black transition"
-                >
-                  ภาพรวมความคืบหน้าตลอดหลักสูตร
-                </Link>
-              </li>
-            </ul>
-          )}
+          <Link href="/admin/dashboard" className="text-black hover:text-white">
+            <MenuItem
+              isCollapsed={isCollapsed}
+              icon={<TbReport />}
+              label="ภาพรวมความคืบหน้า"
+            />
+          </Link>
         </div>
 
         <Link href="/admin/logAdmin" className="text-black hover:text-white">
@@ -170,15 +151,17 @@ function SidenavAdmin() {
             label="ตรวจสอบ log"
           />
         </Link>
-        <MenuItem
-          isCollapsed={isCollapsed}
-          icon={<MdLogout />}
-          label="ออกจากระบบ"
-          onClick={async () => {
-            await fetch("/api/auth/signout", { method: "POST" });
-            window.location.href = "/";
-          }}
-        />
+        <div className="mb-6">
+          <MenuItem
+            isCollapsed={isCollapsed}
+            icon={<MdLogout />}
+            label="ออกจากระบบ"
+            onClick={async () => {
+              await fetch("/api/auth/signout", { method: "POST" });
+              window.location.href = "/";
+            }}
+          />
+        </div>
       </nav>
     </aside>
   );

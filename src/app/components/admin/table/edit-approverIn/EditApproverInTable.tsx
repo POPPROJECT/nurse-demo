@@ -227,17 +227,16 @@ export default function EditApproverInTable({
         toggleSortAction={toggleSort}
         handleEditAction={handleEdit}
         handleDeleteAction={handleDelete}
+        accessToken={accessToken}
       />
-
-      <div className="text-sm text-gray-700 dark:text-gray-300">
-        แสดง {paged.length} จาก {filtered.length} รายการ
-      </div>
 
       <TablePagination
         pageIndex={pageIndex}
         setPageIndexAction={setPageIndex}
         totalPages={totalPages}
         getPageNumbersAction={getPageNumbers}
+        totalItems={filtered.length}
+        pageSize={perPage}
       />
     </div>
   );

@@ -1,17 +1,17 @@
-'use client';
+"use client";
 
-import React, { useActionState, useEffect, useState } from 'react';
-import axios from 'axios';
+import React, { useEffect, useState } from "react";
+import axios from "axios";
 import {
-  FaUser,
-  FaEnvelope,
-  FaEdit,
-  FaCheck,
-  FaTimes,
   FaCamera,
-} from 'react-icons/fa';
-import { BACKEND_URL } from '../../../../lib/constants';
-import { useAuth } from '@/app/contexts/AuthContext';
+  FaCheck,
+  FaEdit,
+  FaEnvelope,
+  FaTimes,
+  FaUser,
+} from "react-icons/fa";
+import { BACKEND_URL } from "../../../../lib/constants";
+import { useAuth } from "@/app/contexts/AuthContext";
 
 interface UserProfile {
   id: number;
@@ -24,9 +24,9 @@ export default function AdminProfilePage() {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({
-    fullname: '',
-    email: '',
-    avatarUrl: '',
+    fullname: "",
+    email: "",
+    avatarUrl: "",
   });
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -39,17 +39,17 @@ export default function AdminProfilePage() {
           `${process.env.NEXT_PUBLIC_BACKEND_URL}/users/me`,
           {
             headers: { Authorization: `Bearer ${accessToken}` },
-          }
+          },
         );
         setUser(res.data);
         setForm({
           email: res.data.email,
           fullname: res.data.fullname,
-          avatarUrl: res.data.avatarUrl || '',
+          avatarUrl: res.data.avatarUrl || "",
         });
       } catch (err) {
         // ❌ ถ้าไม่มี session → redirect ไปหน้า login
-        window.location.href = '/';
+        window.location.href = "/";
       }
     };
     fetchUser();
@@ -70,8 +70,8 @@ export default function AdminProfilePage() {
 
   const save = async () => {
     const formData = new FormData();
-    formData.append('fullname', form.fullname);
-    if (file) formData.append('avatar', file);
+    formData.append("fullname", form.fullname);
+    if (file) formData.append("avatar", file);
 
     await axios.patch(
       `${process.env.NEXT_PUBLIC_BACKEND_URL}/users/me`,
@@ -79,9 +79,9 @@ export default function AdminProfilePage() {
       {
         headers: {
           Authorization: `Bearer ${accessToken}`,
-          'Content-Type': 'multipart/form-data',
+          "Content-Type": "multipart/form-data",
         },
-      }
+      },
     );
     setEditing(false);
     window.location.reload();
@@ -90,7 +90,7 @@ export default function AdminProfilePage() {
   if (!user) return <div className="p-10">Loading...</div>;
 
   return (
-    <main className="flex-1 px-4 py-8 mt-10 md:px-12 sm:mt-0">
+    <main className="flex-1 px-4 py-8 md:px-12">
       <div className="max-w-3xl mx-auto overflow-hidden bg-white shadow-xl rounded-2xl">
         <div className="p-8 bg-[#F1A661] dark:bg-[#5A9ED1]">
           <div className="flex flex-col items-center md:flex-row">
@@ -101,7 +101,7 @@ export default function AdminProfilePage() {
                   <img
                     src={
                       previewUrl ||
-                      (form.avatarUrl.startsWith('http')
+                      (form.avatarUrl.startsWith("http")
                         ? form.avatarUrl
                         : `${BACKEND_URL}${form.avatarUrl}`)
                     }
@@ -118,7 +118,7 @@ export default function AdminProfilePage() {
                   <button
                     type="button"
                     onClick={() =>
-                      document.getElementById('avatarInput')?.click()
+                      document.getElementById("avatarInput")?.click()
                     }
                     className="absolute bottom-0 right-0 p-2 bg-blue-600 rounded-full shadow-lg hover:bg-blue-700"
                     title="เปลี่ยนรูปโปรไฟล์"
@@ -132,7 +132,7 @@ export default function AdminProfilePage() {
               {editing && (
                 <button
                   onClick={() =>
-                    document.getElementById('avatarInput')?.click()
+                    document.getElementById("avatarInput")?.click()
                   }
                   className="px-4 py-1 text-sm font-bold text-white bg-gray-700 rounded-full shadow hover:bg-gray-800"
                 >
@@ -204,7 +204,7 @@ export default function AdminProfilePage() {
                     setForm({
                       email: user.email,
                       fullname: user.fullname,
-                      avatarUrl: user.avatarUrl || '',
+                      avatarUrl: user.avatarUrl || "",
                     });
                     setFile(null);
                   }}

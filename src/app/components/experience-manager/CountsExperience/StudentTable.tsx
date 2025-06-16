@@ -2,6 +2,7 @@
 import React from "react";
 import { FaPlus, FaSort, FaSortDown, FaSortUp } from "react-icons/fa";
 import { GrView } from "react-icons/gr";
+import { useRouter } from "next/navigation";
 
 type Student = {
   id: number;
@@ -19,10 +20,16 @@ type Props = {
   onSortAction: (col: "studentId" | "name" | "percent") => void;
 };
 
-const HEADERS: { key: Props["sortBy"]; label: string }[] = [
-  { key: "studentId", label: "รหัสนิสิต" },
-  { key: "name", label: "ชื่อ-นามสกุล" },
-  { key: "percent", label: "ความคืบหน้า" },
+const getProgressBarColor = (percent: number) => {
+  if (percent >= 100) return "bg-green-500";
+  if (percent >= 50) return "bg-blue-500";
+  return "bg-amber-500";
+};
+
+const HEADERS: { key: Props["sortBy"]; label: string; span: number }[] = [
+  { key: "studentId", label: "รหัสนิสิต", span: 3 },
+  { key: "name", label: "ชื่อ-นามสกุล", span: 4 },
+  { key: "percent", label: "ความคืบหน้า", span: 3 },
 ];
 
 export default function StudentTable({
@@ -31,125 +38,104 @@ export default function StudentTable({
   order,
   onSortAction,
 }: Props) {
+  const router = useRouter();
+
   return (
-    <div className="mt-6 overflow-x-auto">
-      <table className="min-w-full bg-white shadow dark:bg-gray-500 whitespace-nowrap">
-        <thead className="bg-gray-300 dark:bg-gray-800">
-          <tr>
-            {HEADERS.map((h) => (
-              <th
-                key={h.key}
-                onClick={() => onSortAction(h.key)}
-                className="px-6 py-3 text-base font-medium text-left text-gray-800 uppercase cursor-pointer select-none dark:text-gray-200"
-              >
-                <div className="inline-flex items-center space-x-1">
-                  <span>
-                    <strong>{h.label}</strong>
-                  </span>
-                  <span className="p-1 transition-colors rounded-full group-hover:bg-indigo-100">
-                    {sortBy !== h.key && (
-                      <FaSort className="text-gray-400 dark:text-gray-500" />
-                    )}
-                    {sortBy === h.key && order === "asc" && (
-                      <FaSortUp className="text-indigo-600" />
-                    )}
-                    {sortBy === h.key && order === "desc" && (
-                      <FaSortDown className="text-indigo-600" />
-                    )}
+    <div className="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-gray-200 dark:border-slate-700">
+      {/* Desktop Header */}
+      <div className="hidden md:grid md:grid-cols-12 gap-4 px-6 py-3 font-semibold text-sm text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-slate-700/50 rounded-t-lg">
+        {HEADERS.map((h) => (
+          <div
+            key={h.key}
+            onClick={() => onSortAction(h.key)}
+            // --- ✅ 1. แก้ไข col-span ใน Header ---
+            className={`col-span-${h.span} cursor-pointer group flex items-center gap-2`}
+          >
+            <span>{h.label}</span>
+            <span className="p-1 transition-colors rounded-full group-hover:bg-indigo-100 dark:group-hover:bg-slate-600">
+              {sortBy !== h.key && (
+                <FaSort className="text-gray-400 dark:text-gray-500" />
+              )}
+              {sortBy === h.key && order === "asc" && (
+                <FaSortUp className="text-indigo-600 dark:text-indigo-400" />
+              )}
+              {sortBy === h.key && order === "desc" && (
+                <FaSortDown className="text-indigo-600 dark:text-indigo-400" />
+              )}
+            </span>
+          </div>
+        ))}
+        {/* จัดการ: 3 + 4 + 3 = 10, เหลือ 2 col */}
+        <div className="col-span-2 text-center">จัดการ</div>
+      </div>
+
+      {/* List of Students (Card on mobile) */}
+      <div className="flex flex-col">
+        {data.length > 0 ? (
+          data.map((s, index) => (
+            <div
+              key={s.id}
+              className={`flex flex-col md:grid md:grid-cols-12 md:gap-x-4 p-4 md:items-center text-gray-800 dark:text-gray-300 ${index < data.length - 1 ? "border-b border-gray-200 dark:border-slate-700" : ""}`}
+            >
+              {/* --- ✅ 2. แก้ไข col-span ใน Body ให้ตรงกับ Header --- */}
+              <div className="md:col-span-3 text-sm">
+                <span className="font-semibold md:hidden">รหัสนิสิต: </span>
+                {s.studentId}
+              </div>
+              <div className="md:col-span-4 text-sm">
+                <span className="font-semibold md:hidden">ชื่อ: </span>
+                {s.name}
+              </div>
+
+              <div className="mt-2 md:mt-0 md:col-span-3 text-sm">
+                <span className="font-semibold md:hidden">ความคืบหน้า: </span>
+                <div className="flex items-center gap-3">
+                  <div className="flex-1 h-2 bg-gray-200 rounded-full dark:bg-slate-600">
+                    <div
+                      className={`h-2 rounded-full transition-all duration-500 ${getProgressBarColor(s.percent)}`}
+                      style={{ width: `${s.percent}%` }}
+                    />
+                  </div>
+                  <span className="font-medium text-xs whitespace-nowrap">
+                    {s.percent}% ({s.done}/{s.total})
                   </span>
                 </div>
-              </th>
-            ))}
-            <th className="px-6 py-3 text-sm font-semibold text-center text-gray-800 dark:text-gray-200">
-              จัดการ
-            </th>
-          </tr>
-        </thead>
+              </div>
 
-        <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-          {data.length > 0 ? (
-            data.map((s) => (
-              <tr
-                key={s.id}
-                className="even:bg-gray-200 dark:even:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600"
-              >
-                <td className="px-6 py-4 text-gray-800 whitespace-nowrap dark:text-gray-200">
-                  {s.studentId}
-                </td>
-                <td className="px-6 py-4 text-gray-800 whitespace-nowrap dark:text-gray-200">
-                  {s.name}
-                </td>
-                <td className="px-6 py-4">
-                  <div className="flex items-center space-x-2">
-                    <div className="flex-1 h-2 overflow-hidden bg-gray-400 rounded dark:bg-gray-300">
-                      <div
-                        className="h-2 transition-all bg-indigo-600"
-                        style={{ width: `${s.percent}%` }}
-                      />
-                    </div>
-                    <span className="text-xs font-medium text-gray-800 dark:text-gray-200 whitespace-nowrap">
-                      {s.percent}%
-                    </span>
-                  </div>
-                </td>
-                <td className="flex justify-center px-6 py-4 text-center">
-                  {/* ปุ่มเพิ่มประสบการณ์ */}
-                  <button
-                    className="
-                      px-3 py-1 text-sm font-medium rounded-lg transition-colors duration-200
-                      flex items-center justify-center space-x-1.5
-                    bg-blue-500 text-white
-                    hover:bg-blue-600
-                      focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50
-                    dark:bg-blue-700 dark:hover:bg-blue-600 dark:focus:ring-blue-700
-                    "
-                    onClick={() => {
-                      const nameParam = encodeURIComponent(s.name);
-
-                      // เปลี่ยนจาก s.id เป็น s.studentId
-                      window.location.href = `/experience-manager/CountsExperience/${encodeURIComponent(
-                        s.studentId,
-                      )}?name=${nameParam}`;
-                    }}
-                  >
-                    <FaPlus className="w-3 h-3" />
-                    <span>เพิ่มประสบการณ์</span>
-                  </button>
-
-                  {/* ปุ่มดูประวัติ */}
-                  <button
-                    className="
-                      px-3 py-1 ml-3 text-sm font-medium rounded-lg transition-colors duration-200
-                      flex items-center justify-center space-x-1.5
-                    bg-gray-500 text-white hover:bg-gray-600
-                      focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50
-                    dark:bg-gray-600 dark:hover:bg-gray-500 dark:focus:ring-gray-600
-                    "
-                    onClick={() => {
-                      const nameParam = encodeURIComponent(s.name);
-                      window.location.href = `/experience-manager/CountsExperience/history/${encodeURIComponent(
-                        s.studentId,
-                      )}?name=${nameParam}`;
-                    }}
-                  >
-                    <GrView className="w-3 h-3" />
-                    <span>ดูประวัติ</span>
-                  </button>
-                </td>
-              </tr>
-            ))
-          ) : (
-            <tr>
-              <td
-                colSpan={4}
-                className="py-8 text-center text-gray-500 dark:text-white"
-              >
-                ไม่มีข้อมูลนิสิต
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
+              <div className="flex justify-end items-center gap-2 mt-4 md:mt-0 md:col-span-2 md:justify-center">
+                <button
+                  className="p-2 text-white transition-colors bg-blue-500 rounded-full hover:bg-blue-600"
+                  title="เพิ่ม/ดูข้อมูลประสบการณ์"
+                  onClick={() => {
+                    const nameParam = encodeURIComponent(s.name);
+                    router.push(
+                      `/experience-manager/CountsExperience/${s.studentId}?name=${nameParam}`,
+                    );
+                  }}
+                >
+                  <FaPlus size={12} />
+                </button>
+                <button
+                  className="p-2 text-gray-700 transition-colors bg-gray-200 rounded-full hover:bg-gray-300 dark:bg-slate-600 dark:text-gray-200 dark:hover:bg-slate-500"
+                  title="ดูประวัติการบันทึก"
+                  onClick={() => {
+                    const nameParam = encodeURIComponent(s.name);
+                    router.push(
+                      `/experience-manager/CountsExperience/history/${s.studentId}?name=${nameParam}`,
+                    );
+                  }}
+                >
+                  <GrView size={12} />
+                </button>
+              </div>
+            </div>
+          ))
+        ) : (
+          <div className="py-8 text-center text-gray-500 dark:text-gray-400">
+            ไม่มีข้อมูลนิสิต
+          </div>
+        )}
+      </div>
     </div>
   );
 }

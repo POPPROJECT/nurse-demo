@@ -1,94 +1,94 @@
 "use client";
 import React from "react";
 
-type Props = {
-  page: number;
+interface Props {
+  pageIndex: number;
+  setPageIndexAction: (n: number) => void;
   totalPages: number;
-  setPageAction: (p: number) => void;
-};
-
-function getPageNumbers(current: number, total: number): (number | "...")[] {
-  const pages: (number | "...")[] = [];
-  if (total <= 5) {
-    for (let i = 1; i <= total; i++) pages.push(i);
-  } else {
-    pages.push(1);
-    if (current > 3) pages.push("...");
-    const start = Math.max(2, current - 1);
-    const end = Math.min(total - 1, current + 1);
-    for (let i = start; i <= end; i++) pages.push(i);
-    if (current < total - 2) pages.push("...");
-    pages.push(total);
-  }
-  return pages;
+  getPageNumbersAction: () => (number | "...")[];
+  totalItems: number;
+  pageSize: number;
 }
 
-export default function Pagination({ page, totalPages, setPageAction }: Props) {
-  const pageNumbers = getPageNumbers(page, totalPages);
+export default function Pagination({
+  pageIndex,
+  setPageIndexAction,
+  totalPages,
+  getPageNumbersAction,
+  totalItems,
+  pageSize,
+}: Props) {
+  const fromItem = totalItems > 0 ? pageIndex * pageSize + 1 : 0;
+  const toItem = Math.min((pageIndex + 1) * pageSize, totalItems);
+
+  // --- จุดที่แก้ไข: เราลบเงื่อนไข if (totalPages <=1) ออกไปจากตรงนี้ ---
+  // การแสดงผลจะถูกควบคุมโดยจำนวน totalItems แทน
+  if (totalItems === 0) {
+    return null; // ถ้าไม่มีข้อมูลเลย ก็ไม่ต้องแสดงอะไร
+  }
 
   return (
-    <div className="flex items-center justify-center pt-4 mt-6 space-x-1 border-t border-gray-200 dark:border-gray-700 sm:space-x-2">
-      {/* ปุ่มหน้าแรก */}
-      <button
-        onClick={() => setPageAction(1)}
-        disabled={page === 1}
-        className="px-2 py-1 text-sm font-medium text-gray-600 transition-colors duration-200 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 hover:text-gray-800 dark:text-gray-300 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700 dark:hover:text-white disabled:opacity-50 disabled:cursor-not-allowed sm:px-3"
-      >
-        หน้าแรก
-      </button>
+    <div className="flex flex-col sm:flex-row items-center justify-between gap-y-3 gap-x-4 mt-6 w-full">
+      <div className="text-sm text-gray-500 dark:text-gray-400">
+        แสดง {fromItem} - {toItem} จาก {totalItems} รายการ
+      </div>
 
-      {/* ปุ่มก่อนหน้า */}
-      <button
-        onClick={() => setPageAction(Math.max(1, page - 1))}
-        disabled={page === 1}
-        className="px-2 py-1 text-sm font-medium text-gray-600 transition-colors duration-200 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 hover:text-gray-800 dark:text-gray-300 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700 dark:hover:text-white disabled:opacity-50 disabled:cursor-not-allowed sm:px-3"
-      >
-        ก่อนหน้า
-      </button>
+      {/* ถ้ามีแค่หน้าเดียว ให้แสดงแค่ข้อความ แต่ไม่แสดงปุ่ม */}
+      {totalPages > 1 && (
+        <nav className="flex flex-wrap items-center justify-center gap-2">
+          <button
+            onClick={() => setPageIndexAction(0)}
+            disabled={pageIndex === 0}
+            className="px-3 py-1.5 text-sm font-medium rounded-md disabled:opacity-50 disabled:cursor-not-allowed bg-gray-100 text-gray-700 dark:bg-slate-800 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-slate-700 border dark:border-slate-700"
+          >
+            หน้าแรก
+          </button>
+          <button
+            onClick={() => setPageIndexAction(Math.max(0, pageIndex - 1))}
+            disabled={pageIndex === 0}
+            className="px-3 py-1.5 text-sm font-medium rounded-md disabled:opacity-50 disabled:cursor-not-allowed bg-gray-100 text-gray-700 dark:bg-slate-800 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-slate-700 border dark:border-slate-700"
+          >
+            ก่อนหน้า
+          </button>
 
-      {/* เลขหน้า */}
-      {pageNumbers.map((pNo, index) => (
-        <div key={index}>
-          {pNo === "..." ? (
-            <span className="px-2 py-1 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-lg dark:text-gray-300 dark:bg-gray-800 dark:border-gray-700 sm:px-3">
-              …
-            </span>
-          ) : (
-            <button
-              onClick={() => setPageAction(pNo as number)}
-              aria-current={pNo === page ? "page" : undefined}
-              className={`
-                px-2 sm:px-3 py-1 border text-sm font-medium rounded-lg transition-colors duration-200
-                ${
-                  pNo === page
-                    ? "bg-blue-600 border-blue-600 text-white shadow-sm hover:bg-blue-700 dark:bg-blue-700 dark:border-blue-700 dark:text-white dark:hover:bg-blue-800"
-                    : "bg-white border-gray-300 text-gray-600 hover:bg-gray-100 hover:text-gray-800 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white"
-                }
-              `}
-            >
-              {pNo}
-            </button>
+          {getPageNumbersAction().map((p, idx) =>
+            p === "..." ? (
+              <span key={idx} className="px-2 text-gray-500 dark:text-gray-400">
+                …
+              </span>
+            ) : (
+              <button
+                key={idx}
+                onClick={() => setPageIndexAction(p - 1)}
+                className={`min-w-[32px] px-2 py-1.5 text-sm font-medium rounded-md transition-colors ${
+                  pageIndex === p - 1
+                    ? "bg-indigo-600 text-white hover:bg-indigo-700"
+                    : "bg-white text-gray-700 dark:bg-slate-800 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-slate-700 border dark:border-slate-700"
+                }`}
+              >
+                {p}
+              </button>
+            ),
           )}
-        </div>
-      ))}
 
-      {/* ปุ่มถัดไป */}
-      <button
-        onClick={() => setPageAction(Math.min(totalPages, page + 1))}
-        disabled={page === totalPages || totalPages === 0}
-        className="px-2 py-1 text-sm font-medium text-gray-600 transition-colors duration-200 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 hover:text-gray-800 dark:text-gray-300 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700 dark:hover:text-white disabled:opacity-50 disabled:cursor-not-allowed sm:px-3"
-      >
-        ถัดไป
-      </button>
-
-      {/* ปุ่มหน้าสุดท้าย */}
-      <button
-        onClick={() => setPageAction(totalPages)}
-        disabled={page === totalPages || totalPages === 0}
-        className="px-2 py-1 text-sm font-medium text-gray-600 transition-colors duration-200 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 hover:text-gray-800 dark:text-gray-300 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700 dark:hover:text-white disabled:opacity-50 disabled:cursor-not-allowed sm:px-3"
-      >
-        หน้าสุดท้าย
-      </button>
+          <button
+            onClick={() =>
+              setPageIndexAction(Math.min(totalPages - 1, pageIndex + 1))
+            }
+            disabled={pageIndex >= totalPages - 1}
+            className="px-3 py-1.5 text-sm font-medium rounded-md disabled:opacity-50 disabled:cursor-not-allowed bg-gray-100 text-gray-700 dark:bg-slate-800 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-slate-700 border dark:border-slate-700"
+          >
+            ถัดไป
+          </button>
+          <button
+            onClick={() => setPageIndexAction(totalPages - 1)}
+            disabled={pageIndex >= totalPages - 1}
+            className="px-3 py-1.5 text-sm font-medium rounded-md disabled:opacity-50 disabled:cursor-not-allowed bg-gray-100 text-gray-700 dark:bg-slate-800 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-slate-700 border dark:border-slate-700"
+          >
+            หน้าสุดท้าย
+          </button>
+        </nav>
+      )}
     </div>
   );
 }

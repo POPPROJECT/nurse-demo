@@ -225,6 +225,8 @@ export default function EditExperience_ManagerTable({
         setPageIndexAction={setPageIndex}
         totalPages={totalPages}
         getPageNumbersAction={getPageNumbers}
+        totalItems={filtered.length}
+        pageSize={perPage}
       />
     </div>
   );

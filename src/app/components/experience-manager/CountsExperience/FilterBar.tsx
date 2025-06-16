@@ -1,5 +1,8 @@
 "use client";
 import React from "react";
+import Select from "react-select"; // ใช้ react-select เพื่อความสวยงาม
+
+type BookOption = { value: number; label: string };
 
 type Props = {
   books: { id: number; title: string }[];
@@ -20,69 +23,59 @@ export default function FilterBar({
   limit,
   setLimitAction,
 }: Props) {
-  return (
-    <div className="bg-white p-4 rounded-xl shadow flex flex-col lg:flex-row gap-4 items-center dark:bg-[#1E293B] dark:text-white">
-      {/* เล่ม */}
-      <label className="block mb-1 font-medium">เลือกเล่มสมุด</label>
-      <select
-        className="w-full px-3 py-2 text-gray-800 bg-gray-100 border border-gray-300 rounded-lg lg:w-1/4"
-        value={selectedBook}
-        onChange={(e) =>
-          setSelectedBookAction(e.target.value ? +e.target.value : "")
-        }
-      >
-        <option value="" className="dark:text-gray-800">
-          -- เลือกสมุด --
-        </option>
-        {books.map((b) => (
-          <option key={b.id} value={b.id} className="dark:text-gray-800">
-            {b.title}
-          </option>
-        ))}
-      </select>
+  const bookOptions: BookOption[] = books.map((b) => ({
+    value: b.id,
+    label: b.title,
+  }));
+  const selectedBookOption =
+    bookOptions.find((opt) => opt.value === selectedBook) || null;
 
-      {/* ค้นหา */}
-      <div className="relative flex-1">
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-6 gap-4 mb-6 items-end">
+      <div className="md:col-span-3">
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          เล่มบันทึก
+        </label>
+        <Select
+          instanceId="book-select-manager"
+          options={bookOptions}
+          value={selectedBookOption}
+          onChange={(opt) => setSelectedBookAction(opt ? opt.value : "")}
+          placeholder="-- กรุณาเลือกเล่มบันทึก --"
+          isClearable
+          className="text-gray-800 react-select-container"
+          classNamePrefix="react-select"
+        />
+      </div>
+
+      <div className="md:col-span-2">
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          ค้นหานิสิต
+        </label>
         <input
           type="text"
-          placeholder="ค้นหารหัสนิสิต หรือ ชื่อ-นามสกุล"
-          className="w-full px-3 py-2 pl-10 pr-4 text-gray-800 bg-gray-100 border border-gray-300 rounded-lg"
+          placeholder="รหัสนิสิต หรือ ชื่อ..."
+          className="w-full py-2 px-4 transition bg-gray-100 dark:bg-gray-100 border border-gray-300  rounded-lg focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-400"
           value={search}
           onChange={(e) => setSearchAction(e.target.value)}
         />
-        <span className="absolute text-gray-400 -translate-y-1/2 left-3 top-1/2">
-          <svg
-            className="w-5 h-5 text-gray-400"
-            fill="currentColor"
-            viewBox="0 0 20 20"
-          >
-            <path
-              fillRule="evenodd"
-              clipRule="evenodd"
-              d="M8 4a4 4 0 100 8 4 4 0 000-8zM2
-                             8a6 6 0 1110.89 3.476l4.817 4.817a1
-                             1 0 01-1.414 1.414l-4.816-4.816A6 6
-                             0 012 8z"
-            />
-          </svg>
-        </span>
       </div>
 
-      {/* จำนวนรายการ */}
-      <div className="flex items-center space-x-2">
-        <span>แสดง</span>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          แสดงผล
+        </label>
         <select
-          className="px-2 py-1 text-gray-800 bg-gray-100 border border-gray-300 rounded-lg"
+          className="w-full p-2 border rounded-lg bg-white dark:bg-gray-100 border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400 text-gray-600 dark:text-gray-600"
           value={limit}
           onChange={(e) => setLimitAction(+e.target.value)}
         >
-          {[5, 10, 15, 20, 50].map((n) => (
-            <option key={n} value={n} className="dark:text-gray-800">
+          {[10, 20, 50, 100].map((n) => (
+            <option key={n} value={n}>
               {n}
             </option>
           ))}
         </select>
-        <span>รายการ</span>
       </div>
     </div>
   );

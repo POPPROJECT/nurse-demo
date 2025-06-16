@@ -1,8 +1,9 @@
-'use client';
+"use client";
 
-import { ExperienceStatus } from 'lib/type';
-import React from 'react';
+import { ExperienceStatus } from "lib/type";
+import React from "react";
 
+// ... (Interface Record เหมือนเดิม) ...
 type Record = {
   id: number;
   student: { studentId: string; user: { name: string } };
@@ -18,60 +19,56 @@ type Props = {
 
 export default function LogTable({ data }: Props) {
   return (
-    <div className="overflow-auto">
-      <table className="w-full shadow min-w-max whitespace-nowrap dark:bg-gray-500">
-        <thead className="bg-gray-400 dark:bg-gray-800 dark:text-white">
-          <tr>
-            {[
-              'รหัสนิสิต',
-              'ชื่อ-นามสกุล',
-              'หมวดหมู่',
-              'หมวดหมู่ย่อย',
-              'วันที่',
-              'สถานะ',
-            ].map((h, i) => (
-              <th
-                key={i}
-                className="px-6 py-2 text-base font-medium text-left text-gray-800 uppercase dark:text-white"
-              >
-                <strong>{h}</strong>
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody className="bg-white dark:bg-gray-500">
-          {data.map(
-            (
-              r,
-              index // Add index to the map function
-            ) => (
-              <tr
-                key={r.id}
-                className={`${
-                  index % 2 === 0
-                    ? 'bg-gray-200 dark:bg-gray-500'
-                    : 'bg-gray-300 dark:bg-gray-600'
-                } hover:bg-gray-50 dark:hover:bg-gray-700`}
-              >
-                <td className="px-6 py-2 text-base">{r.student.studentId}</td>
-                <td className="px-6 py-2 text-base">{r.student.user.name}</td>
-                <td className="px-6 py-2 text-base">{r.course}</td>
-                <td className="px-6 py-2 text-base">{r.subCourse}</td>
-                <td className="px-6 py-2 text-base">
-                  {new Date(r.createdAt).toLocaleDateString()}
-                </td>
-                <td className="px-6 py-2 text-base">
-                  {r.status === 'CONFIRMED' ? (
-                    <span className="">ยืนยัน</span>
-                  ) : (
-                    <span className="">ปฏิเสธ</span>
-                  )}
-                </td>
-              </tr>
-            )
-          )}
-        </tbody>
-      </table>
+    <div className="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-gray-200 dark:border-slate-700">
+      {/* Header (แสดงเฉพาะจอใหญ่) */}
+      <div className="hidden md:grid md:grid-cols-6 gap-4 px-4 py-2 font-semibold text-sm text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-slate-700/50 rounded-t-lg">
+        <div>รหัสนิสิต</div>
+        <div className="col-span-2">ชื่อ-นามสกุล</div>
+        <div>หมวดหมู่</div>
+        <div>วันที่</div>
+        <div className="text-center">สถานะ</div>
+      </div>
+
+      {/* List of Logs (Card on mobile) */}
+      <div className="flex flex-col">
+        {data.length > 0 ? (
+          data.map((r, index) => (
+            <div
+              key={r.id}
+              className={`grid grid-cols-2 md:grid-cols-6 gap-x-4 gap-y-2 p-4 items-center text-sm ${index < data.length - 1 ? "border-b border-gray-200 dark:border-slate-700" : ""}`}
+            >
+              <div className="text-gray-800 dark:text-gray-200">
+                <span className="font-semibold md:hidden">รหัสนิสิต: </span>
+                {r.student.studentId}
+              </div>
+              <div className="col-span-2 text-gray-800 dark:text-gray-200">
+                <span className="font-semibold md:hidden">ชื่อ: </span>
+                {r.student.user.name}
+              </div>
+              <div className="text-gray-800 dark:text-gray-200">
+                <span className="font-semibold md:hidden">หมวดหมู่: </span>
+                {r.course}
+              </div>
+              <div className="text-gray-600 dark:text-gray-400">
+                <span className="font-semibold md:hidden text-gray-800 dark:text-gray-200">
+                  วันที่:{" "}
+                </span>
+                {new Date(r.createdAt).toLocaleDateString("th-TH")}
+              </div>
+
+              <div className="text-center">
+                <span
+                  className={`px-2 py-1 rounded-full text-xs font-medium ${r.status === "CONFIRMED" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}`}
+                >
+                  {r.status === "CONFIRMED" ? "อนุมัติ" : "ปฏิเสธ"}
+                </span>
+              </div>
+            </div>
+          ))
+        ) : (
+          <div className="py-8 text-center text-gray-500">ไม่พบข้อมูล</div>
+        )}
+      </div>
     </div>
   );
 }

@@ -232,15 +232,13 @@ export default function EditStudentTable() {
         deleteUserAction={deleteUser}
         accessToken={accessToken} // ส่ง accessToken ต่อไป
       />
-      <div className="text-sm text-gray-600 dark:text-gray-300">
-        แสดง {paged.length} จาก {filtered.length} รายการ (ทั้งหมด {users.length}{" "}
-        รายการ)
-      </div>
       <TablePagination
         pageIndex={pageIndex}
         setPageIndexAction={setPageIndex}
         totalPages={totalPages}
         getPageNumbersAction={getPageNumbers}
+        totalItems={filtered.length}
+        pageSize={perPage}
       />
     </div>
   );

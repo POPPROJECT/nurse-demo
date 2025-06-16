@@ -144,7 +144,9 @@ export default function UploadPanel({
         // ✅ ถ้ายังไม่มีไฟล์: แสดงส่วน Upload ปกติ
         <div className="p-6 bg-white shadow-sm rounded-xl">
           <div className="flex flex-col mb-6 md:flex-row md:items-center md:justify-between">
-            <h2 className="mb-4 text-xl font-semibold md:mb-0">อัพโหลดไฟล์</h2>
+            <h2 className="mb-4 text-xl font-semibold md:mb-0 text-black dark:text-black">
+              อัพโหลดไฟล์
+            </h2>
             <div className="flex flex-wrap gap-2">
               {[
                 "STUDENT",

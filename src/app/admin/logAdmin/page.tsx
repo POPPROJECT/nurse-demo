@@ -7,7 +7,6 @@ import FilterBar from "@/app/components/admin/log/FilterBar";
 import Pagination from "@/app/components/admin/log/Pagination";
 import LogTable from "@/app/components/admin/log/LogTable";
 import LogSummaryBar from "@/app/components/admin/log/LogSummeryBar";
-import { HiClipboardList } from "react-icons/hi";
 
 export default function AdminLogPage() {
   const BASE = process.env.NEXT_PUBLIC_BACKEND_URL!;
@@ -59,19 +58,11 @@ export default function AdminLogPage() {
       : undefined;
 
   return (
-    <div className="container max-w-6xl px-4 py-8 mx-auto mt-10 sm:mt-0">
+    <div className="container max-w-6xl px-4 py-8 mx-auto">
       {/* Header */}
-      <header className="p-6 mb-6 text-white bg-[linear-gradient(to_right,#f46b45_0%,#eea849_100%)] dark:bg-[#1E293B] rounded-xl shadow-md hover:shadow-lg">
-        <div className="flex items-center mb-2">
-          <HiClipboardList className="w-8 h-8 mr-3 text-black-600" />
-          <h1 className="text-3xl font-bold text-white md:text-4xl bg-gradient-to-r to-h bg-clip-text">
-            บันทึกการกระทำในระบบ
-          </h1>
-        </div>
-        <p className="ml-12 text-white">
-          ตรวจสอบและติดตามการเปลี่ยนแปลงทั้งหมดในระบบ
-        </p>
-      </header>
+      <div className="p-6 mb-6 text-white bg-[linear-gradient(to_right,#f46b45_0%,#eea849_100%)] dark:bg-[#1E293B] rounded-xl shadow-md hover:shadow-lg transition-all duration-300 ease-in-out hover:-translate-y-1 ">
+        <h1 className="text-xl font-semibold sm:text-2xl">ตรวจสอบ log</h1>
+      </div>
       <div className="p-6  rounded-xl bg-white dark:bg-[#1E293B] shadow ">
         {/* Filter */}
         <FilterBar

@@ -1,15 +1,15 @@
-'use client';
-import React, { useEffect, useState } from 'react';
-import { useParams, useSearchParams } from 'next/navigation';
-import Link from 'next/link';
-import { getSession } from 'lib/session';
-import AdminProgressClient from '@/app/components/admin/check-student/AdminProgressClient';
-import { useAuth } from '@/app/contexts/AuthContext';
+"use client";
+import React, { useEffect, useState } from "react";
+import { useParams, useSearchParams } from "next/navigation";
+import Link from "next/link";
+import AdminProgressClient from "@/app/components/admin/check-student/AdminProgressClient";
+import { useAuth } from "@/app/contexts/AuthContext";
 
 export default function AdminStudentProgressPage() {
   const { studentId } = useParams();
   const searchParams = useSearchParams();
-  const studentNameParam = searchParams.get('name') || '';
+  const studentNameParam = searchParams.get("name") || "";
+  const studentIdStringParam = searchParams.get("studentId") || ""; // <-- อ่านค่ารหัสนิสิต
 
   const { accessToken, session: authUser } = useAuth(); // ✅ 2. ดึง accessToken และ user จาก Context
   const [isLoading, setIsLoading] = useState(true);
@@ -24,7 +24,7 @@ export default function AdminStudentProgressPage() {
       // AdminLayout ควรจะ redirect ไปแล้ว แต่ถ้ามาถึงตรงนี้ได้ ก็อาจจะ redirect ซ้ำอีกที
       // หรือแสดงข้อความว่า session หมดอายุ
       console.error(
-        '⛔ [AdminStudentProgressPage] No session found in AuthContext.'
+        "⛔ [AdminStudentProgressPage] No session found in AuthContext.",
       );
       // window.location.href = '/'; // ไม่ควร redirect จากที่นี่ ปล่อยให้ AdminLayout จัดการ
       setIsLoading(false); // เพื่อให้ UI แสดงผลว่ามีปัญหา
@@ -41,10 +41,10 @@ export default function AdminStudentProgressPage() {
   if (!accessToken) {
     return (
       <div className="p-6 text-center text-red-500">
-        Session not available. Please{' '}
+        Session not available. Please
         <Link href="/" className="underline">
           login
-        </Link>{' '}
+        </Link>
         again.
       </div>
     );
@@ -55,7 +55,7 @@ export default function AdminStudentProgressPage() {
   const displayName = studentNameParam || studentId.toString(); // studentId อาจจะเป็น string[]
 
   return (
-    <div className="container max-w-6xl px-4 py-8 mx-auto mt-10 sm:mt-0">
+    <div className="container max-w-6xl px-4 py-8 mx-auto">
       {/* ปุ่มย้อนกลับ */}
       <Link
         href="/admin/edituser/student"
@@ -84,8 +84,13 @@ export default function AdminStudentProgressPage() {
         </h1>
       </div>
 
-      <div className="p-3 mb-6 mt-3 dark:text-white bg-white dark:bg-[#1E293B] text-gray-800 rounded-xl shadow-md transition-shadow duration-300 min-w-auto">
-        <h2 className="text-lg font-semibold sm:text-xl ">🔍 {displayName}</h2>
+      <div className="p-3 mt-3 dark:text-white bg-white dark:bg-[#1E293B] text-gray-800 rounded-xl shadow-md transition-shadow duration-300 min-w-auto">
+        <h1 className="text-lg font-semibold sm:text-xl ml-3">
+          <span>{displayName}</span>
+          <span style={{ marginLeft: "1.5rem" }}>
+            รหัสนิสิต: {studentIdStringParam}
+          </span>
+        </h1>
       </div>
 
       <AdminProgressClient

@@ -49,7 +49,7 @@ export default function FilterBar({
     progressModeOptions.find((opt) => opt.value === progressMode) || null; // ▲▲▲ [สิ้นสุดส่วนที่แก้ไข] ▲▲▲
 
   return (
-    <div className="bg-white p-4 rounded-xl shadow flex flex-col lg:flex-row gap-4 items-center dark:bg-[#1E293B] dark:text-white justify-between">
+    <div className="bg-white p-4 rounded-xl shadow flex flex-col lg:flex-row gap-4 items-center dark:bg-[#1E293B] dark:text-white justify-between text-gray-700">
       {/* เล่ม */}
       <div className="w-full lg:w-1/2 flex items-center">
         <label className="block mb-1 font-medium mr-2">สมุด</label>

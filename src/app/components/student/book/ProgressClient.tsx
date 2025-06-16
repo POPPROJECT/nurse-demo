@@ -84,8 +84,12 @@ export default function ProgressClient({
             authHeader,
           ),
         ]);
-
         setCourses(coursesRes.data);
+
+        const sortedCourses = coursesRes.data.sort((a, b) =>
+          a.name.localeCompare(b.name, undefined, { numeric: true }),
+        );
+        setCourses(sortedCourses);
 
         const newStatsMap: Record<number, Pick<Stat, "_count">> = {};
         statsRes.data.forEach((s) => {
@@ -237,7 +241,7 @@ export default function ProgressClient({
         </div>
       )}
 
-      <div className="p-6 mt-6 bg-white shadow-md rounded-xl dark:bg-[#1E293B]">
+      <div className="p-6 mt-6 bg-white shadow-md rounded-xl dark:bg-[#1E293B] dark:text-gray-300 text-gray-800">
         {loading && <div className="py-20 text-center">กำลังโหลดข้อมูล...</div>}
         {!loading && !selectedBook && (
           <div className="py-20 text-center">กรุณาเลือกสมุดเพื่อดูข้อมูล</div>
@@ -268,9 +272,11 @@ export default function ProgressClient({
                 { done: 0, total: 0 },
               );
 
-              const coursePct = courseTotals.total
-                ? Math.round((courseTotals.done / courseTotals.total) * 100)
-                : 0;
+              const coursePct =
+                courseTotals.total > 0
+                  ? Math.round((courseTotals.done / courseTotals.total) * 100)
+                  : 100; // ถ้า total เป็น 0 หรือน้อยกว่า ให้เป็น 100%
+
               const barColor = getBarColor(coursePct);
               const isOpen = openCourses.has(course.id);
 

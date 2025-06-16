@@ -291,57 +291,59 @@ export default function ImportUserPage() {
   }
 
   return (
-    <div className="min-h-screen p-8 space-y-8 bg-gray-50">
-      <UploadPanel
-        currentStep={
-          rows.length > 0
-            ? 2
-            : successList.length > 0 || skippedList.length > 0
-              ? 3
-              : 1
-        }
-        fileName={fileName}
-        onFileSelectAction={handleFileUpload}
-        onRemoveFileAction={handleRemoveFile}
-      />
-
-      {rows.length > 0 && (
-        <>
-          <SummarySection
-            total={rows.length}
-            valid={rows.filter(validateRow).length}
-            invalid={rows.filter((r) => !validateRow(r)).length}
-            userType={
-              rows[0].role === "STUDENT"
-                ? "นิสิต"
-                : rows[0].role === "APPROVER_IN"
-                  ? "ผู้อนุมัติภายใน"
-                  : rows[0].role === "APPROVER_OUT"
-                    ? "ผู้อนุมัติภายนอก"
-                    : "ผู้จัดการเล่ม"
-            }
-            onSearch={setSearch}
-            onFilterChange={setFilterStatus}
-            onConfirm={handleImport}
-            isValid={isValid}
-          />
-          <PreviewTable
-            rows={paginatedRows}
-            validateRow={validateRow}
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={setCurrentPage}
-          />
-        </>
-      )}
-
-      {(successList.length > 0 || skippedList.length > 0) && (
-        <ImportResult
-          successList={successList}
-          skipped={skippedMerged}
-          onUndoAction={handleUndo}
+    <div className="w-full p-4 md:p-6">
+      <div className="w-full p-8 space-y-8 bg-gray-50 rounded-lg">
+        <UploadPanel
+          currentStep={
+            rows.length > 0
+              ? 2
+              : successList.length > 0 || skippedList.length > 0
+                ? 3
+                : 1
+          }
+          fileName={fileName}
+          onFileSelectAction={handleFileUpload}
+          onRemoveFileAction={handleRemoveFile}
         />
-      )}
+
+        {rows.length > 0 && (
+          <>
+            <SummarySection
+              total={rows.length}
+              valid={rows.filter(validateRow).length}
+              invalid={rows.filter((r) => !validateRow(r)).length}
+              userType={
+                rows[0].role === "STUDENT"
+                  ? "นิสิต"
+                  : rows[0].role === "APPROVER_IN"
+                    ? "ผู้อนุมัติภายใน"
+                    : rows[0].role === "APPROVER_OUT"
+                      ? "ผู้อนุมัติภายนอก"
+                      : "ผู้จัดการเล่ม"
+              }
+              onSearch={setSearch}
+              onFilterChange={setFilterStatus}
+              onConfirm={handleImport}
+              isValid={isValid}
+            />
+            <PreviewTable
+              rows={paginatedRows}
+              validateRow={validateRow}
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+            />
+          </>
+        )}
+
+        {(successList.length > 0 || skippedList.length > 0) && (
+          <ImportResult
+            successList={successList}
+            skipped={skippedMerged}
+            onUndoAction={handleUndo}
+          />
+        )}
+      </div>
     </div>
   );
 }

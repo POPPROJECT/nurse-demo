@@ -6,6 +6,9 @@ type Props = {
   page: number;
   totalPages: number;
   setPageAction: (p: number) => void;
+  // เพิ่ม Props สำหรับแสดงจำนวนรายการทั้งหมด
+  totalItems: number;
+  pageSize: number;
 };
 
 function getPageNumbers(current: number, total: number): (number | "...")[] {
@@ -24,72 +27,68 @@ function getPageNumbers(current: number, total: number): (number | "...")[] {
   return pages;
 }
 
-export default function Pagination({ page, totalPages, setPageAction }: Props) {
+export default function Pagination({
+  page,
+  totalPages,
+  setPageAction,
+  totalItems,
+  pageSize,
+}: Props) {
   const pageNumbers = getPageNumbers(page, totalPages);
 
+  if (totalPages <= 0) return null;
+
+  const fromItem = totalItems > 0 ? (page - 1) * pageSize + 1 : 0;
+  const toItem = Math.min(page * pageSize, totalItems);
+
   return (
-    <div className="flex items-center justify-center pt-4 mt-6 space-x-1 border-t border-gray-200 dark:border-gray-700 sm:space-x-2">
-      {/* หน้าแรก */}
-      <button
-        onClick={() => setPageAction(1)}
-        disabled={page === 1}
-        className="px-2 py-1 text-sm font-medium text-gray-600 transition-colors duration-200 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 hover:text-gray-800 dark:text-gray-300 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700 dark:hover:text-white disabled:opacity-50 disabled:cursor-not-allowed sm:px-3"
-      >
-        หน้าแรก
-      </button>
+    <div className="flex flex-col sm:flex-row items-center justify-between gap-y-3 gap-x-4 mt-4 w-full pt-4 border-t border-gray-200 dark:border-slate-700">
+      <div className="text-sm text-gray-500 dark:text-gray-400">
+        แสดง {fromItem} - {toItem} จาก {totalItems} รายการ
+      </div>
 
-      {/* ก่อนหน้า */}
-      <button
-        onClick={() => setPageAction(Math.max(1, page - 1))}
-        disabled={page === 1}
-        className="px-2 py-1 text-sm font-medium text-gray-600 transition-colors duration-200 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 hover:text-gray-800 dark:text-gray-300 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700 dark:hover:text-white disabled:opacity-50 disabled:cursor-not-allowed sm:px-3"
-      >
-        ก่อนหน้า
-      </button>
-
-      {/* เลขหน้า */}
-      {pageNumbers.map((pNo, idx) => (
-        <div key={idx}>
-          {pNo === "..." ? (
-            <span className="px-2 py-1 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-lg dark:text-gray-300 dark:bg-gray-800 dark:border-gray-700 sm:px-3">
-              …
-            </span>
-          ) : (
-            <button
-              onClick={() => setPageAction(pNo as number)}
-              aria-current={pNo === page ? "page" : undefined}
-              className={`
-                px-2 sm:px-3 py-1 border text-sm font-medium rounded-lg transition-colors duration-200
-                ${
-                  pNo === page
-                    ? "bg-blue-600 border-blue-600 text-white shadow-sm hover:bg-blue-700 dark:bg-blue-700 dark:border-blue-700 dark:text-white dark:hover:bg-blue-800"
-                    : "bg-white border-gray-300 text-gray-600 hover:bg-gray-100 hover:text-gray-800 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white"
-                }
-              `}
-            >
-              {pNo}
-            </button>
+      {totalPages > 1 && (
+        <nav className="flex flex-wrap items-center justify-center gap-2">
+          {/* ... (โค้ดปุ่ม Pagination ที่ปรับปรุงแล้วเหมือนในคำตอบก่อนหน้า) ... */}
+          <button
+            onClick={() => setPageAction(1)}
+            disabled={page === 1}
+            className="px-3 py-1.5 text-sm font-medium rounded-md disabled:opacity-50 ..."
+          >
+            หน้าแรก
+          </button>
+          <button
+            onClick={() => setPageAction(page - 1)}
+            disabled={page === 1}
+            className="px-3 py-1.5 text-sm font-medium rounded-md disabled:opacity-50 ..."
+          >
+            ก่อนหน้า
+          </button>
+          {pageNumbers.map((pNo, idx) =>
+            pNo === "..." ? (
+              <span key={idx}>...</span>
+            ) : (
+              <button key={idx} onClick={() => setPageAction(pNo)}>
+                {pNo}
+              </button>
+            ),
           )}
-        </div>
-      ))}
-
-      {/* ถัดไป */}
-      <button
-        onClick={() => setPageAction(Math.min(totalPages, page + 1))}
-        disabled={page === totalPages || totalPages === 0}
-        className="px-2 py-1 text-sm font-medium text-gray-600 transition-colors duration-200 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 hover:text-gray-800 dark:text-gray-300 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700 dark:hover:text-white disabled:opacity-50 disabled:cursor-not-allowed sm:px-3"
-      >
-        ถัดไป
-      </button>
-
-      {/* หน้าสุดท้าย */}
-      <button
-        onClick={() => setPageAction(totalPages)}
-        disabled={page === totalPages || totalPages === 0}
-        className="px-2 py-1 text-sm font-medium text-gray-600 transition-colors duration-200 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 hover:text-gray-800 dark:text-gray-300 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700 dark:hover:text-white disabled:opacity-50 disabled:cursor-not-allowed sm:px-3"
-      >
-        หน้าสุดท้าย
-      </button>
+          <button
+            onClick={() => setPageAction(page + 1)}
+            disabled={page === totalPages}
+            className="px-3 py-1.5 text-sm font-medium rounded-md disabled:opacity-50 ..."
+          >
+            ถัดไป
+          </button>
+          <button
+            onClick={() => setPageAction(totalPages)}
+            disabled={page === totalPages}
+            className="px-3 py-1.5 text-sm font-medium rounded-md disabled:opacity-50 ..."
+          >
+            หน้าสุดท้าย
+          </button>
+        </nav>
+      )}
     </div>
   );
 }
