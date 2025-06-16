@@ -48,7 +48,7 @@ export default function FilterBar({
             <select
               value={action}
               onChange={(e) => setAction(e.target.value as any)}
-              className="pl-4 pr-10 py-2.5 border dark:bg-[#1E293B]  border-gray-300 rounded-md shadow-sm text-sm bg-white appearance-none focus:ring-indigo-200 focus:ring-2 focus:outline-none"
+              className="w-full pl-4 pr-10 py-2.5 border dark:bg-[#1E293B]  border-gray-300 rounded-md shadow-sm text-sm bg-white appearance-none focus:ring-indigo-200 focus:ring-2 focus:outline-none"
             >
               <option value="all">ทั้งหมด</option>
               <option value="create">สร้าง</option>
@@ -66,7 +66,7 @@ export default function FilterBar({
             <select
               value={limit}
               onChange={(e) => setLimitAction(Number(e.target.value))}
-              className="pl-4 pr-10 py-2.5 border dark:bg-[#1E293B] border-gray-300 rounded-md shadow-sm text-sm bg-white appearance-none focus:ring-indigo-200 focus:ring-2 focus:outline-none"
+              className="w-full pl-4 pr-10 py-2.5 border dark:bg-[#1E293B] border-gray-300 rounded-md shadow-sm text-sm bg-white appearance-none focus:ring-indigo-200 focus:ring-2 focus:outline-none"
             >
               <option value={10}>10 รายการ/หน้า</option>
               <option value={20}>20 รายการ/หน้า</option>

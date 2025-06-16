@@ -59,7 +59,7 @@ export default function AdminLogPage() {
       : undefined;
 
   return (
-    <div className="bg-[#f8fafc] dark:bg-[#1E293B] font-[Prompt] p-4 md:p-6 max-w-7xl mx-auto">
+    <div className="container max-w-6xl px-4 py-8 mx-auto mt-10 sm:mt-0">
       {/* Header */}
       <header className="p-6 mb-6 text-white bg-[linear-gradient(to_right,#f46b45_0%,#eea849_100%)] dark:bg-[#1E293B] rounded-xl shadow-md hover:shadow-lg">
         <div className="flex items-center mb-2">
@@ -72,39 +72,40 @@ export default function AdminLogPage() {
           ตรวจสอบและติดตามการเปลี่ยนแปลงทั้งหมดในระบบ
         </p>
       </header>
+      <div className="p-6  rounded-xl bg-white dark:bg-[#1E293B] shadow ">
+        {/* Filter */}
+        <FilterBar
+          search={search}
+          setSearchAction={setSearch}
+          action={action}
+          setAction={setAction}
+          sortBy={sortBy}
+          order={order}
+          setSortAction={(by, ord) => {
+            setSortBy(by);
+            setOrder(ord);
+            setPage(1);
+          }}
+          limit={limit}
+          setLimitAction={(n) => {
+            setLimit(n);
+            setPage(1);
+          }}
+        />
 
-      {/* Filter */}
-      <FilterBar
-        search={search}
-        setSearchAction={setSearch}
-        action={action}
-        setAction={setAction}
-        sortBy={sortBy}
-        order={order}
-        setSortAction={(by, ord) => {
-          setSortBy(by);
-          setOrder(ord);
-          setPage(1);
-        }}
-        limit={limit}
-        setLimitAction={(n) => {
-          setLimit(n);
-          setPage(1);
-        }}
-      />
+        {/* Summary and Table */}
+        <LogSummaryBar total={total} lastUpdate={latestUpdate} />
+        <LogTable data={data} />
 
-      {/* Summary and Table */}
-      <LogSummaryBar total={total} lastUpdate={latestUpdate} />
-      <LogTable data={data} />
-
-      {/* Pagination */}
-      <Pagination
-        page={page}
-        totalPages={Math.ceil(total / limit)}
-        setPageAction={setPage}
-        totalItems={total}
-        limit={limit}
-      />
+        {/* Pagination */}
+        <Pagination
+          page={page}
+          totalPages={Math.ceil(total / limit)}
+          setPageAction={setPage}
+          totalItems={total}
+          limit={limit}
+        />
+      </div>
     </div>
   );
 }

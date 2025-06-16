@@ -84,6 +84,7 @@ function FilterBar({
             onChange={(opt) => setSelectedBook(opt ? opt.value : "")}
             placeholder="-- เลือกสมุด --"
             isClearable
+            className="text-black dark:text-black"
           />
         </div>
 
@@ -102,6 +103,7 @@ function FilterBar({
             }
             isClearable
             isDisabled={!selectedBook || isCourseLoading}
+            className="text-black dark:text-black"
           />
         </div>
       </div>

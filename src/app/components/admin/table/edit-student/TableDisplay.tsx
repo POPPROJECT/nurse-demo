@@ -101,111 +101,103 @@ export default function TableDisplay({
   };
 
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full bg-white rounded shadow table-auto dark:bg-gray-800 dark:text-gray-200">
-        <thead className="bg-gray-200 dark:bg-gray-700">
-          <tr>
-            <th className="px-6 py-3 text-sm text-left text-gray-700 dark:text-gray-200">
-              รหัสนิสิต
-            </th>
-            <th className="px-6 py-3 text-sm text-left text-gray-700 dark:text-gray-200">
-              ชื่อ-นามสกุล
-            </th>
-            <th className="px-6 py-3 text-sm text-left text-gray-700 dark:text-gray-200">
-              อีเมล
-            </th>
-            <th className="px-6 py-3 text-sm text-center text-gray-700 dark:text-gray-200">
-              สถานะบัญชี
-            </th>
-            <th className="px-6 py-3 text-sm text-center text-gray-700 dark:text-gray-200">
-              จัดการ
-            </th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-          {data.length > 0 ? (
-            data.map((u, i) => (
-              <tr
-                key={u.id}
-                className={
-                  i % 2 === 0
-                    ? "bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-600"
-                    : "bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-500"
-                }
-              >
-                <td className="px-6 py-4 text-sm text-gray-800 dark:text-gray-200">
-                  {u.studentId || "-"} {/* แสดง - ถ้าไม่มี studentId */}
-                </td>
-                <td className="px-6 py-4 text-sm text-gray-800 dark:text-gray-200">
+    <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md">
+      {/* Header (แสดงเฉพาะจอใหญ่) */}
+      <div className="hidden md:grid md:grid-cols-12 gap-4 px-6 py-3 font-semibold text-sm text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-slate-700/50 rounded-t-lg">
+        <div className="col-span-2">รหัสนิสิต</div>
+        <div className="col-span-3">ชื่อ-นามสกุล</div>
+        <div className="col-span-3">อีเมล</div>
+        <div className="col-span-2 text-center">สถานะ</div>
+        <div className="col-span-2 text-center">จัดการ</div>
+      </div>
+
+      {/* List of Users (Card on mobile, Row on desktop) */}
+      <div className="flex flex-col">
+        {data.length > 0 ? (
+          data.map((u, index) => (
+            <div
+              key={u.id}
+              className={`grid grid-cols-2 md:grid-cols-12 gap-x-4 gap-y-3 p-4 items-center ${index < data.length - 1 ? "border-b border-gray-200 dark:border-slate-700" : ""}`}
+            >
+              {/* Data for mobile view (using labels) */}
+              <div className="col-span-2 md:col-span-2 text-sm">
+                <span className="font-semibold md:hidden text-gray-800 dark:text-gray-200">
+                  รหัสนิสิต:{" "}
+                </span>
+                <span className="text-gray-800 dark:text-gray-200">
+                  {u.studentId || "-"}
+                </span>
+              </div>
+              <div className="col-span-2 md:col-span-3 text-sm">
+                <span className="font-semibold md:hidden text-gray-800 dark:text-gray-200">
+                  ชื่อ:{" "}
+                </span>
+                <span className="text-gray-800 dark:text-gray-200">
                   {u.fullName}
-                </td>
-                <td className="px-6 py-4 text-sm text-gray-800 dark:text-gray-200">
+                </span>
+              </div>
+              <div className="col-span-2 md:col-span-3 text-sm">
+                <span className="font-semibold md:hidden text-gray-800 dark:text-gray-200">
+                  อีเมล:{" "}
+                </span>
+                <span className="text-gray-800 dark:text-gray-200 break-all">
                   {u.email}
-                </td>
-                <td className="px-6 py-4 text-sm text-center text-gray-800">
-                  <select
-                    value={u.status}
-                    onChange={(e) =>
-                      handleStatusChange(
-                        u.id,
-                        e.target.value as "ENABLE" | "DISABLE",
-                      )
-                    }
-                    className={`px-2 py-1 border rounded text-sm font-medium
-                      ${
-                        u.status === "ENABLE"
-                          ? "bg-green-100 text-green-800 border-green-300 dark:bg-green-700 dark:text-green-100 dark:border-green-500"
-                          : "bg-red-100 text-red-800 border-red-300 dark:bg-red-700 dark:text-red-100 dark:border-red-500"
-                      }`}
-                  >
-                    <option value="ENABLE">เปิดใช้งาน</option>
-                    <option value="DISABLE">ปิดใช้งาน</option>
-                  </select>
-                </td>
-                <td className="px-6 py-4 space-x-2 text-center">
-                  <button
-                    onClick={() =>
-                      router.push(
-                        `/admin/check-student/${u.id}?name=${encodeURIComponent(
-                          u.fullName,
-                        )}`,
-                      )
-                    }
-                    className="px-3 py-1 text-sm text-white bg-blue-500 rounded hover:bg-blue-600"
-                    title="ตรวจสอบความคืบหน้า"
-                  >
-                    <FaEye className="inline mr-1" /> ตรวจสอบ
-                  </button>
-                  <button
-                    // onClick={() => handleEdit(u.id)} // ถ้า handleEdit มาจาก Prop
-                    onClick={() => handleEditClick(u.id)} // หรือเรียกฟังก์ชันใน Component นี้
-                    className="px-3 py-1 text-sm text-white bg-green-600 rounded hover:bg-green-800"
-                    title="แก้ไขข้อมูล"
-                  >
-                    <FaEdit className="inline mr-1" /> แก้ไข
-                  </button>
-                  <button
-                    onClick={() => deleteUserAction(u.id)}
-                    className="px-3 py-1 text-sm text-white bg-red-500 rounded hover:bg-red-700"
-                    title="ลบบัญชี"
-                  >
-                    <FaTrash className="inline mr-1" /> ลบ
-                  </button>
-                </td>
-              </tr>
-            ))
-          ) : (
-            <tr>
-              <td
-                colSpan={5}
-                className="py-8 text-center text-gray-500 dark:text-gray-400"
-              >
-                ไม่มีข้อมูล
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
+                </span>
+              </div>
+
+              {/* Status dropdown */}
+              <div className="col-span-1 md:col-span-2 text-sm text-center">
+                <select
+                  value={u.status}
+                  onChange={(e) =>
+                    handleStatusChange(
+                      u.id,
+                      e.target.value as "ENABLE" | "DISABLE",
+                    )
+                  }
+                  className={`w-full md:w-auto px-2 py-1 border rounded text-xs font-medium ${u.status === "ENABLE" ? "bg-green-100 text-green-800 border-green-300 dark:bg-green-700 dark:text-green-100 dark:border-green-500" : "bg-red-100 text-red-800 border-red-300 dark:bg-red-700 dark:text-red-100 dark:border-red-500"}`}
+                >
+                  <option value="ENABLE">เปิดใช้งาน</option>
+                  <option value="DISABLE">ปิดใช้งาน</option>
+                </select>
+              </div>
+
+              {/* Action buttons */}
+              <div className="col-span-1 md:col-span-2 flex justify-end md:justify-center items-center gap-1">
+                <button
+                  onClick={() =>
+                    router.push(
+                      `/admin/check-student/${u.id}?name=${encodeURIComponent(u.fullName)}`,
+                    )
+                  }
+                  className="p-2 text-white bg-blue-500 rounded-full hover:bg-blue-600"
+                  title="ตรวจสอบความคืบหน้า"
+                >
+                  <FaEye size={12} />
+                </button>
+                <button
+                  onClick={() => handleEditClick(u.id)}
+                  className="p-2 text-white bg-green-600 rounded-full hover:bg-green-800"
+                  title="แก้ไขข้อมูล"
+                >
+                  <FaEdit size={12} />
+                </button>
+                <button
+                  onClick={() => deleteUserAction(u.id)}
+                  className="p-2 text-white bg-red-500 rounded-full hover:bg-red-700"
+                  title="ลบบัญชี"
+                >
+                  <FaTrash size={12} />
+                </button>
+              </div>
+            </div>
+          ))
+        ) : (
+          <div className="py-8 text-center text-gray-500 dark:text-gray-400">
+            ไม่มีข้อมูลนิสิต
+          </div>
+        )}
+      </div>
     </div>
   );
 }
