@@ -62,6 +62,28 @@ async function getPdfData(
   };
 }
 
+// ✅ [เพิ่มใหม่] ฟังก์ชันสำหรับสร้าง Header เป็นรูปภาพ SVG
+function createHeaderSvg(date: string, fontBase64: string): string {
+  const svgContent = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="2480" height="100">
+      <style>
+        @font-face {
+          font-family: 'Sarabun';
+          src: url(data:font/truetype;charset=utf-8;base64,${fontBase64}) format('truetype');
+        }
+      </style>
+      <text x="50" y="50" style="font-family: 'Sarabun', sans-serif; font-size: 32px; fill: #555;">
+        ข้อมูลเมื่อวันที่: ${date}
+      </text>
+      <text x="2430" y="50" text-anchor="end" style="font-family: 'Sarabun', sans-serif; font-size: 32px; fill: #555;">
+        หน้า <tspan class="pageNumber"></tspan> / <tspan class="totalPages"></tspan>
+      </text>
+    </svg>
+  `;
+  // แปลง SVG เป็น Base64
+  return `data:image/svg+xml;base64,${Buffer.from(svgContent).toString("base64")}`;
+}
+
 // ▼▼▼ [แก้ไข] ปรับปรุงการสร้าง HTML ทั้งหมดตามโครงสร้างที่ถูกต้อง ▼▼▼
 function getHtmlContent(data: PdfData) {
   // 1. อ่านไฟล์ Logo และแปลงเป็น Base64 Data URI
@@ -262,6 +284,18 @@ export async function POST(req: NextRequest) {
       year: "numeric",
     });
 
+    // อ่านฟอนต์ Sarabun สำหรับใช้ใน Header SVG
+    const fontPath = path.join(
+      process.cwd(),
+      "public/fonts",
+      "THSarabunNew.ttf",
+    );
+    const fontBuffer = fs.readFileSync(fontPath);
+    const fontBase64 = fontBuffer.toString("base64");
+
+    // สร้าง Header SVG
+    const headerImage = createHeaderSvg(currentDate, fontBase64);
+
     // ปรับการเรียกใช้ Puppeteer ให้เข้ากับ Serverless
     browser = await puppeteer.launch({
       args: chromium.args,
@@ -278,15 +312,15 @@ export async function POST(req: NextRequest) {
       format: "A4",
       printBackground: true,
       displayHeaderFooter: true,
+      // ใช้รูป SVG ที่เราสร้างขึ้นมาเป็น Header
       headerTemplate: `
-        <div style="font-family: Arial, sans-serif; font-size: 10px; color: #555; padding: 0 30px; width: 100%; display: flex; justify-content: space-between;">
-            <span>ข้อมูลเมื่อวันที่: ${currentDate}</span>
-            <span>หน้า <span class="pageNumber"></span> / <span class="totalPages"></span></span>
+        <div style="width: 100%; padding: 0 30px;">
+          <img src="${headerImage}" style="width: 100%; height: auto;" />
         </div>
       `,
-      footerTemplate: "<div></div>",
+      footerTemplate: "<div></div>", // Footer ว่างๆ
       margin: {
-        top: "50px",
+        top: "60px", // เพิ่ม margin ด้านบนเล็กน้อย
         right: "30px",
         bottom: "30px",
         left: "30px",
