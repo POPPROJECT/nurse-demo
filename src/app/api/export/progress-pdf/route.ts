@@ -65,19 +65,25 @@ async function getPdfData(
 // ✅ [เพิ่มใหม่] ฟังก์ชันสำหรับสร้าง Header เป็นรูปภาพ SVG
 function createHeaderSvg(date: string, fontBase64: string): string {
   const svgContent = `
-    <svg xmlns="http://www.w3.org/2000/svg" width="2480" height="100">
+    <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="50px" style="font-family: 'Sarabun', sans-serif; font-size: 10pt; color: #555;">
       <style>
         @font-face {
           font-family: 'Sarabun';
           src: url(data:font/truetype;charset=utf-8;base64,${fontBase64}) format('truetype');
         }
       </style>
-      <text x="50" y="50" style="font-family: 'Sarabun', sans-serif; font-size: 32px; fill: #555;">
-        ข้อมูลเมื่อวันที่: ${date}
-      </text>
-      <text x="2430" y="50" text-anchor="end" style="font-family: 'Sarabun', sans-serif; font-size: 32px; fill: #555;">
-        หน้า <tspan class="pageNumber"></tspan> / <tspan class="totalPages"></tspan>
-      </text>
+      
+      <foreignObject x="0" y="0" width="50%" height="50px">
+        <div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: center; height: 100%; padding-left: 10px;">
+          ข้อมูลเมื่อวันที่: ${date}
+        </div>
+      </foreignObject>
+      
+      <foreignObject x="50%" y="0" width="50%" height="50px">
+        <div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: center; justify-content: flex-end; height: 100%; padding-right: 10px;">
+          หน้า <span class="pageNumber"></span> / <span class="totalPages"></span>
+        </div>
+      </foreignObject>
     </svg>
   `;
   // แปลง SVG เป็น Base64
