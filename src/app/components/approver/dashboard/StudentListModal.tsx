@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Student } from "../../../../../lib/type";
 import LoadingSpinner from "@/app/components/approver/dashboard/LoadingSpinner";
-import ExcelJS from "exceljs"; // ✅ 1. Import ExcelJS
 
 export default function StudentListModal({
   isOpen,
@@ -51,63 +50,63 @@ export default function StudentListModal({
   }, [isOpen]);
 
   // ✅ 2. ฟังก์ชัน Export ที่ใช้ ExcelJS
-  const handleExport = async () => {
-    const workbook = new ExcelJS.Workbook();
-    const worksheet = workbook.addWorksheet("รายชื่อนิสิต");
-
-    // กำหนดส่วนหัวของตาราง
-    worksheet.columns = [
-      { header: "รหัสนิสิต", key: "id", width: 15 },
-      { header: "ชื่อ-นามสกุล", key: "name", width: 30 },
-      { header: "จำนวนที่บันทึก", key: "progress", width: 18 },
-      { header: "สถานะ", key: "status", width: 15 },
-    ];
-
-    // เติมข้อมูลนิสิต
-    displayedStudents.forEach((student) => {
-      worksheet.addRow({
-        id: student.id,
-        name: student.name,
-        // ✅ แก้ไขตรงนี้ให้เป็น String ธรรมดา
-        progress: `${student.completed}/${student.total}`,
-        status: student.status === "completed" ? "บันทึกครบ" : "บันทึกไม่ครบ",
-      });
-    });
-
-    // ตั้งค่าสีพื้นหลังของส่วนหัว
-    worksheet.getRow(1).eachCell((cell) => {
-      cell.fill = {
-        type: "pattern",
-        pattern: "solid",
-        fgColor: { argb: "FFD3D3D3" }, // สีเทาอ่อน
-      };
-      cell.font = { bold: true };
-    });
-
-    // สร้าง Buffer จาก Workbook
-    const buffer = await workbook.xlsx.writeBuffer();
-
-    const today = new Date()
-      .toLocaleDateString("th-TH", {
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
-      })
-      .replace(/\//g, "-");
-
-    // สร้าง Blob เพื่อดาวน์โหลด
-    const blob = new Blob([buffer], {
-      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `รายชื่อนิสิต-${title}-${today}.xlsx`;
-    document.body.appendChild(a);
-    a.click();
-    window.URL.revokeObjectURL(url);
-    document.body.removeChild(a);
-  };
+  // const handleExport = async () => {
+  //   const workbook = new ExcelJS.Workbook();
+  //   const worksheet = workbook.addWorksheet("รายชื่อนิสิต");
+  //
+  //   // กำหนดส่วนหัวของตาราง
+  //   worksheet.columns = [
+  //     { header: "รหัสนิสิต", key: "id", width: 15 },
+  //     { header: "ชื่อ-นามสกุล", key: "name", width: 30 },
+  //     { header: "จำนวนที่บันทึก", key: "progress", width: 18 },
+  //     { header: "สถานะ", key: "status", width: 15 },
+  //   ];
+  //
+  //   // เติมข้อมูลนิสิต
+  //   displayedStudents.forEach((student) => {
+  //     worksheet.addRow({
+  //       id: student.id,
+  //       name: student.name,
+  //       // ✅ แก้ไขตรงนี้ให้เป็น String ธรรมดา
+  //       progress: `${student.actual}/${student.total}`,
+  //       status: student.status === "completed" ? "บันทึกครบ" : "บันทึกไม่ครบ",
+  //     });
+  //   });
+  //
+  //   // ตั้งค่าสีพื้นหลังของส่วนหัว
+  //   worksheet.getRow(1).eachCell((cell) => {
+  //     cell.fill = {
+  //       type: "pattern",
+  //       pattern: "solid",
+  //       fgColor: { argb: "FFD3D3D3" }, // สีเทาอ่อน
+  //     };
+  //     cell.font = { bold: true };
+  //   });
+  //
+  //   // สร้าง Buffer จาก Workbook
+  //   const buffer = await workbook.xlsx.writeBuffer();
+  //
+  //   const today = new Date()
+  //     .toLocaleDateString("th-TH", {
+  //       year: "numeric",
+  //       month: "2-digit",
+  //       day: "2-digit",
+  //     })
+  //     .replace(/\//g, "-");
+  //
+  //   // สร้าง Blob เพื่อดาวน์โหลด
+  //   const blob = new Blob([buffer], {
+  //     type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  //   });
+  //   const url = window.URL.createObjectURL(blob);
+  //   const a = document.createElement("a");
+  //   a.href = url;
+  //   a.download = `รายชื่อนิสิต-${title}-${today}.xlsx`;
+  //   document.body.appendChild(a);
+  //   a.click();
+  //   window.URL.revokeObjectURL(url);
+  //   document.body.removeChild(a);
+  // };
 
   if (!isOpen) {
     return null;
@@ -146,7 +145,6 @@ export default function StudentListModal({
             </svg>
           </button>
         </div>
-
         {/* Modal Body */}
         <div className="space-y-4 p-6">
           <div className="flex flex-col gap-4">
@@ -241,7 +239,7 @@ export default function StudentListModal({
                           {student.name}
                         </td>
                         <td className="whitespace-nowrap px-6 py-3 text-center text-sm text-gray-800">
-                          {student.completed}/{student.total}
+                          {student.actual}/{student.total}
                         </td>
                         <td className="whitespace-nowrap px-6 py-3 text-center">
                           <span
@@ -269,30 +267,30 @@ export default function StudentListModal({
             </div>
           )}
         </div>
-
         {/* Modal Footer */}
-        <div className="flex items-center justify-between border-t bg-gray-50 p-4">
+        {/*ถ้ามีปุ่ม excel ให้แก้จาก justify-end เป็น justify-between*/}
+        <div className="flex items-center justify-end border-t bg-gray-50 p-4">
           {/* ✅ ปุ่ม Export Excel (ใช้ ExcelJS) */}
-          <button
-            onClick={handleExport}
-            className="flex items-center rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 transition-colors"
-          >
-            <svg
-              className="mr-2 h-4 w-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-              ></path>
-            </svg>
-            ส่งออก Excel
-          </button>
+          {/*<button*/}
+          {/*  onClick={handleExport}*/}
+          {/*  className="flex items-center rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 transition-colors"*/}
+          {/*>*/}
+          {/*  <svg*/}
+          {/*    className="mr-2 h-4 w-4"*/}
+          {/*    fill="none"*/}
+          {/*    stroke="currentColor"*/}
+          {/*    viewBox="0 0 24 24"*/}
+          {/*    xmlns="http://www.w3.org/2000/svg"*/}
+          {/*  >*/}
+          {/*    <path*/}
+          {/*      strokeLinecap="round"*/}
+          {/*      strokeLinejoin="round"*/}
+          {/*      strokeWidth="2"*/}
+          {/*      d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"*/}
+          {/*    ></path>*/}
+          {/*  </svg>*/}
+          {/*  ส่งออก Excel*/}
+          {/*</button>*/}
           <button
             onClick={onClose}
             className="rounded-lg bg-gray-200 px-4 py-2 text-sm font-medium text-gray-800 hover:bg-gray-300"

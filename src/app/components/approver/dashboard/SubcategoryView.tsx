@@ -40,43 +40,70 @@ export default function SubcategoryView({
         </button>
       </div>
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-        {course.subcategories.map((sub) => {
-          const color = getBarColor(sub.percent);
-          return (
-            <div
-              key={sub.id}
-              className="bg-gray-50 rounded-lg shadow p-4 border border-gray-100"
-            >
-              <div className="flex justify-between items-start mb-2">
-                <h4 className="font-medium text-gray-800 flex-1">{sub.name}</h4>
-                <span
-                  className="font-bold text-lg shrink-0 ml-2"
-                  style={{ color }}
-                >
-                  {sub.percent}%
-                </span>
+        {course.subcategories
+          .slice() // สร้าง copy ของ array เพื่อไม่ให้กระทบ props เดิม
+          .sort((a, b) => {
+            // ฟังก์ชันสำหรับดึงตัวเลขเวอร์ชัน เช่น "1.2 ชื่อ" จะได้ [1, 2]
+            const parseVersion = (name: string): number[] => {
+              const match = name.match(/^[\d.]+/);
+              if (!match) return [Infinity, Infinity]; // ถ้าไม่มีตัวเลข ให้ไปอยู่ท้ายสุด
+
+              const parts = match[0]
+                .split(".")
+                .map((num) => parseInt(num, 10) || 0);
+              return [parts[0] || 0, parts[1] || 0];
+            };
+
+            const [aMajor, aMinor] = parseVersion(a.name);
+            const [bMajor, bMinor] = parseVersion(b.name);
+
+            // เปรียบเทียบเลขตัวหน้าก่อน
+            if (aMajor !== bMajor) {
+              return aMajor - bMajor;
+            }
+
+            // ถ้าเลขตัวหน้าเท่ากัน ให้เปรียบเทียบเลขตัวหลัง
+            return aMinor - bMinor;
+          })
+          .map((sub) => {
+            const color = getBarColor(sub.percent);
+            return (
+              <div
+                key={sub.id}
+                className="bg-gray-50 rounded-lg shadow p-4 border border-gray-100"
+              >
+                <div className="flex justify-between items-start mb-2">
+                  <h4 className="font-medium text-gray-800 flex-1">
+                    {sub.name}
+                  </h4>
+                  <span
+                    className="font-bold text-lg shrink-0 ml-2"
+                    style={{ color }}
+                  >
+                    {sub.percent}%
+                  </span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2.5 mb-3">
+                  <div
+                    className="h-2.5 rounded-full"
+                    style={{ width: `${sub.percent}%`, backgroundColor: color }}
+                  ></div>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-500">
+                    {sub.doneStudentCount}/{sub.studentCount} นิสิต
+                  </span>
+                  <button
+                    onClick={() => onViewStudents(sub.id, sub.name)}
+                    className="px-3 py-1.5 text-white rounded-lg text-xs hover:opacity-90 transition-opacity"
+                    style={{ backgroundColor: "#f46b45" }}
+                  >
+                    รายชื่อนิสิต
+                  </button>
+                </div>
               </div>
-              <div className="w-full bg-gray-200 rounded-full h-2.5 mb-3">
-                <div
-                  className="h-2.5 rounded-full"
-                  style={{ width: `${sub.percent}%`, backgroundColor: color }}
-                ></div>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-500">
-                  {sub.doneStudentCount}/{sub.studentCount} นิสิต
-                </span>
-                <button
-                  onClick={() => onViewStudents(sub.id, sub.name)}
-                  className="px-3 py-1.5 text-white rounded-lg text-xs hover:opacity-90 transition-opacity"
-                  style={{ backgroundColor: "#f46b45" }}
-                >
-                  รายชื่อนิสิต
-                </button>
-              </div>
-            </div>
-          );
-        })}
+            );
+          })}
       </div>
     </div>
   );

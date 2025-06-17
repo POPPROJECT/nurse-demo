@@ -325,47 +325,66 @@ export default function ProgressClient({
 
                   {isOpen && (
                     <div className="p-5 space-y-4 bg-gray-100 border-t border-gray-200 dark:bg-gray-700 dark:border-gray-600">
-                      {subcs.map((sc) => {
-                        const required =
-                          progressMode === "subject"
-                            ? sc.inSubjectCount
-                            : sc.alwaycourse;
-                        const done = statsMap[sc.id]?._count?.experiences ?? 0;
-                        const pct =
-                          required === null ||
-                          required === undefined ||
-                          required <= 0
-                            ? 100
-                            : Math.min(
-                                100,
-                                Math.round((done / required) * 100),
-                              );
-                        const subBarColor = getBarColor(pct);
+                      {subcs
+                        .slice()
+                        .sort((a, b) => {
+                          const parseVersion = (name: string): number[] => {
+                            const match = name.match(/^[\d.]+/);
+                            if (!match) return [Infinity, Infinity];
+                            const parts = match[0]
+                              .split(".")
+                              .map((num) => parseInt(num, 10) || 0);
+                            return [parts[0] || 0, parts[1] || 0];
+                          };
 
-                        return (
-                          <div
-                            key={sc.id}
-                            className="p-4 bg-white rounded-lg shadow dark:bg-gray-800"
-                          >
-                            <div className="flex items-center justify-between mb-2">
-                              <span className="text-gray-800 dark:text-gray-200">
-                                {sc.name}
-                              </span>
+                          const [aMajor, aMinor] = parseVersion(a.name);
+                          const [bMajor, bMinor] = parseVersion(b.name);
+
+                          if (aMajor !== bMajor) return aMajor - bMajor;
+                          return aMinor - bMinor;
+                        })
+                        .map((sc) => {
+                          const required =
+                            progressMode === "subject"
+                              ? sc.inSubjectCount
+                              : sc.alwaycourse;
+                          const done =
+                            statsMap[sc.id]?._count?.experiences ?? 0;
+                          const pct =
+                            required === null ||
+                            required === undefined ||
+                            required <= 0
+                              ? 100
+                              : Math.min(
+                                  100,
+                                  Math.round((done / required) * 100),
+                                );
+                          const subBarColor = getBarColor(pct);
+
+                          return (
+                            <div
+                              key={sc.id}
+                              className="p-4 bg-white rounded-lg shadow dark:bg-gray-800"
+                            >
+                              <div className="flex items-center justify-between mb-2">
+                                <span className="text-gray-800 dark:text-gray-200">
+                                  {sc.name}
+                                </span>
+                              </div>
+                              <div className="w-full h-2 overflow-hidden bg-gray-200 rounded-full">
+                                <div
+                                  className={`${subBarColor} h-2 transition-all`}
+                                  style={{ width: `${pct}%` }}
+                                ></div>
+                              </div>
+                              <div className="text-sm text-right text-gray-700 dark:text-gray-300">
+                                <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                                  {pct}% ({done}/{required ?? 0})
+                                </span>
+                              </div>
                             </div>
-                            <div className="w-full h-2 overflow-hidden bg-gray-200 rounded-full">
-                              <div
-                                className={`${subBarColor} h-2 transition-all`}
-                                style={{ width: `${pct}%` }}
-                              ></div>
-                            </div>
-                            <div className="text-sm text-right text-gray-700 dark:text-gray-300">
-                              <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                                {pct}% ({done}/{required ?? 0})
-                              </span>
-                            </div>
-                          </div>
-                        );
-                      })}
+                          );
+                        })}
                       {subcs.length === 0 && (
                         <p className="text-center text-gray-500">
                           ไม่มีหัวข้อย่อย

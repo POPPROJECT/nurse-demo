@@ -3,7 +3,7 @@
 import { FormEvent, useEffect, useState } from "react";
 import axios from "axios";
 import Swal from "sweetalert2";
-import { FaCheck, FaEdit, FaPlus, FaTimes, FaTrash } from "react-icons/fa";
+import { FaCheck, FaEdit, FaPlus, FaTimes, FaTrash } from "react-icons/fa"; // [แก้ไข] 1. เปลี่ยน Type ของ subject
 
 // [แก้ไข] 1. เปลี่ยน Type ของ subject
 interface SubCourse {
@@ -164,7 +164,7 @@ export default function SubCourseManager({
       {/* Form เพิ่ม */}
       <form
         onSubmit={addSub}
-        className="flex flex-wrap items-end gap-3 p-4 mt-2 bg-white rounded-lg shadow"
+        className="flex flex-wrap items-end gap-3 p-4 mt-2 bg-white rounded-lg shadow text-gray-800"
       >
         <div className="flex-1 min-w-[200px]">
           <label className="block mb-1">ชื่อหมวดหมู่ย่อย</label>
@@ -234,39 +234,74 @@ export default function SubCourseManager({
                 className="flex items-center justify-between p-3 rounded bg-gray-50 hover:bg-gray-100"
               >
                 {editingId === sub.id ? (
+                  // ----- โหมดแก้ไข -----
                   <div className="flex flex-wrap items-end w-full gap-3">
-                    <input
-                      className="flex-grow px-2 py-1 border rounded"
-                      value={editName}
-                      onChange={(e) => setEditName(e.target.value)}
-                    />
-                    {/* [แก้ไข] 4. เปลี่ยน Input แก้ไขเป็น type="text" */}
-                    <input
-                      className="w-20 px-2 py-1 border rounded"
-                      type="text"
-                      value={editSubject}
-                      onChange={(e) => setEditSubject(e.target.value)}
-                    />
-                    <input
-                      className="w-20 px-2 py-1 border rounded"
-                      type="number"
-                      value={editAlwaycourse}
-                      onChange={(e) =>
-                        setEditAlwaycourse(Number(e.target.value))
-                      }
-                    />
-                    <button
-                      onClick={() => saveEdit(sub.id)}
-                      className="px-3 py-2 text-white bg-green-600 rounded hover:bg-green-700"
-                    >
-                      <FaCheck className="inline mr-1" /> บันทึก
-                    </button>
-                    <button
-                      onClick={cancelEdit}
-                      className="px-3 py-2 text-white bg-gray-500 rounded hover:bg-gray-600"
-                    >
-                      <FaTimes className="inline mr-1" /> ยกเลิก
-                    </button>
+                    <div className="flex-grow">
+                      <label className="text-xs">ชื่อ</label>
+                      <input
+                        className="w-full px-2 py-1 border rounded"
+                        value={editName}
+                        onChange={(e) => setEditName(e.target.value)}
+                      />
+                    </div>
+                    <div className="w-28">
+                      <label className="text-xs">ในวิชา</label>
+                      <input
+                        className="w-full px-2 py-1 border rounded"
+                        type="number"
+                        min={0}
+                        value={editInSubjectCount}
+                        onChange={(e) =>
+                          setEditInSubjectCount(Number(e.target.value))
+                        }
+                      />
+                    </div>
+                    <div className="w-28">
+                      <label className="text-xs">ตลอดหลักสูตร</label>
+                      <input
+                        className="w-full px-2 py-1 border rounded"
+                        type="number"
+                        min={0}
+                        value={editAlwaycourse}
+                        onChange={(e) =>
+                          setEditAlwaycourse(Number(e.target.value))
+                        }
+                      />
+                    </div>
+
+                    {/* ▼▼▼ [แก้ไข] เพิ่ม Checkbox ที่นี่ ▼▼▼ */}
+                    <div className="flex items-center self-center h-[38px] pt-4">
+                      <input
+                        type="checkbox"
+                        id={`edit-isFreeform-${sub.id}`}
+                        checked={editIsFreeform}
+                        onChange={(e) => setEditIsFreeform(e.target.checked)}
+                        className="w-4 h-4"
+                      />
+                      <label
+                        htmlFor={`edit-isFreeform-${sub.id}`}
+                        className="ml-2 text-sm"
+                      >
+                        กรอกชื่อวิชาเอง
+                      </label>
+                    </div>
+
+                    <div className="flex gap-2 self-end">
+                      <button
+                        onClick={() => saveEdit(sub.id)}
+                        className="px-3 py-2 text-white bg-green-600 rounded hover:bg-green-700"
+                        title="ยืนยัน"
+                      >
+                        <FaCheck />
+                      </button>
+                      <button
+                        onClick={cancelEdit}
+                        className="px-3 py-2 text-white bg-red-500 rounded hover:bg-red-600"
+                        title="ยกเลิก"
+                      >
+                        <FaTimes />
+                      </button>
+                    </div>
                   </div>
                 ) : (
                   <>
@@ -274,7 +309,7 @@ export default function SubCourseManager({
                       <span className="font-medium">{sub.name}</span>
                       <span className="text-gray-500">
                         | ในวิชา: {sub.inSubjectCount || "-"}
-                      </span>{" "}
+                      </span>
                       {/* แสดงชื่อ subject */}
                       <span className="text-gray-500">
                         | ตลอดหลักสูตร: {sub.alwaycourse}

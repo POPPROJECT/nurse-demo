@@ -25,6 +25,21 @@ interface ApproverProgressClientProps {
   studentId: number;
 }
 
+// --- ฟังก์ชัน Helper สำหรับการเรียงลำดับ ---
+const parseVersion = (name: string): number[] => {
+  const match = name.match(/^[\d.]+/);
+  if (!match) return [Infinity, Infinity];
+  const parts = match[0].split(".").map((num) => parseInt(num, 10) || 0);
+  return [parts[0] || 0, parts[1] || 0];
+};
+
+const compareCourses = (a: Course | SubCourse, b: Course | SubCourse) => {
+  const [aMajor, aMinor] = parseVersion(a.name);
+  const [bMajor, bMinor] = parseVersion(b.name);
+  if (aMajor !== bMajor) return aMajor - bMajor;
+  return aMinor - bMinor;
+};
+
 // --- MAIN COMPONENT ---
 export default function ApproverProgressClient({
   accessToken,
@@ -89,16 +104,22 @@ export default function ApproverProgressClient({
           ),
         ]);
 
-        setCourses(coursesRes.data);
+        const sortedCourses = coursesRes.data.slice().sort(compareCourses);
+        setCourses(sortedCourses);
 
         const m: Record<number, Stat> = {};
         statsRes.data.forEach((s) => (m[s.id] = s));
         setStatsMap(m);
 
-        const subcoursePromises = coursesRes.data.map((c) =>
-          axios
-            .get<SubCourse[]>(`${BASE}/courses/${c.id}/subcourses`, authHeader)
-            .then((r) => ({ id: c.id, subs: r.data })),
+        const subcoursePromises = sortedCourses.map(
+          (
+            c, // ใช้ sortedCourses
+          ) =>
+            axios
+              .get<
+                SubCourse[]
+              >(`${BASE}/courses/${c.id}/subcourses`, authHeader)
+              .then((r) => ({ id: c.id, subs: r.data })),
         );
         const subcourseResults = await Promise.all(subcoursePromises);
         const byC: Record<number, SubCourse[]> = {};
@@ -111,7 +132,7 @@ export default function ApproverProgressClient({
         setLoading(false);
       }
     };
-    loadData();
+    if (selectedBook) loadData();
   }, [selectedBook, studentId, authHeader, BASE]);
 
   // --- CALCULATIONS ---
@@ -339,47 +360,51 @@ export default function ApproverProgressClient({
                         {/* 1. เช็คว่ามีรายการย่อยในหมวดนี้หรือไม่ */}
                         {allSubsInCourse.length > 0 ? (
                           // 2. ถ้ามี ให้ map แสดงผลทุกรายการโดย "ไม่ใช้ .filter"
-                          allSubsInCourse.map((sc) => {
-                            const doneCount =
-                              statsMap[sc.id]?._count?.experiences ?? 0;
-                            // เรายังคงใช้ requirementKey เพื่อดึงค่า total ที่ถูกต้องสำหรับแต่ละโหมด
-                            const total = sc[requirementKey] ?? 0;
-                            const subPct =
-                              total === 0
-                                ? 100
-                                : Math.round(
-                                    (Math.min(doneCount, total) / total) * 100,
-                                  );
-                            const subBarColor =
-                              subPct === 100
-                                ? "bg-green-400"
-                                : subPct >= 50
-                                  ? "bg-yellow-400"
-                                  : "bg-red-400";
-                            return (
-                              <div
-                                key={sc.id}
-                                className="p-4 bg-white rounded-lg shadow dark:bg-gray-800"
-                              >
-                                <div className="flex items-center justify-between mb-2">
-                                  <span className="text-gray-800 dark:text-gray-200">
-                                    {sc.name}
-                                  </span>
+                          allSubsInCourse
+                            .slice()
+                            .sort(compareCourses)
+                            .map((sc) => {
+                              const doneCount =
+                                statsMap[sc.id]?._count?.experiences ?? 0;
+                              // เรายังคงใช้ requirementKey เพื่อดึงค่า total ที่ถูกต้องสำหรับแต่ละโหมด
+                              const total = sc[requirementKey] ?? 0;
+                              const subPct =
+                                total === 0
+                                  ? 100
+                                  : Math.round(
+                                      (Math.min(doneCount, total) / total) *
+                                        100,
+                                    );
+                              const subBarColor =
+                                subPct === 100
+                                  ? "bg-green-400"
+                                  : subPct >= 50
+                                    ? "bg-yellow-400"
+                                    : "bg-red-400";
+                              return (
+                                <div
+                                  key={sc.id}
+                                  className="p-4 bg-white rounded-lg shadow dark:bg-gray-800"
+                                >
+                                  <div className="flex items-center justify-between mb-2">
+                                    <span className="text-gray-800 dark:text-gray-200">
+                                      {sc.name}
+                                    </span>
+                                  </div>
+                                  <div className="w-full h-2 overflow-hidden bg-gray-200 rounded-full">
+                                    <div
+                                      className={`${subBarColor} h-2 transition-all`}
+                                      style={{ width: `${subPct}%` }}
+                                    ></div>
+                                  </div>
+                                  <div className="text-sm text-right text-gray-700 dark:text-gray-300">
+                                    <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                                      {subPct}% ({doneCount}/{total})
+                                    </span>
+                                  </div>
                                 </div>
-                                <div className="w-full h-2 overflow-hidden bg-gray-200 rounded-full">
-                                  <div
-                                    className={`${subBarColor} h-2 transition-all`}
-                                    style={{ width: `${subPct}%` }}
-                                  ></div>
-                                </div>
-                                <div className="text-sm text-right text-gray-700 dark:text-gray-300">
-                                  <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                                    {subPct}% ({doneCount}/{total})
-                                  </span>
-                                </div>
-                              </div>
-                            );
-                          })
+                              );
+                            })
                         ) : (
                           <p className="text-center text-gray-500 dark:text-gray-400">
                             ไม่มีหัวข้อย่อย

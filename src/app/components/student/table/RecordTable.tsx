@@ -1031,7 +1031,7 @@ export default function RecordTable({ accessToken }: { accessToken: string }) {
                       </div>
                       {/* ถ้ามี subject ให้แสดงบรรทัดนี้ */}
                       {rec.subject && (
-                        <div className="mb-2  text-gray-700 dark:text-gray-300">
+                        <div className="mb-2 text-gray-700 dark:text-gray-300">
                           <span className="font-medium">ในวิชา:</span>{" "}
                           {rec.subject}
                         </div>
@@ -1056,13 +1056,13 @@ export default function RecordTable({ accessToken }: { accessToken: string }) {
                         })}
                       </div>
                       <div className="text-gray-600 dark:text-gray-300">
-                        ผู้นิเทศก์:{" "}
+                        ผู้นิเทศก์:
                         <span className="font-medium text-blue-600">
                           {rec.approverName}
                         </span>
                       </div>
                       <div className="mt-1 mb-1 text-gray-400">
-                        วันที่ส่งข้อมูล:{" "}
+                        วันที่ส่งข้อมูล:
                         <span className="">
                           {new Date(rec.createdAt).toLocaleDateString("th")}
                         </span>

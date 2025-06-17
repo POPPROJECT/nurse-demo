@@ -152,7 +152,7 @@ export default function CourseManager({
             placeholder="ชื่อหมวดหมู่"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="flex-1 px-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none transition-all "
+            className="flex-1 px-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none transition-all text-gray-800"
           />
           <button
             type="submit"
@@ -182,7 +182,21 @@ export default function CourseManager({
           <ul className="space-y-3 max-h-[350px] overflow-y-auto pr-1">
             {courses
               .slice()
-              .sort((a, b) => a.id - b.id)
+              .sort((a, b) => {
+                // ฟังก์ชันสำหรับดึงตัวเลขข้างหน้าออกมา
+                const getLeadingNumber = (name: string): number => {
+                  const match = name.match(/^\d+/); // หาตัวเลขที่อยู่ต้น string
+                  if (match) {
+                    return parseInt(match[0], 10);
+                  }
+                  return Infinity; // ถ้าไม่มีตัวเลข ให้ไปอยู่ท้ายสุด
+                };
+
+                const numA = getLeadingNumber(a.name);
+                const numB = getLeadingNumber(b.name);
+
+                return numA - numB;
+              })
               .map((c, index) => (
                 <li
                   key={c.id}
@@ -199,16 +213,16 @@ export default function CourseManager({
                       <div className="flex space-x-2">
                         <button
                           onClick={() => saveEdit(c.id)}
-                          className="px-3 py-2 text-white bg-green-600 rounded hover:text-green-800"
+                          className="px-3 py-2 text-sm text-white bg-green-600 rounded-lg hover:bg-green-700 flex items-center"
                         >
-                          <FaCheck className="inline mr-1" />
+                          <FaCheck className="mr-1" />
                           บันทึก
                         </button>
                         <button
                           onClick={cancelEdit}
-                          className="px-3 py-2 text-white bg-red-500 rounded hover:text-red-700"
+                          className="px-3 py-2 text-sm text-white bg-red-500 rounded-lg hover:bg-red-700 flex items-center"
                         >
-                          <FaTimes className="inline mr-1" />
+                          <FaTimes className="mr-1" />
                           ยกเลิก
                         </button>
                       </div>
@@ -222,16 +236,16 @@ export default function CourseManager({
                         <div className="flex space-x-2">
                           <button
                             onClick={() => startEdit(c)}
-                            className="px-2 py-2 text-blue-500 hover:text-blue-700"
+                            className="px-2 py-2 text-blue-500 hover:text-blue-700 text-sm flex items-center"
                           >
-                            <FaEdit className="inline mr-1" />
+                            <FaEdit className="mr-1" />
                             แก้ไข
                           </button>
                           <button
                             onClick={() => deleteCourse(c.id)}
-                            className="px-2 py-2 text-red-500 hover:text-red-700"
+                            className="px-2 py-2 text-red-500 hover:text-red-700 text-sm flex items-center"
                           >
-                            <FaTrash className="inline mr-1" />
+                            <FaTrash className="mr-1" />
                             ลบ
                           </button>
                         </div>

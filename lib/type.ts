@@ -83,6 +83,7 @@ export interface Student {
   name: string;
   completed: number;
   total: number;
+  actual: number;
   status: "completed" | "incomplete";
 }
 

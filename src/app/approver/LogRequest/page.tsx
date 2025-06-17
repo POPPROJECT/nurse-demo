@@ -35,7 +35,7 @@ export default function LogRequestPage() {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [search, setSearch] = useState("");
-  const [status, setStatus] = useState<"all" | "CONFIRMED" | "CANCEL">("all");
+  const [status, setStatus] = useState<"all" | "confirmed" | "cancel">("all");
   const [sortBy, setSortBy] = useState("createdAt");
   const [order, setOrder] = useState<"asc" | "desc">("desc");
   const [loading, setLoading] = useState(true);
