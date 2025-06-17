@@ -38,11 +38,16 @@ interface FieldValue {
   value: string;
 }
 
+interface CourseInfo {
+  id: number;
+  name: string;
+}
+
 interface Experience {
   id: number;
   bookId: number;
-  course: string;
-  subCourse: string;
+  course: CourseInfo;
+  subCourse: CourseInfo;
   subject?: string | null;
   approverRole: "APPROVER_IN" | "APPROVER_OUT";
   approverName: string;
@@ -392,13 +397,13 @@ export default function RecordTable({ accessToken }: { accessToken: string }) {
   /** เปิด modal แก้ไข พร้อม preload ค่า */
   const onEdit = (rec: Experience) => {
     setEditId(rec.id);
-    // course
-    const foundCourse = courses.find((c) => c.label === rec.course);
+    // ใช้ rec.course.name ในการเปรียบเทียบ
+    const foundCourse = courses.find((c) => c.label === rec.course.name);
     setEditCourse(foundCourse || null);
-    // subCourse (จะ load ใน useEffect ข้างบน)
-    // รอ subCourses โหลดเสร็จ → match label
+
     setTimeout(() => {
-      const foundSub = subCourses.find((s) => s.label === rec.subCourse);
+      // ใช้ rec.subCourse.name ในการเปรียบเทียบ
+      const foundSub = subCourses.find((s) => s.label === rec.subCourse.name);
       setEditSubCourse(foundSub || null);
       if (foundSub?.isSubjectFreeform) {
         setEditFreeformSubject(rec.subject ?? "");
@@ -412,7 +417,7 @@ export default function RecordTable({ accessToken }: { accessToken: string }) {
       (o) => o.value === rec.approverRole,
     )!;
     setEditApproverType(aproTypeOption);
-    // จะโหลด approverOptions จาก useEffect ข้างบน → จากนั้น match name
+
     setTimeout(() => {
       const foundApr = approverOptions.find(
         (a) => a.label === rec.approverName,
@@ -421,12 +426,9 @@ export default function RecordTable({ accessToken }: { accessToken: string }) {
         foundApr || { value: rec.approverName, label: rec.approverName },
       );
     }, 0);
-    // fieldValues
+
     setEditFieldValues(
-      rec.fieldValues.map((fv) => ({
-        fieldId: fv.fieldId,
-        value: fv.value,
-      })),
+      rec.fieldValues.map((fv) => ({ fieldId: fv.fieldId, value: fv.value })),
     );
     setIsEditing(true);
     setOpenMenuId(null);
@@ -995,7 +997,7 @@ export default function RecordTable({ accessToken }: { accessToken: string }) {
                       )}
                       <div className="flex items-center gap-2 mb-1">
                         <h3 className="text-lg font-semibold text-blue-600">
-                          {rec.course}
+                          {rec.course.name}
                         </h3>
                         <span
                           className={`
@@ -1025,7 +1027,7 @@ export default function RecordTable({ accessToken }: { accessToken: string }) {
                         </span>
                       </div>
                       <div className="mb-2 font-medium text-blue-600">
-                        {rec.subCourse}
+                        {rec.subCourse.name}
                       </div>
                       {/* ถ้ามี subject ให้แสดงบรรทัดนี้ */}
                       {rec.subject && (

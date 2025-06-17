@@ -4,14 +4,19 @@ import chromium from "@sparticuz/chromium";
 import fs from "fs";
 import path from "path";
 
+interface CourseInfo {
+  id: number;
+  name: string;
+}
+
 // --- TYPE DEFINITIONS ---
 interface FieldValue {
   fieldId: number;
   value: string;
 }
 interface Experience {
-  course: string;
-  subCourse?: string;
+  course: CourseInfo;
+  subCourse?: CourseInfo;
   subject?: string | null;
   inSubjectCount?: number;
   alwaycourse?: number;
@@ -111,29 +116,22 @@ function getHtmlContent(data: PdfData) {
   };
 
   const sorted = [...data.experiences].sort((a, b) => {
-    // 1. เรียงตาม Course หลักก่อน
-    const [aCourseMain] = parseVersionString(a.course);
-    const [bCourseMain] = parseVersionString(b.course);
+    // ใช้ .name จาก Object ในการเรียง
+    const [aCourseMain] = parseVersionString(a.course.name);
+    const [bCourseMain] = parseVersionString(b.course.name);
     if (aCourseMain !== bCourseMain) return aCourseMain - bCourseMain;
 
-    // 2. ถ้า Course หลักเหมือนกัน ให้เรียงตาม SubCourse
-    const [aSubMain, aSubMinor] = parseVersionString(a.subCourse);
-    const [bSubMain, bSubMinor] = parseVersionString(b.subCourse);
-
-    // 2.1 เทียบเลขหน้าจุดทศนิยมของ SubCourse
+    const [aSubMain, aSubMinor] = parseVersionString(a.subCourse?.name);
+    const [bSubMain, bSubMinor] = parseVersionString(b.subCourse?.name);
     if (aSubMain !== bSubMain) return aSubMain - bSubMain;
-
-    // 2.2 ถ้าเลขหน้าจุดเท่ากัน ให้เทียบเลขหลังจุดทศนิยม
     if (aSubMinor !== bSubMinor) return aSubMinor - bSubMinor;
-
-    return 0; // ถ้าเหมือนกันหมด
+    return 0;
   });
-  // ▲▲▲ [สิ้นสุดส่วนที่แก้ไข] ▲▲▲
 
-  // 3. Logic การนับลำดับ "ที่"
   const caseCounter = new Map<string, number>();
   const experiencesWithCaseNumber = sorted.map((exp) => {
-    const key = `${exp.course}_${exp.subCourse}`;
+    // ใช้ .name จาก Object ในการสร้าง key
+    const key = `${exp.course.name}_${exp.subCourse?.name}`;
     const count = (caseCounter.get(key) || 0) + 1;
     caseCounter.set(key, count);
     return { ...exp, caseNumber: count };
@@ -143,53 +141,47 @@ function getHtmlContent(data: PdfData) {
   const grouped = experiencesWithCaseNumber.reduce<
     Record<string, (Experience & { caseNumber: number })[]>
   >((acc, exp) => {
-    if (!acc[exp.course]) acc[exp.course] = [];
-    acc[exp.course].push(exp);
+    const courseName = exp.course.name; // ใช้ .name เป็น Key
+    if (!acc[courseName]) acc[courseName] = [];
+    acc[courseName].push(exp);
     return acc;
   }, {});
 
   // ▼▼▼ [แก้ไข] ปรับแก้ Logic การสร้างแถวตาราง ▼▼▼
   const tableRows = Object.entries(grouped)
-    .map(([course, exps]) => {
+    .map(([courseName, exps]) => {
       const courseHeaderRow = `
       <tr class="bg-slate-100 font-bold">
-        <td class="p-2 border border-slate-300" colspan="${4 + data.fields.length + 1}">${course}</td>
+        <td class="p-2 border border-slate-300" colspan="${4 + data.fields.length + 1}">${courseName}</td>
       </tr>
     `;
 
-      let lastSubCourse: string | undefined | null = null;
+      let lastSubCourseName: string | undefined | null = null;
 
       const subCourseRows = exps
         .map((exp: Experience & { caseNumber: number }) => {
-          console.log(
-            "Experience Data for PDF Row:",
-            JSON.stringify(exp, null, 2),
-          );
+          let currentSubCourseName = exp.subCourse?.name || "";
 
-          let experienceCell = `<td class="p-2 border border-slate-300 pl-6">${exp.subCourse || ""}</td>`;
+          let experienceCell = `<td class="p-2 border border-slate-300 pl-6">${currentSubCourseName}</td>`;
           let alwaycourseCell = `<td class="p-2 text-center border border-slate-300">${exp.alwaycourse || ""}</td>`;
 
-          // --- เริ่ม Logic ใหม่สำหรับช่อง "ในวิชา" ---
           const parts = [];
-          if (exp.subject) {
-            parts.push(exp.subject);
-          }
-          // ใช้ != null เพื่อดักทั้ง null และ undefined
-          if (exp.inSubjectCount != null) {
-            parts.push(exp.inSubjectCount);
-          }
-          // เข้าร่วมเฉพาะส่วนที่มีข้อมูล และถ้าไม่มีเลยให้เป็นค่าว่าง
+          if (exp.subject) parts.push(exp.subject);
+          if (exp.inSubjectCount != null) parts.push(exp.inSubjectCount);
           const inSubjectDisplayValue =
             parts.length > 0 ? parts.join(" / ") : "";
           let inSubjectCell = `<td class="p-2 text-center border border-slate-300">${inSubjectDisplayValue}</td>`;
-          // --- จบ Logic ใหม่ ---
 
-          if (exp.subCourse && exp.subCourse === lastSubCourse) {
+          // เปรียบเทียบด้วย .name
+          if (
+            currentSubCourseName &&
+            currentSubCourseName === lastSubCourseName
+          ) {
             experienceCell = `<td class="p-2 border border-slate-300 pl-6"></td>`;
             inSubjectCell = `<td class="p-2 text-center border border-slate-300"></td>`;
             alwaycourseCell = `<td class="p-2 text-center border border-slate-300"></td>`;
           }
-          lastSubCourse = exp.subCourse;
+          lastSubCourseName = currentSubCourseName;
 
           return `
             <tr>
@@ -299,9 +291,6 @@ export async function POST(req: NextRequest) {
     const fontBuffer = fs.readFileSync(fontPath);
     const fontBase64 = fontBuffer.toString("base64");
 
-    // สร้าง Header SVG
-    const headerImage = createHeaderSvg(currentDate, fontBase64);
-
     // ปรับการเรียกใช้ Puppeteer ให้เข้ากับ Serverless
     browser = await puppeteer.launch({
       args: chromium.args,
@@ -320,17 +309,19 @@ export async function POST(req: NextRequest) {
       displayHeaderFooter: true,
       // ใช้รูป SVG ที่เราสร้างขึ้นมาเป็น Header
       headerTemplate: `
-        <div style="width: 100%; padding: 0 30px;">
-          <img src="${headerImage}" style="width: 100%; height: auto;" />
+        <div style="width: 100%; padding: 0 30px; box-sizing: border-box;">
+          <img src="data:image/svg+xml;base64,${Buffer.from(
+            `
+            <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="50px" style="font-family: Arial, sans-serif; font-size: 10pt; color: #555;">
+              <text x="0" y="35">ข้อมูลเมื่อวันที่: ${currentDate}</text>
+              <text x="100%" y="35" text-anchor="end">หน้า <span class="pageNumber"></span> / <span class="totalPages"></span></text>
+            </svg>
+          `,
+          ).toString("base64")}" style="width: 100%; height: auto;" />
         </div>
       `,
-      footerTemplate: "<div></div>", // Footer ว่างๆ
-      margin: {
-        top: "60px", // เพิ่ม margin ด้านบนเล็กน้อย
-        right: "30px",
-        bottom: "30px",
-        left: "30px",
-      },
+      footerTemplate: "<div></div>",
+      margin: { top: "60px", right: "30px", bottom: "30px", left: "30px" },
     });
     // ▲▲▲ [สิ้นสุดส่วนที่แก้ไข] ▲▲▲
 

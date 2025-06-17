@@ -4,8 +4,8 @@ import React from "react";
 type Props = {
   search: string;
   setSearchAction: (v: string) => void;
-  status: "all" | "CONFIRMED" | "CANCEL";
-  setStatusAction: (v: "all" | "CONFIRMED" | "CANCEL") => void;
+  status: "all" | "confirmed" | "cancel";
+  setStatusAction: (v: "all" | "confirmed" | "cancel") => void;
   limit: number;
   setLimitAction: (n: number) => void;
 };
@@ -42,8 +42,8 @@ export default function FilterBar({
           className="w-full p-2 border rounded-lg bg-white dark:bg-slate-800 border-gray-300 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-400 text-gray-700 dark:text-gray-300"
         >
           <option value="all">ทั้งหมด</option>
-          <option value="CONFIRMED">อนุมัติ</option>
-          <option value="CANCEL">ปฏิเสธ</option>
+          <option value="confirmed">อนุมัติ</option>
+          <option value="cancel">ปฏิเสธ</option>
         </select>
       </div>
 

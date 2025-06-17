@@ -8,12 +8,16 @@ import Pagination from "@/app/components/approver/LogRequest/Pagination";
 import { useAuth } from "@/app/contexts/AuthContext";
 import { ExperienceStatus } from "lib/type";
 
+interface CourseInfo {
+  name: string;
+}
+
 // ... (Interface LogTableRecord และ FetchLogResponse เหมือนเดิม) ...
 interface LogTableRecord {
   id: number;
   student: { studentId: string; user: { name: string } };
-  course: string;
-  subCourse: string;
+  course: CourseInfo;
+  subCourse: CourseInfo;
   status: ExperienceStatus;
   createdAt: string;
 }

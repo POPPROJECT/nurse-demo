@@ -14,11 +14,16 @@ interface FieldValue {
   value: string;
 }
 
+interface CourseInfo {
+  id: number;
+  name: string;
+}
+
 export interface ExperienceRequest {
   // ✅ export interface นี้เพื่อให้ RequestCard import ไปใช้ได้
   id: number;
-  course: string;
-  subCourse: string;
+  course: CourseInfo;
+  subCourse: CourseInfo;
   subject?: string | null;
   student: {
     // ✅ Backend ส่ง "student" object
