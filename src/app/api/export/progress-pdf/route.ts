@@ -169,13 +169,19 @@ function getHtmlContent(data: PdfData) {
             })
             .join(
               "",
-            )}<td class="p-2 border border-slate-300">${exp.approverName}</td></tr>`;
+            )}<td class="p-2 border border-slate-300 items-center">${exp.approverName}</td></tr>`;
         })
         .join("");
 
       return courseHeaderRow + subCourseRows;
     })
     .join("");
+
+  const currentDate = new Date().toLocaleDateString("th-TH", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
 
   // ▼▼▼ [แก้ไข] ปรับแก้ส่วนของ <style> และ <thead> ภายใน HTML ▼▼▼
   return `
@@ -220,6 +226,7 @@ function getHtmlContent(data: PdfData) {
       <body>
         <div class="text-center mb-4"><img src="${logoSrc}" alt="Logo" class="w-16 h-16 mx-auto" /></div>
         <div class="mt-4 mb-8 text-base">
+          <p><strong>ข้อมูลเมื่อวันที่:</strong> ${currentDate}</p>
           <p><strong>ชื่อ-นามสกุล:</strong> ${data.userName}</p>
           <p><strong>รหัสนิสิต:</strong> ${data.studentId}</p>
           <p><strong>สมุด:</strong> ${data.bookTitle}</p>
@@ -232,7 +239,7 @@ function getHtmlContent(data: PdfData) {
               <th class="p-2 font-semibold border border-slate-300 center" style="width: 9.2%;">ตลอด<br/>หลักสูตร</th>
               <th class="p-2 font-semibold border border-slate-300 center" style="width: 4%;">ที่</th>
               ${data.fields.map((f) => `<th class="p-2 font-semibold border border-slate-300 center">${f.label}</th>`).join("")}
-              <th class="p-2 font-semibold border border-slate-300 center" style="width: 20%;">ชื่อผู้นิเทศ</th>
+              <th class="p-2 font-semibold border border-slate-300 center" style="width: 20%;">ชื่อผู้นิเทศก์</th>
             </tr>
           </thead>
           <tbody>
@@ -257,11 +264,6 @@ export async function POST(req: NextRequest) {
     } // ดึงข้อมูลและสร้าง HTML (เหมือนเดิม)
     const data = await getPdfData(bookId, accessToken);
     const htmlContent = getHtmlContent(data);
-    const currentDate = new Date().toLocaleDateString("th-TH", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    });
 
     // อ่านฟอนต์ Sarabun สำหรับใช้ใน Header SVG
     const fontPath = path.join(
@@ -310,9 +312,6 @@ export async function POST(req: NextRequest) {
   <div style="font-family: 'THSarabunNew', sans-serif; font-size: 10px; width: 100%; padding: 0 30px;">
     <table style="width: 100%; border-collapse: collapse;">
       <tr>
-        <td style="text-align: left; color: #808080;">
-          ข้อมูลเมื่อวันที่: ${currentDate}
-        </td>
         <td style="text-align: right; color: #808080;">
           หน้า <span class="pageNumber"></span> / <span class="totalPages"></span>
         </td>
