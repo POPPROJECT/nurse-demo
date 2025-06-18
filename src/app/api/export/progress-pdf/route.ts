@@ -319,7 +319,7 @@ function getHtmlContent(data: PdfData) {
               <th class="p-2 font-semibold border border-slate-300 center" style="width: 9.2%;">ตลอด<br/>หลักสูตร</th>
               <th class="p-2 font-semibold border border-slate-300 center" style="width: 4%;">ที่</th>
               ${data.fields.map((f) => `<th class="p-2 font-semibold border border-slate-300 center">${f.label}</th>`).join("")}
-              <th class="p-2 font-semibold border border-slate-300 center" style="width: 20%;">ชื่อผู้นิเทศ</th>
+              <th class="p-2 font-semibold border border-slate-300 center" style="width: 20%;">ชื่อผู้นิเทศก์</th>
             </tr>
           </thead>
           <tbody>
@@ -417,9 +417,13 @@ export async function POST(req: NextRequest) {
       //   </div>
       // `,
       headerTemplate: `
-        <div style="font-family: 'THSarabunNew', sans-serif; font-size: 10px; color: #808080; padding: 0 30px; width: 100%; display: flex; justify-content: space-between;">
-            <span>ข้อมูลเมื่อวันที่: ${currentDate}</span>
-            <span>หน้า <span class="pageNumber"></span> / <span class="totalPages"></span></span>
+        <div style="font-size:10px; color:#808080; width:100%; padding: 0 30px;">
+          <table style="width: 100%; font-family: Arial, sans-serif;">
+            <tr>
+                <td style="text-align:left;">ข้อมูลเมื่อวันที่: ${currentDate}</td>
+                <td style="text-align:right;">หน้า <span class="pageNumber"></span> / <span class="totalPages"></span></td>
+            </tr>
+          </table>
         </div>
       `,
       footerTemplate: "<div></div>",
