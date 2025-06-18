@@ -169,7 +169,7 @@ function getHtmlContent(data: PdfData) {
             })
             .join(
               "",
-            )}<td class="p-2 border border-slate-300 text-center align-middle border-r">${exp.approverName}</td></tr>`;
+            )}<td class="p-2 border border-slate-300 text-center">${exp.approverName}</td></tr>`;
         })
         .join("");
 
@@ -235,9 +235,9 @@ function getHtmlContent(data: PdfData) {
           <thead>
             <tr class="bg-slate-200">
               <th class="p-2 font-semibold border border-slate-300 center" style="width: 25%;">ประสบการณ์</th>
-              <th class="p-2 font-semibold border border-slate-300 center" style="width: 5.8%;">ใน<br/>วิชา</th>
-              <th class="p-2 font-semibold border border-slate-300 center" style="width: 9.2%;">ตลอด<br/>หลักสูตร</th>
-              <th class="p-2 font-semibold border border-slate-300 center" style="width: 4%;">ที่</th>
+              <th class="p-2 font-semibold border border-slate-300 center" style="width: 5%;">ใน<br/>วิชา</th>
+              <th class="p-2 font-semibold border border-slate-300 center" style="width: 7%;">ตลอด<br/>หลักสูตร</th>
+              <th class="p-2 font-semibold border border-slate-300 center" style="width: 3.5%;">ที่</th>
               ${data.fields.map((f) => `<th class="p-2 font-semibold border border-slate-300 center">${f.label}</th>`).join("")}
               <th class="p-2 font-semibold border border-slate-300 center" style="width: 20%;">ชื่อผู้นิเทศก์</th>
             </tr>
@@ -308,12 +308,17 @@ export async function POST(req: NextRequest) {
       format: "A4",
       printBackground: true,
       displayHeaderFooter: true,
-      headerTemplate: "<div></div>",
-      footerTemplate: `  
-        <div style="width: 100%; font-size: 10px; font-family: 'THSarabunNew', sans-serif; text-align: center; color: #808080;">
-            หน้า <span class="pageNumber"></span> / <span class="totalPages"></span>
-        </div>
-      `,
+      headerTemplate: `
+        <div style="font-family: 'THSarabunNew', sans-serif; font-size: 10px; width: 100%; padding: 0 30px;">
+            <table style="width: 100%; border-collapse: collapse;">
+                <tr>
+                <td style="text-align: right; color: #808080;">
+                    หน้า <span class="pageNumber"></span> / <span class="totalPages"></span>
+                </td>
+                </tr>
+            </table>
+        </div>`,
+      footerTemplate: "<div></div>",
       margin: { top: "60px", right: "30px", bottom: "30px", left: "30px" },
     });
 
