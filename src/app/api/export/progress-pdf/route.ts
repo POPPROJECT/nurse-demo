@@ -397,6 +397,7 @@ export async function POST(req: NextRequest) {
 
     const page = await browser.newPage();
     await page.setContent(htmlContent, { waitUntil: "networkidle0" });
+    const fontUrl = "https://nurse-demo.vercel.app/fonts/THSarabunNew.ttf"; // เปลี่ยนให้ตรงกับ domain ที่ deploy
 
     // ▼▼▼ [แก้ไข] ปรับ Header/Footer Template ใหม่ทั้งหมด ▼▼▼
     const pdfBuffer = await page.pdf({
@@ -416,16 +417,31 @@ export async function POST(req: NextRequest) {
       //     ).toString("base64")}" style="width: 100%; height: auto;" />
       //   </div>
       // `,
+
       headerTemplate: `
-        <div style="font-size:10px; color:#808080; width:100%; padding: 0 30px;">
-          <table style="width: 100%; font-family: Arial, sans-serif;">
-            <tr>
-                <td style="text-align:left;">ข้อมูลเมื่อวันที่: ${currentDate}</td>
-                <td style="text-align:right;">หน้า <span class="pageNumber"></span> / <span class="totalPages"></span></td>
-            </tr>
-          </table>
-        </div>
-      `,
+  <style>
+    @font-face {
+      font-family: 'THSarabunNew';
+      src: url('${fontUrl}') format('truetype');
+      font-weight: normal;
+      font-style: normal;
+    }
+    body {
+      font-family: 'THSarabunNew', sans-serif;
+      font-size: 10px;
+      color: #808080;
+    }
+  </style>
+  <div style="width:100%; padding: 0 30px;">
+    <table style="width:100%;">
+      <tr>
+        <td style="text-align:left;">ข้อมูลเมื่อวันที่: ${currentDate}</td>
+        <td style="text-align:right;">หน้า <span class="pageNumber"></span> / <span class="totalPages"></span></td>
+      </tr>
+    </table>
+  </div>
+`,
+
       footerTemplate: "<div></div>",
       margin: { top: "60px", right: "30px", bottom: "30px", left: "30px" },
     });
