@@ -169,7 +169,7 @@ function getHtmlContent(data: PdfData) {
             })
             .join(
               "",
-            )}<td class="p-2 border border-slate-300 items-center">${exp.approverName}</td></tr>`;
+            )}<td class="p-2 border border-slate-300 text-center align-middle border-r">${exp.approverName}</td></tr>`;
         })
         .join("");
 
@@ -308,19 +308,12 @@ export async function POST(req: NextRequest) {
       format: "A4",
       printBackground: true,
       displayHeaderFooter: true,
-      headerTemplate: `
-  <div style="font-family: 'THSarabunNew', sans-serif; font-size: 10px; width: 100%; padding: 0 30px;">
-    <table style="width: 100%; border-collapse: collapse;">
-      <tr>
-        <td style="text-align: right; color: #808080;">
-          หน้า <span class="pageNumber"></span> / <span class="totalPages"></span>
-        </td>
-      </tr>
-    </table>
-  </div>
-`,
-
-      footerTemplate: "<div></div>",
+      headerTemplate: "<div></div>",
+      footerTemplate: `  
+        <div style="width: 100%; font-size: 10px; font-family: 'THSarabunNew', sans-serif; text-align: center; color: #808080;">
+            หน้า <span class="pageNumber"></span> / <span class="totalPages"></span>
+        </div>
+      `,
       margin: { top: "60px", right: "30px", bottom: "30px", left: "30px" },
     });
 
