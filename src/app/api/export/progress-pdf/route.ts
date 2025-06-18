@@ -78,34 +78,6 @@ async function getPdfData(
   };
 }
 
-// // ✅ [เพิ่มใหม่] ฟังก์ชันสำหรับสร้าง Header เป็นรูปภาพ SVG
-// function createHeaderSvg(date: string, fontBase64: string): string {
-//   const svgContent = `
-//     <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="50px" style="font-family: 'Sarabun', sans-serif; font-size: 10pt; color: #555;">
-//       <style>
-//         @font-face {
-//           font-family: 'Sarabun';
-//           src: url(data:font/truetype;charset=utf-8;base64,${fontBase64}) format('truetype');
-//         }
-//       </style>
-
-//       <foreignObject x="0" y="0" width="50%" height="50px">
-//         <div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: center; height: 100%; padding-left: 10px;">
-//           ข้อมูลเมื่อวันที่: ${date}
-//         </div>
-//       </foreignObject>
-
-//       <foreignObject x="50%" y="0" width="50%" height="50px">
-//         <div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: center; justify-content: flex-end; height: 100%; padding-right: 10px;">
-//           หน้า <span class="pageNumber"></span> / <span class="totalPages"></span>
-//         </div>
-//       </foreignObject>
-//     </svg>
-//   `;
-//   // แปลง SVG เป็น Base64
-//   return `data:image/svg+xml;base64,${Buffer.from(svgContent).toString("base64")}`;
-// }
-
 // ▼▼▼ [แก้ไข] ปรับปรุงการสร้าง HTML ทั้งหมดตามโครงสร้างที่ถูกต้อง ▼▼▼
 function getHtmlContent(data: PdfData) {
   // 1. อ่านไฟล์ Logo และแปลงเป็น Base64 Data URI
@@ -158,65 +130,6 @@ function getHtmlContent(data: PdfData) {
     return acc;
   }, {});
 
-  // // ▼▼▼ [แก้ไข] ปรับแก้ Logic การสร้างแถวตาราง ▼▼▼
-  // const tableRows = Object.entries(grouped)
-  //   .map(([courseName, exps]) => {
-  //     const courseHeaderRow = `
-  //     <tr class="bg-slate-100 font-bold">
-  //       <td class="p-2 border border-slate-300" colspan="${4 + data.fields.length + 1}">${courseName}</td>
-  //     </tr>
-  //   `;
-
-  //     let lastSubCourseName: string | undefined | null = null;
-
-  //     const subCourseRows = exps
-  //       .map((exp: Experience & { caseNumber: number }) => {
-  //         let currentSubCourseName = exp.subCourse?.name || "";
-
-  //         let experienceCell = `<td class="p-2 border border-slate-300 pl-6">${currentSubCourseName}</td>`;
-  //         // ดึงค่า alwaycourse จาก object ของ SubCourse
-  //         let alwaycourseCell = `<td class="p-2 text-center border border-slate-300">${exp.subCourse?.alwaycourse ?? ''}</td>`;
-
-  //         // Logic การแสดง "ในวิชา"
-  //         const inSubjectDisplayValue = exp.subCourse?.isSubjectFreeform
-  //               ? exp.subject // ถ้าเป็น freeform ให้ใช้ค่าที่นิสิตกรอก
-  //               : exp.subCourse?.inSubjectCount; // ถ้าไม่ ให้ใช้ค่าจาก inSubjectCount
-  //         let inSubjectCell = `<td class="p-2 text-center border border-slate-300">${inSubjectDisplayValue ?? ''}</td>`;
-
-  //         // เปรียบเทียบด้วย .name
-  //         if (
-  //           currentSubCourseName &&
-  //           currentSubCourseName === lastSubCourseName
-  //         ) {
-  //           experienceCell = `<td class="p-2 border border-slate-300 pl-6"></td>`;
-  //           inSubjectCell = `<td class="p-2 text-center border border-slate-300"></td>`;
-  //           alwaycourseCell = `<td class="p-2 text-center border border-slate-300"></td>`;
-  //         }
-  //         lastSubCourseName = currentSubCourseName;
-
-  //         return `
-  //           <tr>
-  //             ${experienceCell}
-  //             ${inSubjectCell}
-  //             ${alwaycourseCell}
-  //             <td class="p-2 text-center border border-slate-300">${exp.caseNumber}</td>
-  //             ${data.fields
-  //               .map((f) => {
-  //                 const value =
-  //                   exp.fieldValues.find((fv) => fv.fieldId === f.id)?.value ||
-  //                   "";
-  //                 return `<td class="p-2 text-center border border-slate-300">${value}</td>`;
-  //               })
-  //               .join("")}
-  //             <td class="p-2 border border-slate-300">${exp.approverName}</td>
-  //           </tr>
-  //         `;
-  //       })
-  //       .join("");
-
-  //     return courseHeaderRow + subCourseRows;
-  //   })
-  //   .join("");
   const tableRows = Object.entries(grouped)
     .map(([courseName, exps]) => {
       const courseHeaderRow = `<tr class="bg-slate-100 font-bold"><td class="p-2 border border-slate-300" colspan="${4 + data.fields.length + 1}">${courseName}</td></tr>`;
@@ -359,14 +272,6 @@ export async function POST(req: NextRequest) {
     const fontBuffer = fs.readFileSync(fontPath);
     const fontBase64 = fontBuffer.toString("base64");
 
-    // // ปรับการเรียกใช้ Puppeteer ให้เข้ากับ Serverless
-    // browser = await puppeteer.launch({
-    //   args: chromium.args,
-    //   defaultViewport: chromium.defaultViewport,
-    //   executablePath: await chromium.executablePath(),
-    //   headless: chromium.headless,
-    // });
-
     //▼▼▼ [แก้ไข]
     let launchOptions = {};
     if (process.env.NODE_ENV === "production") {
@@ -393,39 +298,32 @@ export async function POST(req: NextRequest) {
     }
 
     browser = await puppeteer.launch(launchOptions); // [แก้ไข] ลบ ignoreHTTPSErrors ออกจาก launchOptions ▼▼▼
-    // ▲▲▲ [สิ้นสุดส่วนที่แก้ไข] ▲▲▲
 
     const page = await browser.newPage();
     await page.setContent(htmlContent, { waitUntil: "networkidle0" });
 
-    // ▼▼▼ [แก้ไข] ปรับ Header/Footer Template ใหม่ทั้งหมด ▼▼▼
     const pdfBuffer = await page.pdf({
       format: "A4",
       printBackground: true,
       displayHeaderFooter: true,
-      // ใช้รูป SVG ที่เราสร้างขึ้นมาเป็น Header
       headerTemplate: `
-        <div style="width: 100%; padding: 0 30px; box-sizing: border-box;">
-          <img src="data:image/svg+xml;base64,${Buffer.from(
-            `
-            <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="50px" style="font-family: Arial, sans-serif; font-size: 10pt; color: #555;">
-              <text x="0" y="35">ข้อมูลเมื่อวันที่: ${currentDate}</text>
-              <text x="100%" y="35" text-anchor="end">หน้า <span class="pageNumber"></span> / <span class="totalPages"></span></text>
-            </svg>
-          `,
-          ).toString("base64")}" style="width: 100%; height: auto;" />
-        </div>
-      `,
-      // headerTemplate: `
-      //   <div style="font-family: 'THSarabunNew', sans-serif; font-size: 10px; color: #808080; padding: 0 30px; width: 100%; display: flex; justify-content: space-between;">
-      //       <span>ข้อมูลเมื่อวันที่: ${currentDate}</span>
-      //       <span>หน้า <span class="pageNumber"></span> / <span class="totalPages"></span></span>
-      //   </div>
-      // `,
+  <div style="font-family: 'THSarabunNew', sans-serif; font-size: 10px; width: 100%; padding: 0 30px;">
+    <table style="width: 100%; border-collapse: collapse;">
+      <tr>
+        <td style="text-align: left; color: #808080;">
+          ข้อมูลเมื่อวันที่: ${currentDate}
+        </td>
+        <td style="text-align: right; color: #808080;">
+          หน้า <span class="pageNumber"></span> / <span class="totalPages"></span>
+        </td>
+      </tr>
+    </table>
+  </div>
+`,
+
       footerTemplate: "<div></div>",
       margin: { top: "60px", right: "30px", bottom: "30px", left: "30px" },
     });
-    // ▲▲▲ [สิ้นสุดส่วนที่แก้ไข] ▲▲▲
 
     return new NextResponse(pdfBuffer, {
       headers: {
