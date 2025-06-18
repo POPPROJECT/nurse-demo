@@ -774,7 +774,7 @@ export default function RecordTable({ accessToken }: { accessToken: string }) {
       {/* Main Table */}
       <div className="container max-w-6xl px-4 py-8 mx-auto">
         {/* Header */}
-        <div className="p-6 mb-6 text-white bg-[linear-gradient(to_right,#f46b45_0%,#eea849_100%)] dark:bg-[#1E293B] rounded-xl shadow-md hover:shadow-lg transition-all duration-300 ease-in-out hover:-translate-y-1 ">
+        <div className="p-6 mb-6 text-white bg-[linear-gradient(to_right,#f46b45_0%,#eea849_100%)] dark:bg-[#1E293B] rounded-xl shadow-md">
           <h1 className="text-xl font-semibold sm:text-2xl">
             ตรวจสอบรายการบันทึก
           </h1>
@@ -782,15 +782,19 @@ export default function RecordTable({ accessToken }: { accessToken: string }) {
 
         {/* Filter */}
         <div className="p-6 mb-6 bg-white shadow rounded-xl dark:bg-[#1E293B] dark:text-white text-gray-800">
-          <div className="flex flex-col md:flex-row flex-wrap w-full gap-4">
+          {/* ใช้ Flexbox ที่ยืดหยุ่นและจัดวางได้ถูกต้องในทุกขนาดจอ */}
+          <div className="flex flex-col flex-wrap w-full gap-4 md:flex-row md:items-end">
             {/* Book Filter */}
-            <div className="flex flex-col">
-              <label htmlFor="bookFilter" className="mb-1 text-sm font-medium">
+            <div className="flex flex-col w-full md:w-auto">
+              <label
+                htmlFor="bookFilter"
+                className="block mb-1 text-sm font-medium"
+              >
                 สมุด
               </label>
               <select
                 id="bookFilter"
-                className="px-3 py-2 bg-white border border-gray-300 rounded-lg dark:text-gray-800"
+                className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg dark:text-gray-800"
                 value={bookFilter ?? ""}
                 onChange={(e) => {
                   const v = Number(e.target.value);
@@ -810,7 +814,7 @@ export default function RecordTable({ accessToken }: { accessToken: string }) {
             </div>
 
             {/* Status Filter */}
-            <div className="flex flex-col">
+            <div className="flex flex-col w-full md:w-auto">
               <label
                 htmlFor="statusFilter"
                 className="mb-1 text-sm font-medium"
@@ -819,7 +823,7 @@ export default function RecordTable({ accessToken }: { accessToken: string }) {
               </label>
               <select
                 id="statusFilter"
-                className="px-3 py-2 bg-white border border-gray-300 rounded-lg dark:text-black"
+                className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg dark:text-black"
                 value={statusFilter}
                 onChange={(e) => {
                   setStatusFilter(e.target.value as any);
@@ -842,13 +846,13 @@ export default function RecordTable({ accessToken }: { accessToken: string }) {
             </div>
 
             {/* Sort By */}
-            <div className="flex flex-col">
+            <div className="flex flex-col w-full md:w-auto">
               <label htmlFor="sortBy" className="mb-1 text-sm font-medium">
                 เรียงตาม
               </label>
               <select
                 id="sortBy"
-                className="px-3 py-2 bg-white border border-gray-300 rounded-lg dark:text-black"
+                className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg dark:text-black"
                 value={sortBy}
                 onChange={(e) => {
                   setSortBy(e.target.value as any);
@@ -874,7 +878,7 @@ export default function RecordTable({ accessToken }: { accessToken: string }) {
             </div>
 
             {/* Search */}
-            <div className="flex flex-col flex-grow min-w-[180px]">
+            <div className="flex flex-col flex-grow w-full min-w-[180px] md:w-auto">
               <label htmlFor="search" className="mb-1 text-sm font-medium">
                 ค้นหา
               </label>
@@ -910,13 +914,13 @@ export default function RecordTable({ accessToken }: { accessToken: string }) {
             </div>
 
             {/* Limit */}
-            <div className="flex items-center">
+            <div className="flex items-center w-full pt-4 md:w-auto md:pt-0">
               <label htmlFor="limit" className="mr-2 text-sm font-medium">
                 แสดง:
               </label>
               <select
                 id="limit"
-                className="px-2 py-1 border border-gray-300 rounded-lg dark:bg-white dark:text-gray-800"
+                className="px-2 py-2 border border-gray-300 rounded-lg dark:bg-white dark:text-gray-800"
                 value={limit}
                 onChange={(e) => {
                   setLimit(+e.target.value);
