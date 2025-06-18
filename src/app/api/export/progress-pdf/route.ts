@@ -319,7 +319,7 @@ function getHtmlContent(data: PdfData) {
               <th class="p-2 font-semibold border border-slate-300 center" style="width: 9.2%;">ตลอด<br/>หลักสูตร</th>
               <th class="p-2 font-semibold border border-slate-300 center" style="width: 4%;">ที่</th>
               ${data.fields.map((f) => `<th class="p-2 font-semibold border border-slate-300 center">${f.label}</th>`).join("")}
-              <th class="p-2 font-semibold border border-slate-300 center" style="width: 20%;">ชื่อผู้นิเทศก์</th>
+              <th class="p-2 font-semibold border border-slate-300 center" style="width: 20%;">ชื่อผู้นิเทศ</th>
             </tr>
           </thead>
           <tbody>
@@ -398,42 +398,34 @@ export async function POST(req: NextRequest) {
     const page = await browser.newPage();
     await page.setContent(htmlContent, { waitUntil: "networkidle0" });
 
-    // ตรวจสอบว่า process.env.SITE_URL มีค่า ถ้าไม่มี ให้ใช้ URL พื้นฐาน
-    const siteUrl = process.env.SITE_URL;
-
+    // ▼▼▼ [แก้ไข] ปรับ Header/Footer Template ใหม่ทั้งหมด ▼▼▼
     const pdfBuffer = await page.pdf({
       format: "A4",
       printBackground: true,
       displayHeaderFooter: true,
+      // ใช้รูป SVG ที่เราสร้างขึ้นมาเป็น Header
       headerTemplate: `
-        <style>
-            /* --- ส่วนสำคัญคือตรงนี้ --- */
-            @font-face {
-                font-family: 'THSarabunNew';
-                src: url('${siteUrl}/fonts/THSarabunNew.ttf') format('truetype');
-            }
-            html {
-                -webkit-print-color-adjust: exact;
-            }
-            .header {
-                font-family: 'THSarabunNew', sans-serif;
-                font-size: 12px;
-                color: #555555;
-                padding: 0 30px;
-                width: 100%;
-                display: flex;
-                justify-content: space-between;
-                -webkit-print-color-adjust: exact;
-            }
-        </style>
-        <div class="header">
-            <span>ข้อมูลเมื่อวันที่: ${currentDate}</span>
-            <span>หน้า <span class="pageNumber"></span> / <span class="totalPages"></span></span>
+        <div style="width: 100%; padding: 0 30px; box-sizing: border-box;">
+          <img src="data:image/svg+xml;base64,${Buffer.from(
+            `
+            <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="50px" style="font-family: Arial, sans-serif; font-size: 10pt; color: #555;">
+              <text x="0" y="35">ข้อมูลเมื่อวันที่: ${currentDate}</text>
+              <text x="100%" y="35" text-anchor="end">หน้า <span class="pageNumber"></span> / <span class="totalPages"></span></text>
+            </svg>
+          `,
+          ).toString("base64")}" style="width: 100%; height: auto;" />
         </div>
-    `,
+      `,
+      // headerTemplate: `
+      //   <div style="font-family: 'THSarabunNew', sans-serif; font-size: 10px; color: #808080; padding: 0 30px; width: 100%; display: flex; justify-content: space-between;">
+      //       <span>ข้อมูลเมื่อวันที่: ${currentDate}</span>
+      //       <span>หน้า <span class="pageNumber"></span> / <span class="totalPages"></span></span>
+      //   </div>
+      // `,
       footerTemplate: "<div></div>",
       margin: { top: "60px", right: "30px", bottom: "30px", left: "30px" },
     });
+    // ▲▲▲ [สิ้นสุดส่วนที่แก้ไข] ▲▲▲
 
     return new NextResponse(pdfBuffer, {
       headers: {
