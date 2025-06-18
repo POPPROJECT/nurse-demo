@@ -1,10 +1,11 @@
-'use client';
+// //frontend\src\app\experience-manager\CountsExperience\history\[studentId]\StudentHistoryClient.tsx
+"use client";
 
-import { useParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
-import axios from 'axios';
-import Swal from 'sweetalert2';
-import { useAuth } from '@/app/contexts/AuthContext';
+import { useEffect, useState } from "react";
+import axios from "axios";
+import Swal from "sweetalert2";
+import { useAuth } from "@/app/contexts/AuthContext";
+import Link from "next/link";
 
 interface FieldValue {
   field?: { label: string };
@@ -12,9 +13,9 @@ interface FieldValue {
 }
 interface Experience {
   id: string;
-  course: string;
-  subCourse: string;
-  status: 'PENDING' | 'CONFIRMED' | 'CANCEL';
+  course: { id: number; name: string }; // แก้ไขจาก string เป็น object
+  subCourse: { id: number; name: string }; // แก้ไขจาก string เป็น object
+  status: "PENDING" | "CONFIRMED" | "CANCEL";
   createdAt: string;
   approverName: string;
   fieldValues: FieldValue[];
@@ -28,25 +29,42 @@ interface StudentHistoryClientProps {
   studentId: string;
 }
 
+const DeleteIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    className="w-5 h-5"
+    fill="none"
+    viewBox="0 0 24 24"
+    stroke="currentColor"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="2"
+      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+    />
+  </svg>
+);
+
 export default function StudentHistoryPage({
   studentId,
 }: StudentHistoryClientProps) {
   const { session } = useAuth(); // Accessing session from AuthContext
   const token = session?.accessToken; // Get token from session
   const BASE = process.env.NEXT_PUBLIC_BACKEND_URL;
-  const [studentName, setStudentName] = useState('');
+  const [studentName, setStudentName] = useState("");
   const [realUserId, setRealUserId] = useState<number | null>(null);
   const [experiences, setExperiences] = useState<Experience[]>([]);
   const [books, setBooks] = useState<Book[]>([]);
   const [bookId, setBookId] = useState<number | null>(null);
   const [status, setStatus] = useState<
-    'ALL' | 'PENDING' | 'CONFIRMED' | 'CANCEL'
-  >('ALL');
-  const [sortBy, setSortBy] = useState<'createdAt' | 'course' | 'status'>(
-    'createdAt'
+    "ALL" | "PENDING" | "CONFIRMED" | "CANCEL"
+  >("ALL");
+  const [sortBy, setSortBy] = useState<"createdAt" | "course" | "status">(
+    "createdAt",
   );
-  const [order, setOrder] = useState<'asc' | 'desc'>('desc');
-  const [search, setSearch] = useState('');
+  const [order, setOrder] = useState<"asc" | "desc">("desc");
+  const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(5);
   const [total, setTotal] = useState(0);
@@ -66,7 +84,7 @@ export default function StudentHistoryPage({
         setRealUserId(res.data.userId);
         setStudentName(res.data.name);
       })
-      .catch(() => Swal.fire('Error', 'โหลดข้อมูลนิสิตล้มเหลว', 'error'));
+      .catch(() => Swal.fire("Error", "โหลดข้อมูลนิสิตล้มเหลว", "error"));
   }, [studentId, token]);
 
   // โหลดสมุด
@@ -81,7 +99,7 @@ export default function StudentHistoryPage({
         setBooks(r.data);
         if (r.data.length > 0) setBookId(r.data[0].id);
       })
-      .catch(() => Swal.fire('Error', 'โหลดสมุดไม่ได้', 'error'));
+      .catch(() => Swal.fire("Error", "โหลดสมุดไม่ได้", "error"));
   }, [realUserId, token, BASE]);
 
   // โหลดรายการบันทึก
@@ -107,7 +125,7 @@ export default function StudentHistoryPage({
         setExperiences(res.data.data);
         setTotal(res.data.total);
       })
-      .catch(() => Swal.fire('Error', 'ไม่สามารถโหลดข้อมูลได้', 'error'))
+      .catch(() => Swal.fire("Error", "ไม่สามารถโหลดข้อมูลได้", "error"))
       .finally(() => setLoading(false));
   }, [
     realUserId,
@@ -124,13 +142,13 @@ export default function StudentHistoryPage({
 
   const handleDelete = (id: string) => {
     Swal.fire({
-      title: 'ลบรายการนี้?',
-      text: 'เมื่อลบแล้วจะไม่สามารถกู้คืนได้',
-      icon: 'warning',
+      title: "ลบรายการนี้?",
+      text: "เมื่อลบแล้วจะไม่สามารถกู้คืนได้",
+      icon: "warning",
       showCancelButton: true,
-      confirmButtonText: 'ยืนยัน',
-      cancelButtonText: 'ยกเลิก',
-      confirmButtonColor: '#ef4444',
+      confirmButtonText: "ยืนยัน",
+      cancelButtonText: "ยกเลิก",
+      confirmButtonColor: "#ef4444",
     }).then((result) => {
       if (!result.isConfirmed) return;
       axios
@@ -139,19 +157,19 @@ export default function StudentHistoryPage({
           withCredentials: true,
         })
         .then(() => {
-          Swal.fire('ลบสำเร็จ', '', 'success');
+          Swal.fire("ลบสำเร็จ", "", "success");
           setExperiences((prev) => prev.filter((exp) => exp.id !== id));
         })
-        .catch(() => Swal.fire('Error', 'ลบไม่สำเร็จ', 'error'));
+        .catch(() => Swal.fire("Error", "ลบไม่สำเร็จ", "error"));
     });
   };
 
   const getPageNumbers = (
     current: number,
     total: number,
-    delta = 2
-  ): (number | '...')[] => {
-    const range: (number | '...')[] = [];
+    delta = 2,
+  ): (number | "...")[] => {
+    const range: (number | "...")[] = [];
     let l = 0;
     for (let i = 1; i <= total; i++) {
       if (
@@ -159,7 +177,7 @@ export default function StudentHistoryPage({
         i === total ||
         (i >= current - delta && i <= current + delta)
       ) {
-        if (l + 1 !== i) range.push('...');
+        if (l + 1 !== i) range.push("...");
         range.push(i);
         l = i;
       }
@@ -168,10 +186,38 @@ export default function StudentHistoryPage({
   };
 
   return (
-    <div className="max-w-6xl p-6 mx-auto mt-6 text-gray-800 bg-white shadow dark:bg-slate-800 rounded-xl dark:text-white">
-      <h1 className="mb-6 text-2xl font-bold text-center">
-        ประวัติการบันทึกของนิสิต {studentId} - {studentName}
-      </h1>
+    <div className="max-w-6xl p-6 mx-auto mt-6 text-gray-800   dark:text-white">
+      <Link
+        href="/experience-manager/CountsExperience"
+        className="inline-flex items-center mb-2 text-gray-600 hover:text-gray-700 dark:text-gray-300"
+      >
+        <svg
+          className="w-5 h-5 mr-2"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={2}
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M15 19l-7-7 7-7"
+          />
+        </svg>
+        กลับไปหน้าจัดการข้อมูลประสบการณ์นิสิต
+      </Link>
+
+      <div className="p-6 mb-6 text-white bg-[linear-gradient(to_right,#f46b45_0%,#eea849_100%)] dark:bg-[#1E293B] rounded-xl shadow-md hover:shadow-lg transition-all duration-300 ease-in-out hover:-translate-y-1 ">
+        <h1 className="text-xl font-semibold sm:text-2xl ">
+          ประวัติการบันทึกของนิสิต
+        </h1>
+      </div>
+
+      <div className="p-3 mb-6  dark:text-white bg-white dark:bg-[#1E293B] text-gray-800 rounded-xl shadow-md transition-shadow duration-300 min-w-auto">
+        <h2 className="text-lg font-semibold sm:text-xl ">
+          🔎 {studentId} - {studentName}
+        </h2>
+      </div>
 
       {/* Filter */}
       <div className="p-6 mb-6 bg-white shadow rounded-xl dark:bg-[#1E293B] dark:text-white">
@@ -184,7 +230,7 @@ export default function StudentHistoryPage({
             <select
               id="bookFilter"
               className="px-3 py-2 bg-white border border-gray-300 rounded-lg dark:text-black"
-              value={bookId ?? ''}
+              value={bookId ?? ""}
               onChange={(e) => {
                 const v = Number(e.target.value);
                 setBookId(isNaN(v) ? null : v);
@@ -331,46 +377,46 @@ export default function StudentHistoryPage({
             <div
               key={exp.id}
               className={`p-4 rounded-xl shadow border-l-4 bg-white dark:bg-slate-700 text-gray-700 dark:text-gray-200 ${
-                exp.status === 'PENDING'
-                  ? 'border-yellow-400'
-                  : exp.status === 'CONFIRMED'
-                  ? 'border-green-400'
-                  : 'border-red-400'
+                exp.status === "PENDING"
+                  ? "border-yellow-400"
+                  : exp.status === "CONFIRMED"
+                    ? "border-green-400"
+                    : "border-red-400"
               }`}
             >
               <div className="flex justify-between">
                 <div>
                   <h2 className="text-xl font-bold text-blue-600">
-                    {exp.course}
+                    {exp.course.name}
                   </h2>
                   <p className="mb-1 text-sm font-semibold text-blue-500">
-                    {exp.subCourse}
+                    {exp.subCourse.name}
                   </p>
                   <p className="text-sm">
-                    สถานะ:{' '}
-                    {exp.status === 'PENDING'
-                      ? 'รอดำเนินการ'
-                      : exp.status === 'CONFIRMED'
-                      ? 'ยืนยันแล้ว'
-                      : 'ปฏิเสธ'}
+                    สถานะ:{" "}
+                    {exp.status === "PENDING"
+                      ? "รอดำเนินการ"
+                      : exp.status === "CONFIRMED"
+                        ? "ยืนยันแล้ว"
+                        : "ปฏิเสธ"}
                   </p>
                   <p className="text-sm">ผู้นิเทศ: {exp.approverName}</p>
                   <p className="text-sm">
-                    วันที่:{' '}
-                    {new Date(exp.createdAt).toLocaleDateString('th-TH')}
+                    วันที่:{" "}
+                    {new Date(exp.createdAt).toLocaleDateString("th-TH")}
                   </p>
                 </div>
                 <button
-                  className="px-3 py-1 text-sm font-medium text-white bg-red-600 rounded hover:bg-red-700 h-fit"
+                  className="sm:text-gray-400 text-red-500 hover:text-red-500 p-1.5    transition-colors"
                   onClick={() => handleDelete(exp.id)}
                 >
-                  ลบ
+                  <DeleteIcon />
                 </button>
               </div>
               <div className="mt-2 text-sm">
                 {exp.fieldValues.map((fv, i) => (
                   <div key={i}>
-                    <span className="font-semibold">{fv.field?.label}:</span>{' '}
+                    <span className="font-semibold">{fv.field?.label}:</span>{" "}
                     {fv.value}
                   </div>
                 ))}
@@ -404,7 +450,7 @@ export default function StudentHistoryPage({
         {/* เลขหน้า */}
         {getPageNumbers(page, totalPages).map((pNo, index) => (
           <div key={index}>
-            {pNo === '...' ? (
+            {pNo === "..." ? (
               <span className="px-2 py-1 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-lg dark:text-gray-300 dark:bg-gray-800 dark:border-gray-700 sm:px-3">
                 ...
               </span>
@@ -415,16 +461,16 @@ export default function StudentHistoryPage({
             px-2 sm:px-3 py-1 border text-sm font-medium rounded-lg transition-colors duration-200
             ${
               pNo === page
-                ? 'bg-blue-600 border-blue-600 text-white shadow-sm hover:bg-blue-700' // Active state for Light mode
-                : 'bg-white border-gray-300 text-gray-600 hover:bg-gray-100 hover:text-gray-800' // Inactive state for Light mode
+                ? "bg-blue-600 border-blue-600 text-white shadow-sm hover:bg-blue-700" // Active state for Light mode
+                : "bg-white border-gray-300 text-gray-600 hover:bg-gray-100 hover:text-gray-800" // Inactive state for Light mode
             }
             ${
               pNo === page
-                ? 'dark:bg-blue-700 dark:border-blue-700 dark:text-white dark:hover:bg-blue-800' // Active state for Dark mode
-                : 'dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white' // Inactive state for Dark mode
+                ? "dark:bg-blue-700 dark:border-blue-700 dark:text-white dark:hover:bg-blue-800" // Active state for Dark mode
+                : "dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white" // Inactive state for Dark mode
             }
           `}
-                aria-current={pNo === page ? 'page' : undefined}
+                aria-current={pNo === page ? "page" : undefined}
               >
                 {pNo}
               </button>
