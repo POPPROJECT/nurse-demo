@@ -571,18 +571,16 @@ export default function RecordTable({ accessToken }: { accessToken: string }) {
   }
 
   return (
-    <div className="">
+    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Edit Modal */}
       {isEditing && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-opacity-80 backdrop-blur-sm">
-          {" "}
           {/* เพิ่ม p-4 เพื่อให้มีระยะห่างรอบ modal บนมือถือ */}
           <div className="w-full max-w-md p-4 bg-white rounded-lg shadow-lg sm:p-6">
-            {" "}
             {/* เปลี่ยน max-w-lg เป็น max-w-md และปรับ padding */}
             <h2 className="mb-4 text-lg font-semibold text-center sm:text-xl">
               แก้ไขรายการ
-            </h2>{" "}
+            </h2>
             {/* ลดขนาด font เล็กน้อยบนมือถือ */}
             {/* เลือก Course */}
             <div className="mb-4">
@@ -591,7 +589,7 @@ export default function RecordTable({ accessToken }: { accessToken: string }) {
                 className="block mb-1 text-sm font-medium"
               >
                 หมวดหมู่
-              </label>{" "}
+              </label>
               {/* เพิ่ม htmlFor */}
               <Select
                 id="editCourse" // เพิ่ม id ให้สอดคล้องกับ htmlFor
@@ -776,7 +774,6 @@ export default function RecordTable({ accessToken }: { accessToken: string }) {
       {/* Main Table */}
       <div className="container max-w-6xl px-4 py-8 mx-auto mt-10 sm:mt-0">
         {/* Header */}
-
         <div className="p-6 mb-6 text-white bg-[linear-gradient(to_right,#f46b45_0%,#eea849_100%)] dark:bg-[#1E293B] rounded-xl shadow-md hover:shadow-lg transition-all duration-300 ease-in-out hover:-translate-y-1 ">
           <h1 className="text-xl font-semibold sm:text-2xl">
             ตรวจสอบรายการบันทึก
@@ -785,7 +782,7 @@ export default function RecordTable({ accessToken }: { accessToken: string }) {
 
         {/* Filter */}
         <div className="p-6 mb-6 bg-white shadow rounded-xl dark:bg-[#1E293B] dark:text-white text-gray-800">
-          <div className="flex flex-wrap items-end gap-y-4 gap-x-6">
+          <div className="flex flex-col md:flex-row flex-wrap w-full gap-4">
             {/* Book Filter */}
             <div className="flex flex-col">
               <label htmlFor="bookFilter" className="mb-1 text-sm font-medium">

@@ -64,8 +64,8 @@ export default function ExperienceForm({
   const [freeformSubject, setFreeformSubject] = useState("");
 
   const approverRoleOptions: Option[] = [
-    { value: "APPROVER_IN", label: "อาจารย์ภายใน" },
-    { value: "APPROVER_OUT", label: "อาจารย์ภายนอก" },
+    { value: "APPROVER_IN", label: "ผู้นิเทศก์ภายใน" },
+    { value: "APPROVER_OUT", label: "ผู้นิเทศก์ภายนอก" },
   ];
   const [selectedApproverRole, setSelectedApproverRole] =
     useState<Option | null>(null);
