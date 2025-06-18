@@ -772,7 +772,7 @@ export default function RecordTable({ accessToken }: { accessToken: string }) {
       )}
 
       {/* Main Table */}
-      <div className="container max-w-6xl px-4 py-8 mx-auto mt-10 sm:mt-0">
+      <div className="container max-w-6xl px-4 py-8 mx-auto">
         {/* Header */}
         <div className="p-6 mb-6 text-white bg-[linear-gradient(to_right,#f46b45_0%,#eea849_100%)] dark:bg-[#1E293B] rounded-xl shadow-md hover:shadow-lg transition-all duration-300 ease-in-out hover:-translate-y-1 ">
           <h1 className="text-xl font-semibold sm:text-2xl">
@@ -975,7 +975,7 @@ export default function RecordTable({ accessToken }: { accessToken: string }) {
               >
                 <div className="p-6">
                   <div className="flex flex-col justify-between md:flex-row">
-                    <div className="flex-1">
+                    <div className="flex-1 min-w-0">
                       {/* checkbox */}
                       {rec.status === "PENDING" && (
                         <input
@@ -993,7 +993,7 @@ export default function RecordTable({ accessToken }: { accessToken: string }) {
                         />
                       )}
                       <div className="flex items-center gap-2 mb-1">
-                        <h3 className="text-lg font-semibold text-blue-600">
+                        <h3 className="text-lg font-semibold text-blue-600 break-words">
                           {rec.course.name}
                         </h3>
                         <span
@@ -1023,12 +1023,12 @@ export default function RecordTable({ accessToken }: { accessToken: string }) {
                               : "ปฏิเสธ"}
                         </span>
                       </div>
-                      <div className="mb-2 font-medium text-blue-600">
+                      <div className="mb-2 font-medium text-blue-600 break-words">
                         {rec.subCourse.name}
                       </div>
                       {/* ถ้ามี subject ให้แสดงบรรทัดนี้ */}
                       {rec.subject && (
-                        <div className="mb-2 text-gray-700 dark:text-gray-300">
+                        <div className="mb-2 text-gray-700 dark:text-gray-300 break-words">
                           <span className="font-medium">ในวิชา:</span>{" "}
                           {rec.subject}
                         </div>
@@ -1041,7 +1041,7 @@ export default function RecordTable({ accessToken }: { accessToken: string }) {
                               ?.label ??
                             "";
                           return (
-                            <div key={i}>
+                            <div key={i} className="break-words">
                               <span className="text-gray-600 dark:text-gray-300">
                                 {label}:
                               </span>
@@ -1052,7 +1052,7 @@ export default function RecordTable({ accessToken }: { accessToken: string }) {
                           );
                         })}
                       </div>
-                      <div className="text-gray-600 dark:text-gray-300">
+                      <div className="text-gray-600 dark:text-gray-300 break-words">
                         ผู้นิเทศก์:
                         <span className="font-medium text-blue-600">
                           {rec.approverName}
@@ -1155,37 +1155,37 @@ export default function RecordTable({ accessToken }: { accessToken: string }) {
         </div>
 
         {/* {totalPages > 1 && bookFilter !== null && records.length > 0 && ( // เพิ่ม records.length > 0 เพื่อความแน่นอน */}
-        {/* Pagination */}
-        <div className="flex items-center justify-center pt-4 mt-6 space-x-1 border-t border-gray-200 dark:border-gray-700 sm:space-x-2">
-          {/* ปุ่มหน้าแรก */}
-          <button
-            onClick={() => setPage(1)}
-            disabled={page === 1}
-            className="px-2 py-1 text-sm font-medium text-gray-600 transition-colors duration-200 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 hover:text-gray-800 dark:text-gray-300 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700 dark:hover:text-white disabled:opacity-50 disabled:cursor-not-allowed sm:px-3"
-          >
-            หน้าแรก
-          </button>
+        {bookFilter !== null && totalPages > 1 && (
+          <div className="flex items-center justify-center pt-4 mt-6 space-x-1 border-t border-gray-200 dark:border-gray-700 sm:space-x-2">
+            {/* ปุ่มหน้าแรก */}
+            <button
+              onClick={() => setPage(1)}
+              disabled={page === 1}
+              className="px-2 py-1 text-sm font-medium text-gray-600 transition-colors duration-200 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 hover:text-gray-800 dark:text-gray-300 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700 dark:hover:text-white disabled:opacity-50 disabled:cursor-not-allowed sm:px-3"
+            >
+              หน้าแรก
+            </button>
 
-          {/* ปุ่มก่อนหน้า */}
-          <button
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-            disabled={page === 1}
-            className="px-2 py-1 text-sm font-medium text-gray-600 transition-colors duration-200 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 hover:text-gray-800 dark:text-gray-300 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700 dark:hover:text-white disabled:opacity-50 disabled:cursor-not-allowed sm:px-3"
-          >
-            ก่อนหน้า
-          </button>
+            {/* ปุ่มก่อนหน้า */}
+            <button
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page === 1}
+              className="px-2 py-1 text-sm font-medium text-gray-600 transition-colors duration-200 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 hover:text-gray-800 dark:text-gray-300 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700 dark:hover:text-white disabled:opacity-50 disabled:cursor-not-allowed sm:px-3"
+            >
+              ก่อนหน้า
+            </button>
 
-          {/* เลขหน้า */}
-          {getPageNumbers(page, totalPages).map((pNo, index) => (
-            <div key={index}>
-              {pNo === "..." ? (
-                <span className="px-2 py-1 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-lg dark:text-gray-300 dark:bg-gray-800 dark:border-gray-700 sm:px-3">
-                  ...
-                </span>
-              ) : (
-                <button
-                  onClick={() => setPage(pNo as number)}
-                  className={`
+            {/* เลขหน้า */}
+            {getPageNumbers(page, totalPages).map((pNo, index) => (
+              <div key={index}>
+                {pNo === "..." ? (
+                  <span className="px-2 py-1 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-lg dark:text-gray-300 dark:bg-gray-800 dark:border-gray-700 sm:px-3">
+                    ...
+                  </span>
+                ) : (
+                  <button
+                    onClick={() => setPage(pNo as number)}
+                    className={`
             px-2 sm:px-3 py-1 border text-sm font-medium rounded-lg transition-colors duration-200
             ${
               pNo === page
@@ -1198,32 +1198,33 @@ export default function RecordTable({ accessToken }: { accessToken: string }) {
                 : "dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white" // Inactive state for Dark mode
             }
           `}
-                  aria-current={pNo === page ? "page" : undefined}
-                >
-                  {pNo}
-                </button>
-              )}
-            </div>
-          ))}
+                    aria-current={pNo === page ? "page" : undefined}
+                  >
+                    {pNo}
+                  </button>
+                )}
+              </div>
+            ))}
 
-          {/* ปุ่มถัดไป */}
-          <button
-            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-            disabled={page === totalPages || totalPages === 0}
-            className="px-2 py-1 text-sm font-medium text-gray-600 transition-colors duration-200 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 hover:text-gray-800 dark:text-gray-300 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700 dark:hover:text-white disabled:opacity-50 disabled:cursor-not-allowed sm:px-3"
-          >
-            ถัดไป
-          </button>
+            {/* ปุ่มถัดไป */}
+            <button
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={page === totalPages || totalPages === 0}
+              className="px-2 py-1 text-sm font-medium text-gray-600 transition-colors duration-200 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 hover:text-gray-800 dark:text-gray-300 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700 dark:hover:text-white disabled:opacity-50 disabled:cursor-not-allowed sm:px-3"
+            >
+              ถัดไป
+            </button>
 
-          {/* ปุ่มหน้าสุดท้าย */}
-          <button
-            onClick={() => setPage(totalPages)}
-            disabled={page === totalPages || totalPages === 0}
-            className="px-2 py-1 text-sm font-medium text-gray-600 transition-colors duration-200 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 hover:text-gray-800 dark:text-gray-300 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700 dark:hover:text-white disabled:opacity-50 disabled:cursor-not-allowed sm:px-3"
-          >
-            หน้าสุดท้าย
-          </button>
-        </div>
+            {/* ปุ่มหน้าสุดท้าย */}
+            <button
+              onClick={() => setPage(totalPages)}
+              disabled={page === totalPages || totalPages === 0}
+              className="px-2 py-1 text-sm font-medium text-gray-600 transition-colors duration-200 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 hover:text-gray-800 dark:text-gray-300 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700 dark:hover:text-white disabled:opacity-50 disabled:cursor-not-allowed sm:px-3"
+            >
+              หน้าสุดท้าย
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
