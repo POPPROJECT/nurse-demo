@@ -215,11 +215,6 @@ export default function EditExperience_ManagerTable({
         handleDeleteAction={handleDelete}
       />
 
-      <div className="text-sm text-gray-700 dark:text-gray-300">
-        แสดง {paged.length} จาก {filtered.length} รายการ (ทั้งหมด {users.length}{" "}
-        รายการ)
-      </div>
-
       <TablePagination
         pageIndex={pageIndex}
         setPageIndexAction={setPageIndex}
