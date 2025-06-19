@@ -21,7 +21,7 @@ export default async function ApprovedIn() {
       <div className="w-full max-w-7xl mx-auto p-6 bg-white rounded-xl shadow-lg dark:bg-[#26334b] md:p-6 space-y-6">
         <div className="mb-6 mt-3">
           <span className=" px-4 py-4 bg-[#da935a] text-black text-xl rounded-xl font-bold shadow-lg">
-            จัดการบัญชีผู้นิเทศภายใน
+            จัดการบัญชีผู้นิเทศก์ภายใน
           </span>
         </div>
         <br />

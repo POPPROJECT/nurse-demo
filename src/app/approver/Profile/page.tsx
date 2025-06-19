@@ -203,8 +203,8 @@ export default function ApproverProfilePage() {
               <div className="mt-2 space-x-2">
                 <span className="px-3 py-1 text-sm text-black bg-white rounded-full bg-opacity-80">
                   {user.role === "APPROVER_OUT"
-                    ? "ผู้นิเทศภายนอก"
-                    : "ผู้นิเทศภายใน"}
+                    ? "ผู้นิเทศก์ภายนอก"
+                    : "ผู้นิเทศก์ภายใน"}
                 </span>
               </div>
             </div>
